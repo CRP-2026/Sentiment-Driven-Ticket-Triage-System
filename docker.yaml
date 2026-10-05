@@ -1,0 +1,47 @@
+services:
+  backend:
+    build:
+      context: ./backend
+      args:
+        INSTALL_ML: ${INSTALL_ML:-false}
+    environment:
+      DB_URL: sqlite:////data/tickets.db
+      MODEL_NAME: ${MODEL_NAME:-mock}          # mock | baseline | phobert
+      MODEL_PATH: ${MODEL_PATH:-/app/models}
+      CORS_ORIGINS: '["http://localhost:5173","http://localhost:8080"]'
+      HF_HUB_OFFLINE: "1"
+      WATCHFILES_FORCE_POLLING: ${WATCH_POLL:-false}   # đặt true trên Windows nếu reload không chạy
+    volumes:
+      - ./backend/src:/app/src
+      - ./backend/configs:/app/configs
+      - ./backend/scripts:/app/scripts
+      - ./backend/tests:/app/tests
+      - ./backend/models:/app/models:ro
+      - ./contracts:/contracts
+      - db_data:/data
+    ports: ["8000:8000"]
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request as u; u.urlopen('http://localhost:8000/api/v1/health')"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 40s    
+
+  frontend:
+    build:
+      context: ./frontend
+      target: dev
+    environment:
+      VITE_PROXY_TARGET: http://backend:8000
+      CHOKIDAR_USEPOLLING: ${WATCH_POLL:-false}
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules          # giữ node_modules trong container
+      - ./contracts:/contracts
+    ports: ["5173:5173"]
+    depends_on:
+      backend:
+        condition: service_healthy
+
+volumes:
+  db_data:
