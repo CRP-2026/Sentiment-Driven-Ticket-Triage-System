@@ -1,14 +1,16 @@
-import pytest
 from pathlib import Path
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker, Session
-from fastapi.testclient import TestClient
 
-from ticket_triage.db.models import Base
+import pytest
+from fastapi.testclient import TestClient
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
+
+from ticket_triage.api.main import app
+from ticket_triage.core.queue.priority_queue import TicketPriorityQueue
 from ticket_triage.core.sentiment.mock import MockSentimentModel
 from ticket_triage.core.taxonomy import Taxonomy
-from ticket_triage.core.queue.priority_queue import TicketPriorityQueue
-from ticket_triage.api.main import app
+from ticket_triage.db.models import Base
+
 
 @pytest.fixture
 def in_memory_db():

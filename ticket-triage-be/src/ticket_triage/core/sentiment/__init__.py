@@ -1,17 +1,17 @@
 from .base import (
+    AbsaResult,
+    AspectSentiment,
+    BaseSentimentModel,
     Sentiment,
     SentimentResult,
-    AspectSentiment,
-    AbsaResult,
-    BaseSentimentModel,
 )
 from .mock import MockSentimentModel
 
 __all__ = [
-    "Sentiment",
-    "SentimentResult",
-    "AspectSentiment",
     "AbsaResult",
+    "AspectSentiment",
     "BaseSentimentModel",
     "MockSentimentModel",
+    "Sentiment",
+    "SentimentResult",
 ]

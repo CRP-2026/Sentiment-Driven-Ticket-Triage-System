@@ -1,6 +1,7 @@
 import logging
 from typing import Any
-from .base import BaseSentimentModel, AbsaResult, SentimentResult, AspectSentiment
+
+from .base import AbsaResult, AspectSentiment, BaseSentimentModel, SentimentResult
 
 logger = logging.getLogger(__name__)
 
@@ -26,7 +27,7 @@ class ZeroShotNliModel(BaseSentimentModel):
                 device=-1, # CPU mặc định
             )
             logger.info("Loaded Zero-shot NLI model: %s", self.model_name_or_path)
-        except Exception as e:
+        except (ImportError, OSError, RuntimeError, ValueError) as e:
             logger.warning("Could not load transformers pipeline (%s). Falling back to mock.", e)
             self._classifier = None
 

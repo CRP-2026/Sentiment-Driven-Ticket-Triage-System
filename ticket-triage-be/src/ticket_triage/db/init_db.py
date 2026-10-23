@@ -1,5 +1,7 @@
 from sqlalchemy import Engine, text
+
 from .models import Base
+
 
 def init_db(engine_instance: Engine) -> None:
     """Tự động kích hoạt WAL mode (nếu là SQLite) và tạo toàn bộ bảng."""

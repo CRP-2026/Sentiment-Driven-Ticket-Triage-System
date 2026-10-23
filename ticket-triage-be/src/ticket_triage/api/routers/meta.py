@@ -1,4 +1,5 @@
 from fastapi import APIRouter, Request
+
 from ..schemas import AspectMetaItem
 
 router = APIRouter(prefix="/meta", tags=["Metadata"])

@@ -1,5 +1,5 @@
 from ticket_triage.db.repository import TicketRepository
-from ticket_triage.db.models import Ticket
+
 
 def test_create_ticket_with_aspects(in_memory_db):
     aspects = [

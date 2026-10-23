@@ -1,5 +1,7 @@
 import pytest
-from ticket_triage.core.queue.state_manager import StateManager, InvalidStateTransitionError
+
+from ticket_triage.core.queue.state_manager import InvalidStateTransitionError, StateManager
+
 
 def test_valid_transitions():
     assert StateManager.can_transition("new", "assigned") is True

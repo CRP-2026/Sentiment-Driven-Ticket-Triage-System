@@ -1,9 +1,11 @@
-from datetime import datetime, timedelta
+from datetime import UTC, datetime
+
 from ticket_triage.core.queue.priority_queue import TicketPriorityQueue
+
 
 def test_priority_queue_highest_score_first():
     q = TicketPriorityQueue()
-    now = datetime.utcnow()
+    now = datetime.now(UTC)
 
     q.push(ticket_id=1, priority_score=45.0, created_at=now)
     q.push(ticket_id=2, priority_score=85.0, created_at=now)

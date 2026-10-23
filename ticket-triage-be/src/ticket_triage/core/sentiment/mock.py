@@ -1,5 +1,7 @@
 import random
-from .base import BaseSentimentModel, AbsaResult, SentimentResult, AspectSentiment
+
+from .base import AbsaResult, AspectSentiment, BaseSentimentModel, SentimentResult
+
 
 class MockSentimentModel(BaseSentimentModel):
     """Mô hình giả lập trả kết quả chuẩn hóa để Bài toán 2 và frontend phát triển song song."""

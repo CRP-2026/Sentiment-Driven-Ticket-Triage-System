@@ -1,7 +1,8 @@
-from ticket_triage.core.preprocessing.normalizer import clean_text
-from ticket_triage.core.preprocessing.lang_validator import validate_english
 from ticket_triage.core.preprocessing.keyword_prefilter import filter_candidate_aspects
+from ticket_triage.core.preprocessing.lang_validator import validate_english
+from ticket_triage.core.preprocessing.normalizer import clean_text
 from ticket_triage.core.preprocessing.pipeline import preprocess_ticket
+
 
 def test_clean_text_basic():
     raw = "<b>Hello</b> <a href='https://example.com'>click here</a>   world!!! soooo baaaad!!!!"

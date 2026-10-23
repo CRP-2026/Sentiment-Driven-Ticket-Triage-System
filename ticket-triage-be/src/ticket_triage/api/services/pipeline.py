@@ -1,12 +1,15 @@
 from typing import Any
+
 from sqlalchemy.orm import Session
+
 from ...core.preprocessing.pipeline import preprocess_ticket
-from ...core.sentiment.base import BaseSentimentModel
-from ...core.priority.priority_engine import calculate_priority, PriorityBreakdown
+from ...core.priority.priority_engine import PriorityBreakdown, calculate_priority
 from ...core.queue.priority_queue import TicketPriorityQueue
+from ...core.sentiment.base import BaseSentimentModel
 from ...core.taxonomy import Taxonomy
-from ...db.repository import TicketRepository
 from ...db.models import Ticket
+from ...db.repository import TicketRepository
+
 
 def process_ticket_pipeline(
     raw_text: str,

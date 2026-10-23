@@ -1,5 +1,6 @@
-from ticket_triage.core.sentiment.base import AbsaResult, SentimentResult, AspectSentiment
 from ticket_triage.core.priority.priority_engine import calculate_priority
+from ticket_triage.core.sentiment.base import AbsaResult, AspectSentiment, SentimentResult
+
 
 def test_priority_engine_critical_case():
     result = AbsaResult(

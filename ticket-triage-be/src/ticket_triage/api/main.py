@@ -1,17 +1,19 @@
 import logging
-from pathlib import Path
 from contextlib import asynccontextmanager
+from pathlib import Path
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from ..settings import settings
-from ..db.session import engine, SessionLocal
+
+from ..core.queue.priority_queue import TicketPriorityQueue
+from ..core.sentiment.baseline import ZeroShotNliModel
+from ..core.sentiment.mock import MockSentimentModel
+from ..core.taxonomy import Taxonomy
 from ..db.init_db import init_db
 from ..db.repository import TicketRepository
-from ..core.taxonomy import Taxonomy
-from ..core.queue.priority_queue import TicketPriorityQueue
-from ..core.sentiment.mock import MockSentimentModel
-from ..core.sentiment.baseline import ZeroShotNliModel
-from .routers import health, meta, tickets, stats
+from ..db.session import SessionLocal, engine
+from ..settings import settings
+from .routers import health, meta, stats, tickets
 
 logger = logging.getLogger("ticket_triage")
 logging.basicConfig(level=logging.INFO)

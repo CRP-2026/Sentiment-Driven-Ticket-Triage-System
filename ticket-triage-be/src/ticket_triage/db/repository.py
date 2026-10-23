@@ -1,8 +1,11 @@
 from typing import Any
-from sqlalchemy import select, func, desc
+
+from sqlalchemy import desc, func, select
 from sqlalchemy.orm import Session
-from .models import Ticket, TicketAspect
+
 from ..core.queue.state_manager import StateManager
+from .models import Ticket, TicketAspect
+
 
 class TicketRepository:
     """Data Access Layer cho CSDL SQLite."""

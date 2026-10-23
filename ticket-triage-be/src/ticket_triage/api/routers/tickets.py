@@ -1,9 +1,10 @@
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
 from sqlalchemy.orm import Session
-from ...db.session import get_db
-from ...db.repository import TicketRepository
+
 from ...core.queue.state_manager import InvalidStateTransitionError
-from ..schemas import TicketCreateIn, TicketOut, TicketListResponse, StatusUpdateIn
+from ...db.repository import TicketRepository
+from ...db.session import get_db
+from ..schemas import StatusUpdateIn, TicketCreateIn, TicketListResponse, TicketOut
 from ..services.pipeline import process_ticket_pipeline
 
 router = APIRouter(prefix="/tickets", tags=["Tickets"])

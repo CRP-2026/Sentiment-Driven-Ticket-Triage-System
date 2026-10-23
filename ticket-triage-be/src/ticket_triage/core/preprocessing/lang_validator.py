@@ -2,11 +2,16 @@ import re
 from dataclasses import dataclass
 
 try:
-    from langdetect import detect_langs, DetectorFactory
+    from langdetect import DetectorFactory, detect_langs
+    from langdetect.lang_detect_exception import LangDetectException
+
     DetectorFactory.seed = 42
     LANGDETECT_AVAILABLE = True
 except ImportError:
     LANGDETECT_AVAILABLE = False
+
+    class LangDetectException(Exception):
+        pass
 
 @dataclass(frozen=True)
 class LanguageValidationResult:
@@ -68,7 +73,7 @@ def validate_english(text: str) -> LanguageValidationResult:
                 confidence=prob,
                 needs_manual_review=True,
             )
-    except Exception:
+    except LangDetectException:
         # Nếu câu quá ngắn gây lỗi langdetect nhưng toàn ký tự ASCII alphabet
         ascii_words = re.findall(r"\b[A-Za-z]+\b", clean)
         if len(ascii_words) >= 1:

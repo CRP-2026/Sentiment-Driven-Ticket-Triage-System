@@ -1,10 +1,12 @@
 from typing import Any
+
 from fastapi import APIRouter, Depends
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session
-from sqlalchemy import select, func
-from ...db.session import get_db
+
 from ...db.models import TicketAspect
 from ...db.repository import TicketRepository
+from ...db.session import get_db
 
 router = APIRouter(prefix="/stats", tags=["Stats"])
 

@@ -1,5 +1,6 @@
 import re
 from dataclasses import dataclass, field
+
 from ..sentiment.base import AbsaResult
 from .intensity_extractor import extract_intensity_bonus
 

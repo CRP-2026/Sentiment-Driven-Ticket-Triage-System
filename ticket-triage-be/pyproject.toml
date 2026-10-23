@@ -41,6 +41,11 @@ where = ["src"]
 line-length = 100
 target-version = "py311"
 
+[tool.ruff.lint]
+ignore = [
+    "B008",  # Do not perform function call `Depends` in argument defaults (standard FastAPI pattern)
+]
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 python_files = ["test_*.py"]

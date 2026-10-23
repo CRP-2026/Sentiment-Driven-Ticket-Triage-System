@@ -1,12 +1,14 @@
-import os
+import io
 import sys
 from pathlib import Path
 
 if sys.platform == "win32":
     try:
-        sys.stdout.reconfigure(encoding="utf-8")
-        sys.stderr.reconfigure(encoding="utf-8")
-    except Exception:
+        if hasattr(sys.stdout, "reconfigure"):
+            sys.stdout.reconfigure(encoding="utf-8")
+        if hasattr(sys.stderr, "reconfigure"):
+            sys.stderr.reconfigure(encoding="utf-8")
+    except (AttributeError, io.UnsupportedOperation):
         pass
 
 # Add src to path
@@ -14,11 +16,11 @@ current_dir = Path(__file__).resolve().parent
 backend_dir = current_dir.parent
 sys.path.insert(0, str(backend_dir / "src"))
 
-from ticket_triage.db.session import engine, SessionLocal
-from ticket_triage.db.init_db import init_db
-from ticket_triage.core.taxonomy import Taxonomy
-from ticket_triage.core.sentiment.mock import MockSentimentModel
 from ticket_triage.api.services.pipeline import process_ticket_pipeline
+from ticket_triage.core.sentiment.mock import MockSentimentModel
+from ticket_triage.core.taxonomy import Taxonomy
+from ticket_triage.db.init_db import init_db
+from ticket_triage.db.session import SessionLocal, engine
 
 DEMO_TICKETS = [
     "I was charged twice for order #9821. Please refund immediately or I will dispute the chargeback with my bank!",

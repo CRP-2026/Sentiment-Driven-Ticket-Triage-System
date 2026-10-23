@@ -1,7 +1,9 @@
 from dataclasses import dataclass, field
-from .normalizer import clean_text
-from .lang_validator import validate_english, LanguageValidationResult
+
 from .keyword_prefilter import filter_candidate_aspects
+from .lang_validator import validate_english
+from .normalizer import clean_text
+
 
 @dataclass(frozen=True)
 class PreprocessedTicket:

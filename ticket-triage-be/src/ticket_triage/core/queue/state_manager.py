@@ -1,4 +1,6 @@
 from enum import Enum
+from typing import ClassVar
+
 
 class TicketState(str, Enum):
     NEW = "new"
@@ -8,12 +10,11 @@ class TicketState(str, Enum):
 
 class InvalidStateTransitionError(ValueError):
     """Lỗi khi thực hiện chuyển đổi trạng thái không hợp lệ."""
-    pass
 
 class StateManager:
     """Quản trị máy trạng thái vòng đời 4 bước của ticket."""
 
-    ALLOWED_TRANSITIONS: dict[str, set[str]] = {
+    ALLOWED_TRANSITIONS: ClassVar[dict[str, set[str]]] = {
         TicketState.NEW.value: {TicketState.ASSIGNED.value, TicketState.IN_PROGRESS.value},
         TicketState.ASSIGNED.value: {TicketState.IN_PROGRESS.value, TicketState.NEW.value},
         TicketState.IN_PROGRESS.value: {TicketState.RESOLVED.value, TicketState.ASSIGNED.value},

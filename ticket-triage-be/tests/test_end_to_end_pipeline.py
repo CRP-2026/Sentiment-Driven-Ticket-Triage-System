@@ -1,7 +1,7 @@
 from ticket_triage.api.services.pipeline import process_ticket_pipeline
-from ticket_triage.core.sentiment.mock import MockSentimentModel
 from ticket_triage.core.queue.priority_queue import TicketPriorityQueue
-from ticket_triage.core.taxonomy import Taxonomy
+from ticket_triage.core.sentiment.mock import MockSentimentModel
+
 
 def test_full_e2e_pipeline_english(in_memory_db, sample_taxonomy):
     model = MockSentimentModel()

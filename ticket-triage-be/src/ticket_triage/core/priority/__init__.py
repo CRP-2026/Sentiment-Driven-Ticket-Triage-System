@@ -1,9 +1,9 @@
-from .intensity_extractor import extract_intensity_bonus, IntensityAnalysis
-from .priority_engine import calculate_priority, PriorityBreakdown
+from .intensity_extractor import IntensityAnalysis, extract_intensity_bonus
+from .priority_engine import PriorityBreakdown, calculate_priority
 
 __all__ = [
-    "extract_intensity_bonus",
     "IntensityAnalysis",
-    "calculate_priority",
     "PriorityBreakdown",
+    "calculate_priority",
+    "extract_intensity_bonus",
 ]
