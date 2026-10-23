@@ -1,0 +1,14 @@
+aspect_detection_template: "This customer feedback is related to {aspect}."
+aspect_sentiment_template: "The customer expresses a {sentiment} feeling towards {aspect}."
+
+aspect_names:
+  customer_service: "customer support and agent responsiveness"
+  refund_payment: "refunds, charges, billing or payment dispute"
+  product_quality: "product quality, material, durability or defect"
+  shipping: "delivery time, shipping status or package condition"
+  general: "general questions or account inquiries"
+
+sentiments:
+  positive: "positive and satisfied"
+  neutral: "neutral or informational"
+  negative: "negative, frustrated or dissatisfied"
