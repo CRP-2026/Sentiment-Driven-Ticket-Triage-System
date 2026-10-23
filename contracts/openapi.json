@@ -1,0 +1,482 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Sentiment-Driven Ticket Triage API",
+    "description": "Hệ thống phân loại và định tuyến vé hỗ trợ khách hàng theo cảm xúc",
+    "version": "0.1.0"
+  },
+  "paths": {
+    "/api/v1/health": {
+      "get": {
+        "tags": ["Health"],
+        "summary": "Get Health",
+        "operationId": "get_health_api_v1_health_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HealthResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/meta/aspects": {
+      "get": {
+        "tags": ["Metadata"],
+        "summary": "Get Aspects Metadata",
+        "operationId": "get_aspects_metadata_api_v1_meta_aspects_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/AspectMetaItem"
+                  },
+                  "title": "Response Get Aspects Metadata"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/tickets": {
+      "get": {
+        "tags": ["Tickets"],
+        "summary": "Get Tickets",
+        "operationId": "get_tickets_api_v1_tickets_get",
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1,
+              "default": 50,
+              "title": "Limit"
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 0,
+              "title": "Offset"
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "title": "Ticket Status"
+            }
+          },
+          {
+            "name": "aspect",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "title": "Aspect"
+            }
+          },
+          {
+            "name": "sentiment",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "title": "Sentiment"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TicketListResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": ["Tickets"],
+        "summary": "Triage Ticket",
+        "operationId": "triage_ticket_api_v1_tickets_post",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TicketCreateIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TicketOut"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/tickets/queue": {
+      "get": {
+        "tags": ["Tickets"],
+        "summary": "Get Tickets Queue",
+        "operationId": "get_tickets_api_v1_tickets_queue_get",
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1,
+              "default": 50,
+              "title": "Limit"
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 0,
+              "title": "Offset"
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "title": "Ticket Status"
+            }
+          },
+          {
+            "name": "aspect",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "title": "Aspect"
+            }
+          },
+          {
+            "name": "sentiment",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "title": "Sentiment"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TicketListResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/tickets/{ticket_id}": {
+      "get": {
+        "tags": ["Tickets"],
+        "summary": "Get Ticket Detail",
+        "operationId": "get_ticket_detail_api_v1_tickets__ticket_id__get",
+        "parameters": [
+          {
+            "name": "ticket_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Ticket Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TicketOut"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/tickets/{ticket_id}/status": {
+      "patch": {
+        "tags": ["Tickets"],
+        "summary": "Update Ticket Status",
+        "operationId": "update_ticket_status_api_v1_tickets__ticket_id__status_patch",
+        "parameters": [
+          {
+            "name": "ticket_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Ticket Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StatusUpdateIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TicketOut"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/stats/overview": {
+      "get": {
+        "tags": ["Stats"],
+        "summary": "Get Stats Overview",
+        "operationId": "get_stats_overview_api_v1_stats_overview_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "title": "Stats Overview"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/stats/aspects": {
+      "get": {
+        "tags": ["Stats"],
+        "summary": "Get Aspects Stats",
+        "operationId": "get_aspects_stats_api_v1_stats_aspects_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object"
+                  },
+                  "title": "Response Get Aspects Stats"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "AspectMetaItem": {
+        "type": "object",
+        "required": ["id", "name_vi", "description", "department", "weight"],
+        "properties": {
+          "id": { "type": "string", "title": "Id" },
+          "name_vi": { "type": "string", "title": "Name Vi" },
+          "description": { "type": "string", "title": "Description" },
+          "department": { "type": "string", "title": "Department" },
+          "weight": { "type": "number", "title": "Weight" }
+        },
+        "title": "AspectMetaItem"
+      },
+      "AspectOut": {
+        "type": "object",
+        "required": ["aspect", "sentiment", "confidence"],
+        "properties": {
+          "aspect": { "type": "string", "title": "Aspect" },
+          "sentiment": { "type": "string", "title": "Sentiment" },
+          "confidence": { "type": "number", "title": "Confidence" },
+          "terms": {
+            "type": "array",
+            "items": { "type": "string" },
+            "title": "Terms",
+            "default": []
+          }
+        },
+        "title": "AspectOut"
+      },
+      "HealthResponse": {
+        "type": "object",
+        "required": ["model_name", "queue_size"],
+        "properties": {
+          "status": { "type": "string", "title": "Status", "default": "ok" },
+          "version": { "type": "string", "title": "Version", "default": "0.1.0" },
+          "model_name": { "type": "string", "title": "Model Name" },
+          "queue_size": { "type": "integer", "title": "Queue Size" }
+        },
+        "title": "HealthResponse"
+      },
+      "PriorityBreakdownOut": {
+        "type": "object",
+        "required": ["score", "base", "urgency_bonus", "intensity_bonus", "aspect_bonus", "reasons"],
+        "properties": {
+          "score": { "type": "number", "title": "Score" },
+          "base": { "type": "number", "title": "Base" },
+          "urgency_bonus": { "type": "number", "title": "Urgency Bonus" },
+          "intensity_bonus": { "type": "number", "title": "Intensity Bonus" },
+          "aspect_bonus": { "type": "number", "title": "Aspect Bonus" },
+          "reasons": {
+            "type": "array",
+            "items": { "type": "string" },
+            "title": "Reasons"
+          }
+        },
+        "title": "PriorityBreakdownOut"
+      },
+      "StatusUpdateIn": {
+        "type": "object",
+        "required": ["status"],
+        "properties": {
+          "status": {
+            "type": "string",
+            "description": "new | assigned | in_progress | resolved",
+            "title": "Status"
+          },
+          "assigned_to": {
+            "type": "string",
+            "title": "Assigned To",
+            "nullable": true
+          }
+        },
+        "title": "StatusUpdateIn"
+      },
+      "TicketCreateIn": {
+        "type": "object",
+        "required": ["content"],
+        "properties": {
+          "content": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Nội dung phản hồi tiếng Anh của khách hàng",
+            "title": "Content"
+          }
+        },
+        "title": "TicketCreateIn"
+      },
+      "TicketListResponse": {
+        "type": "object",
+        "required": ["items", "total", "limit", "offset"],
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/TicketOut" },
+            "title": "Items"
+          },
+          "total": { "type": "integer", "title": "Total" },
+          "limit": { "type": "integer", "title": "Limit" },
+          "offset": { "type": "integer", "title": "Offset" }
+        },
+        "title": "TicketListResponse"
+      },
+      "TicketOut": {
+        "type": "object",
+        "required": [
+          "id",
+          "content",
+          "language_flag",
+          "needs_manual_review",
+          "low_confidence",
+          "priority_score",
+          "priority_level",
+          "status",
+          "created_at",
+          "updated_at"
+        ],
+        "properties": {
+          "id": { "type": "integer", "title": "Id" },
+          "content": { "type": "string", "title": "Content" },
+          "processed_content": { "type": "string", "title": "Processed Content", "nullable": true },
+          "language_flag": { "type": "string", "title": "Language Flag" },
+          "needs_manual_review": { "type": "boolean", "title": "Needs Manual Review" },
+          "sentiment_label": { "type": "string", "title": "Sentiment Label", "nullable": true },
+          "confidence": { "type": "number", "title": "Confidence", "nullable": true },
+          "low_confidence": { "type": "boolean", "title": "Low Confidence" },
+          "priority_score": { "type": "number", "title": "Priority Score" },
+          "priority_level": { "type": "string", "title": "Priority Level" },
+          "dominant_aspect": { "type": "string", "title": "Dominant Aspect", "nullable": true },
+          "priority_breakdown": {
+            "$ref": "#/components/schemas/PriorityBreakdownOut",
+            "nullable": true
+          },
+          "status": { "type": "string", "title": "Status" },
+          "assigned_to": { "type": "string", "title": "Assigned To", "nullable": true },
+          "aspects": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/AspectOut" },
+            "title": "Aspects",
+            "default": []
+          },
+          "created_at": { "type": "string", "format": "date-time", "title": "Created At" },
+          "updated_at": { "type": "string", "format": "date-time", "title": "Updated At" }
+        },
+        "title": "TicketOut"
+      }
+    }
+  }
+}
