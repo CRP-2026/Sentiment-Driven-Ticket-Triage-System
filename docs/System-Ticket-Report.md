@@ -3,10 +3,10 @@
 
 **Mã dự án:** `TICKET-TRIAGE-01` | **Học phần:** Quản trị dự án phần mềm  
 **Giảng viên hướng dẫn:** *Nguyễn Thanh Tuấn*  
-**Nhóm thực hiện:** *DogTowFaces* (Võ Tấn Đức, Lê Công Quốc Mỹ, Nguyễn Văn Lê Duy, Nguyễn Viết Pháp, Nguyễn Phương Thảo)  
-**Phiên bản tài liệu:** Version 3.0 (Chuẩn hóa toàn diện theo [Project-Charter-Ticket-Triage-System.md](file:///d:/Learning/Sentiment-Driven-Ticket-Triage-System/docs/Project-Charter-Ticket-Triage-System.md) và [WBS-Ticket-Triage-System.md](file:///d:/Learning/Sentiment-Driven-Ticket-Triage-System/docs/WBS-Ticket-Triage-System.md))  
+**Nhóm thực hiện:** *DogTowFaces*  
+**Phiên bản tài liệu:** Version 3.0   
 **Ngày cập nhật:** 19/10/2026 (Đồng bộ: English-only, ABSA Zero-shot NLI, Phân tách 2 bài toán độc lập)  
-**Tình trạng:** Tài liệu thiết kế kỹ thuật chính thức (Scope Baseline & Architecture Specification)
+**Tình trạng:** Tài liệu thiết kế kỹ thuật chính thức 
 
 ---
 
