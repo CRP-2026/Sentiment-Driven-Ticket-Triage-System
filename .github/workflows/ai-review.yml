@@ -1,0 +1,97 @@
+name: AI Code Review
+
+on:
+  # 1. Chỉ chạy khi gán nhãn (label) vào PR (KHÔNG tự động chạy khi mở PR hay push commit)
+  pull_request:
+    types: [labeled]
+
+  # 2. Chạy theo yêu cầu khi comment /review hoặc /ai-review vào PR (yêu cầu workflow đã merge vào main)
+  issue_comment:
+    types: [created]
+
+  # 3. Chạy thủ công từ tab Actions trên GitHub (bấm Run workflow)
+  workflow_dispatch:
+    inputs:
+      pr_number:
+        description: "Số Pull Request cần review (ví dụ: 1)"
+        required: true
+        type: string
+
+permissions:
+  contents: read
+  pull-requests: write
+  issues: write
+
+jobs:
+  review:
+    name: AI Review PR
+    runs-on: ubuntu-latest
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (github.event_name == 'pull_request' &&
+       (github.event.label.name == 'ai-review' || github.event.label.name == 'review')) ||
+      (github.event_name == 'issue_comment' && github.event.issue.pull_request &&
+       (contains(github.event.comment.body, '/review') || contains(github.event.comment.body, '/ai-review')))
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Extract PR Information
+        id: pr_info
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            PR_NUM="${{ github.event.inputs.pr_number }}"
+          elif [ "${{ github.event_name }}" = "pull_request" ]; then
+            PR_NUM="${{ github.event.pull_request.number }}"
+          else
+            PR_NUM="${{ github.event.issue.number }}"
+          fi
+
+          echo "PR_NUMBER=$PR_NUM" >> $GITHUB_ENV
+
+          # Lấy thông tin PR bằng GitHub CLI (fallback an toàn nếu gh bị lỗi)
+          PR_JSON=$(gh pr view "$PR_NUM" --json title,body,baseRefName,headRefName 2>/dev/null || echo "{}")
+          TITLE=$(echo "$PR_JSON" | jq -r '.title // empty')
+          BODY=$(echo "$PR_JSON" | jq -r '.body // empty')
+          BASE=$(echo "$PR_JSON" | jq -r '.baseRefName // empty')
+          HEAD=$(echo "$PR_JSON" | jq -r '.headRefName // empty')
+
+          if [ -n "$TITLE" ]; then
+            echo "PR_TITLE=$TITLE" >> $GITHUB_ENV
+          fi
+          if [ -n "$BODY" ]; then
+            echo "PR_BODY<<EOF" >> $GITHUB_ENV
+            echo "$BODY" >> $GITHUB_ENV
+            echo "EOF" >> $GITHUB_ENV
+          fi
+          if [ -n "$BASE" ]; then
+            echo "BASE_REF=$BASE" >> $GITHUB_ENV
+          fi
+          if [ -n "$HEAD" ]; then
+            echo "HEAD_REF=$HEAD" >> $GITHUB_ENV
+            git checkout "origin/$HEAD" 2>/dev/null || git checkout "$HEAD" 2>/dev/null || true
+          fi
+
+      - name: Run AI Reviewer with Gemini
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          GEMINI_MODEL: "gemini-3.6-flash"
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          GUIDELINES_FILE: .github/review_guidelines.md
+        run: |
+          if [ -z "$GEMINI_API_KEY" ]; then
+            echo "::error::Thiếu secret GEMINI_API_KEY. Vui lòng thêm vào Repository Settings -> Secrets and variables -> Actions."
+            exit 1
+          fi
+          python .github/scripts/ai_reviewer.py
