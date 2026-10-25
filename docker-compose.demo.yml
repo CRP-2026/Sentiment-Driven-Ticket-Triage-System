@@ -1,13 +1,13 @@
 services:
   backend:
     command: ["uvicorn", "ticket_triage.api.main:app", "--host", "0.0.0.0", "--port", "8000"]
-    volumes:                       # bỏ mount source, chỉ giữ model, db, contracts
-      - ./backend/models:/app/models:ro
+    volumes:
+      - ./ticket-triage-be/models:/app/models:ro
       - ./contracts:/contracts
       - db_data:/data
   frontend:
     build:
-      context: ./frontend
+      context: ./ticket-triage-fe
       target: demo
     environment: {}
     volumes: []

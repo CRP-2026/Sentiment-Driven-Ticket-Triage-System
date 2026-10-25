@@ -1,0 +1,66 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+/lib/
+/lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Virtual Environments
+.venv/
+venv/
+ENV/
+env/
+
+# SQLite & Data
+*.db
+*.db-shm
+*.db-wal
+data/
+db_data/
+
+# Environment & Secrets
+.env
+.env.local
+
+# Node & Frontend
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+.pnpm-store/
+ticket-triage-fe/dist/
+
+# Machine Learning models
+models/*.pt
+models/*.bin
+models/*.safetensors
+models/*.onnx
+ticket-triage-be/models/*.pt
+ticket-triage-be/models/*.bin
+ticket-triage-be/models/*.safetensors
+!ticket-triage-be/models/.gitkeep
+
+# IDE & OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
