@@ -1,0 +1,30 @@
+urgency_keywords:
+  critical:
+    - urgent
+    - immediately
+    - asap
+    - lawsuit
+    - sue
+    - lawyer
+    - fraud
+    - scam
+    - chargeback
+    - stolen
+  high:
+    - broken
+    - refund
+    - cancel
+    - not working
+    - never received
+    - dispute
+    - charged twice
+    - missing
+
+urgency_cap: 30.0
+aspect_cap: 20.0
+intensity_bonus: 5.0
+
+priority_thresholds:
+  high: 70.0      # score >= 70.0: CRITICAL / Cao (Đỏ)
+  medium: 30.0    # 30.0 <= score < 70.0: MEDIUM / Trung bình (Vàng)
+                  # score < 30.0: LOW / Thấp (Xanh)
