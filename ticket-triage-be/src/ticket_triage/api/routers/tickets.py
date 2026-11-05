@@ -76,14 +76,24 @@ def get_ticket_detail(
 def update_ticket_status(
     ticket_id: int,
     payload: StatusUpdateIn,
+    request: Request,
     db: Session = Depends(get_db),
 ) -> TicketOut:
     """Cập nhật trạng thái vòng đời ticket (new -> assigned -> in_progress -> resolved)."""
+    status_str = payload.status.value if hasattr(payload.status, "value") else str(payload.status)
+    existing = TicketRepository.get_by_id(db, ticket_id)
+    if not existing:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Ticket #{ticket_id} không tồn tại",
+        )
+    old_status = existing.status
+
     try:
         updated = TicketRepository.update_status(
             db=db,
             ticket_id=ticket_id,
-            new_status=payload.status,
+            new_status=status_str,
             assigned_to=payload.assigned_to,
         )
     except InvalidStateTransitionError as e:
@@ -97,5 +107,13 @@ def update_ticket_status(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Ticket #{ticket_id} không tồn tại",
         )
+
+    # Đồng bộ với hàng đợi in-memory:
+    queue = getattr(request.app.state, "priority_queue", None)
+    if queue:
+        if updated.status == "resolved":
+            queue.remove(ticket_id)
+        elif old_status == "resolved" and updated.status != "resolved":
+            queue.push(updated.id, updated.priority_score, updated.created_at, updated)
 
     return updated # type: ignore

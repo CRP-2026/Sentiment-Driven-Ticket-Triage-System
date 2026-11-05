@@ -26,8 +26,8 @@ def clean_text(raw_text: str) -> str:
     text = URL_RE.sub(" ", text)
     text = EMAIL_RE.sub(" ", text)
 
-    # 3. Rút gọn ký tự chữ cái lặp quá 2 lần (ví dụ: pleeeease -> please, baaaad -> bad)
-    text = REPEATED_LETTERS_RE.sub(r"\1", text)
+    # 3. Rút gọn ký tự chữ cái lặp quá 2 lần (ví dụ: coool -> cool, goood -> good, baaaad -> baad)
+    text = REPEATED_LETTERS_RE.sub(r"\1\1", text)
 
     # 4. Rút gọn dấu câu lặp quá mức (ví dụ: !!!!!!! -> !!!)
     text = REPEATED_PUNCT_RE.sub(r"\1\1\1", text)

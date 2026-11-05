@@ -10,7 +10,7 @@ def test_clean_text_basic():
     assert "<b>" not in cleaned
     assert "https://" not in cleaned
     assert "so" in cleaned
-    assert "bad" in cleaned
+    assert "baad" in cleaned or "bad" in cleaned
     assert "!!!" in cleaned
 
 def test_clean_text_preserves_caps_and_negations():
