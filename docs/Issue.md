@@ -162,3 +162,24 @@
 3. Chạy `pnpm run check` và `pnpm run test` trên Frontend.
 4. QA nghiệm thu trên tập dữ liệu kiểm thử 150–200 ticket CSKH.
 
+---
+
+## ✅ VI. Trạng Thái Thực Thi & Nghiệm Thu (Resolution Report)
+
+> **Cập nhật ngày:** 2026-11-05  
+> **Trạng thái:** Toàn bộ 8 vấn đề kỹ thuật đã được xử lý triệt để và kiểm thử hồi quy đạt **43/43 tests PASSED (100%)**.
+
+| STT | Vấn đề / Lỗi kỹ thuật | Trạng thái | Chi tiết cách xử lý & File liên quan |
+|:---:|:---|:---:|:---|
+| **#1** | Langdetect nhận nhầm câu ngắn tiếng Anh | **ĐÃ XỬ LÝ** | Bổ sung quy tắc heuristic: câu ngắn (< 5 từ hoặc < 35 ký tự) chỉ chứa ký tự Latin ASCII mặc định là tiếng Anh hợp lệ (`en`, confidence 1.0). Chuẩn hóa ngưỡng xác suất về 0.70 tại [`lang_validator.py`](file:///f:/laptrinhPython/chuyenDe/ticket_analys/Sentiment-Driven-Ticket-Triage-System/ticket-triage-be/src/ticket_triage/core/preprocessing/lang_validator.py). |
+| **#2** | Logic phủ định triệt tiêu từ khóa sự cố | **ĐÃ XỬ LÝ** | Tách riêng nhóm từ khóa hạ nhiệt `DE_ESCALATION_KEYWORDS` (*urgent, immediately, asap...*). Logic `_is_negated` chỉ phủ định từ hạ nhiệt (*"not urgent"*), giữ nguyên điểm khẩn cấp cho từ sự cố (*"refund", "broken", "charged twice"...*) tại [`priority_engine.py`](file:///f:/laptrinhPython/chuyenDe/ticket_analys/Sentiment-Driven-Ticket-Triage-System/ticket-triage-be/src/ticket_triage/core/priority/priority_engine.py). |
+| **#3** | Mock model match substring & Random không seed | **ĐÃ XỬ LÝ** | Áp dụng ranh giới từ `\b...\b` để loại bỏ match substring (*"issue"* không match *"sue"*, *"goodbye"* không match *"good"*). Khởi tạo seed cố định dựa trên mã băm MD5 của chuỗi văn bản tại [`mock.py`](file:///f:/laptrinhPython/chuyenDe/ticket_analys/Sentiment-Driven-Ticket-Triage-System/ticket-triage-be/src/ticket_triage/core/sentiment/mock.py). |
+| **#4** | `clean_text` làm hỏng từ gốc tiếng Anh | **ĐÃ XỬ LÝ** | Đổi nén ký tự lặp về chuẩn NLP `r"\1\1"` (*"coool"* $\rightarrow$ *"cool"*, *"goood"* $\rightarrow$ *"good"*) tại [`normalizer.py`](file:///f:/laptrinhPython/chuyenDe/ticket_analys/Sentiment-Driven-Ticket-Triage-System/ticket-triage-be/src/ticket_triage/core/preprocessing/normalizer.py). |
+| **#5** | Nhận ticket rỗng / spam / DoS | **ĐÃ XỬ LÝ** | Thêm `@field_validator("content")` trong Pydantic: kiểm tra `strip()`, giới hạn độ dài [3, 5000] ký tự, loại bỏ thẻ HTML rỗng và chuỗi ký tự vô nghĩa tại [`schemas.py`](file:///f:/laptrinhPython/chuyenDe/ticket_analys/Sentiment-Driven-Ticket-Triage-System/ticket-triage-be/src/ticket_triage/api/schemas.py). |
+| **#6** | Múi giờ UTC trả về thiếu hậu tố "Z" | **ĐÃ XỬ LÝ** | Thêm `@field_serializer` cho `created_at` và `updated_at` trong `TicketOut` định dạng chuẩn ISO 8601 kèm hậu tố `"Z"` tại [`schemas.py`](file:///f:/laptrinhPython/chuyenDe/ticket_analys/Sentiment-Driven-Ticket-Triage-System/ticket-triage-be/src/ticket_triage/api/schemas.py). |
+| **#7** | Hàng đợi `heapq` không đồng bộ khi resolved | **ĐÃ XỬ LÝ** | Cài đặt phương thức `remove(ticket_id)` trong [`priority_queue.py`](file:///f:/laptrinhPython/chuyenDe/ticket_analys/Sentiment-Driven-Ticket-Triage-System/ticket-triage-be/src/ticket_triage/core/queue/priority_queue.py); đồng bộ gọi `queue.remove(ticket_id)` tại endpoint `PATCH /tickets/{id}/status` trong [`tickets.py`](file:///f:/laptrinhPython/chuyenDe/ticket_analys/Sentiment-Driven-Ticket-Triage-System/ticket-triage-be/src/ticket_triage/api/routers/tickets.py). |
+| **#8** | Lệch hợp đồng API & lệnh `gen-api` | **ĐÃ XỬ LÝ** | Bổ sung `StatusEnum`, `StatsOverviewResponse`, `AspectStatItem`, trường `is_mock` cho `HealthResponse`; đổi lệnh `gen-api` xuất sang `src/api/generated.ts` tránh ghi đè type frontend; tái tạo chuẩn `contracts/openapi.json`. |
+| **Nạp YAML** | Nạp cấu hình động từ file YAML | **ĐÃ XỬ LÝ** | Đã kết nối hàm nạp `load_priority_rules()` từ `configs/priority_rules.yaml` và `load_aspect_hypotheses()` từ `configs/aspect_hypotheses.yaml` vào runtime. Phân tầng điểm Critical (+20/15) vs High (+15/10). |
+| **Kiểm thử** | Bộ kiểm thử hồi quy độc lập | **ĐÃ XỬ LÝ** | Tạo mới [`tests/test_regression_issues.py`](file:///f:/laptrinhPython/chuyenDe/ticket_analys/Sentiment-Driven-Ticket-Triage-System/ticket-triage-be/tests/test_regression_issues.py) với 21 bài kiểm thử chuyên sâu cho toàn bộ 8 lỗi. |
+
+

@@ -44,7 +44,7 @@ def get_git_diff(base_ref: str) -> str:
             )
             diff = fallback.stdout.strip()
         return diff
-    except Exception as e:
+    except (subprocess.SubprocessError, OSError) as e:
         print(f"Warning: Failed to get git diff via origin/{base_ref}: {e}")
         return ""
 
@@ -107,7 +107,7 @@ def call_gemini(api_key: str, prompt: str, model_name: str = "gemini-3.6-flash")
                 print(f"Model {model} returned HTTP {e.code} (overloaded or unavailable). Retrying with next fallback model...", file=sys.stderr)
                 continue
             raise
-        except Exception as e:
+        except (urllib.error.URLError, TimeoutError, OSError, json.JSONDecodeError) as e:
             print(f"Model {model} error: {e}", file=sys.stderr)
             last_error = e
             continue
@@ -155,8 +155,8 @@ def main():
                     pr_number = str(event["pull_request"].get("number", ""))
                 elif "issue" in event:
                     pr_number = str(event["issue"].get("number", ""))
-            except Exception:
-                pass
+            except (OSError, json.JSONDecodeError, KeyError) as e:
+                print(f"Warning: Could not parse event file: {e}", file=sys.stderr)
     if not pr_number:
         print("Error: Missing required environment variable: PR_NUMBER", file=sys.stderr)
         sys.exit(1)
@@ -206,7 +206,7 @@ Hãy phân tích kỹ diff, đối chiếu với từng tiêu chí trong hướn
 """
 
     print(f"Analyzing PR #{pr_number} with {model_name}...")
-    review_content, used_model = call_gemini(gemini_api_key, prompt, model_name=model_name)
+    review_content, _used_model = call_gemini(gemini_api_key, prompt, model_name=model_name)
 
     full_comment = review_content.strip()
 
