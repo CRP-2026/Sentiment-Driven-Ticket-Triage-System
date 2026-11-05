@@ -20,9 +20,14 @@ logging.basicConfig(level=logging.INFO)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # 1. Khởi tạo CSDL SQLite (bật WAL mode, tạo bảng)
-    logger.info("Initializing SQLite database with WAL mode...")
-    init_db(engine)
+    is_testing = getattr(app.state, "testing", False) or settings.is_testing()
+
+    # 1. Khởi tạo CSDL SQLite (bật WAL mode, tạo bảng) nếu không phải môi trường test
+    if not is_testing:
+        logger.info("Initializing SQLite database with WAL mode...")
+        init_db(engine)
+    else:
+        logger.info("Running in test mode: Skipping disk SQLite initialization in lifespan.")
 
     # 2. Nạp Taxonomy từ YAML
     aspects_yaml_path = Path(settings.configs_dir) / "aspects.yaml"
@@ -44,14 +49,18 @@ async def lifespan(app: FastAPI):
         logger.info("Initializing MockSentimentModel for development/testing...")
         app.state.sentiment_model = MockSentimentModel()
 
-    # 4. Khởi tạo hàng đợi In-memory Max-Heap và nạp lại từ SQLite
-    queue = TicketPriorityQueue()
-    with SessionLocal() as db:
-        unresolved = TicketRepository.get_unresolved_tickets(db)
-        for t in unresolved:
-            queue.push(t.id, t.priority_score, t.created_at, t)
-        logger.info("Reloaded %d unresolved tickets from SQLite into priority heap.", len(unresolved))
-    app.state.priority_queue = queue
+    # 4. Khởi tạo hàng đợi In-memory Max-Heap
+    if not is_testing:
+        queue = TicketPriorityQueue()
+        with SessionLocal() as db:
+            unresolved = TicketRepository.get_unresolved_tickets(db)
+            for t in unresolved:
+                queue.push(t.id, t.priority_score, t.created_at, t)
+            logger.info("Reloaded %d unresolved tickets from SQLite into priority heap.", len(unresolved))
+        app.state.priority_queue = queue
+    else:
+        if not hasattr(app.state, "priority_queue") or app.state.priority_queue is None:
+            app.state.priority_queue = TicketPriorityQueue()
 
     yield
 
