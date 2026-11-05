@@ -79,6 +79,15 @@ class TicketPriorityQueue:
     def is_empty(self) -> bool:
         return len(self._heap) == 0
 
+    def remove(self, ticket_id: int) -> bool:
+        """Loại bỏ một ticket khỏi hàng đợi ưu tiên (ví dụ khi ticket đã resolved)."""
+        if ticket_id not in self._item_map:
+            return False
+        del self._item_map[ticket_id]
+        self._heap = [e for e in self._heap if e.ticket_id != ticket_id]
+        heapq.heapify(self._heap)
+        return True
+
     def clear(self) -> None:
         self._heap.clear()
         self._item_map.clear()

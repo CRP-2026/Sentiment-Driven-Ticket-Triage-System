@@ -9,7 +9,7 @@
     "check": "tsc --noEmit && eslint src",
     "lint": "eslint src",
     "test": "vitest run --passWithNoTests",
-    "gen-api": "pnpm dlx openapi-typescript ../contracts/openapi.json -o src/api/schema.d.ts"
+    "gen-api": "pnpm dlx openapi-typescript ../contracts/openapi.json -o src/api/generated.ts"
   },
   "dependencies": {
     "@tanstack/react-query": "^5.40.0",
