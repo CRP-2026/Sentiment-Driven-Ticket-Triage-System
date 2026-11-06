@@ -8,6 +8,7 @@ from ..settings import settings
 connect_args = {}
 if settings.db_url.startswith("sqlite"):
     connect_args["check_same_thread"] = False
+    connect_args["timeout"] = 15
 
 engine = create_engine(
     settings.db_url,

@@ -10,7 +10,9 @@ def init_db(engine_instance: Engine) -> None:
         with engine_instance.connect() as conn:
             # WAL mode chỉ áp dụng cho SQLite file, không dùng cho in-memory
             if ":memory:" not in url_str:
-                conn.execute(text("PRAGMA journal_mode=WAL;"))
+                current_mode = conn.execute(text("PRAGMA journal_mode;")).scalar()
+                if str(current_mode).lower() != "wal":
+                    conn.execute(text("PRAGMA journal_mode=WAL;"))
             conn.execute(text("PRAGMA foreign_keys=ON;"))
             conn.commit()
 
