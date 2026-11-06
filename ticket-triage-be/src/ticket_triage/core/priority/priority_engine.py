@@ -1,5 +1,9 @@
 import re
 from dataclasses import dataclass, field
+from functools import lru_cache
+from pathlib import Path
+
+import yaml
 
 from ..sentiment.base import AbsaResult
 from .intensity_extractor import extract_intensity_bonus
@@ -25,6 +29,35 @@ NEGATION_PATTERNS = [
     r"\bnot\s+", r"\bnever\s+", r"\bno\s+", r"\bwon't\s+", r"\bdoesn't\s+",
     r"\bdon't\s+", r"\bdidn't\s+", r"\bwithout\s+", r"\bstop\s+"
 ]
+
+@lru_cache(maxsize=4)
+def _read_yaml_file(path_str: str) -> dict:
+    try:
+        with open(path_str, "r", encoding="utf-8") as f:
+            return yaml.safe_load(f) or {}
+    except (OSError, yaml.YAMLError):
+        return {}
+
+
+def load_priority_rules(yaml_path: Path | str | None = None) -> dict:
+    """Nạp cấu hình từ configs/priority_rules.yaml vào runtime."""
+    if yaml_path is not None:
+        target_path = Path(yaml_path)
+    else:
+        # Tự tìm đường dẫn cấu hình độc lập, không import settings để tuân thủ Clean Architecture
+        base_configs = Path(__file__).resolve().parents[4] / "configs" / "priority_rules.yaml"
+        if base_configs.is_file():
+            target_path = base_configs
+        elif Path("configs/priority_rules.yaml").is_file():
+            target_path = Path("configs/priority_rules.yaml")
+        elif Path("ticket-triage-be/configs/priority_rules.yaml").is_file():
+            target_path = Path("ticket-triage-be/configs/priority_rules.yaml")
+        else:
+            return {}
+
+    if target_path.is_file():
+        return _read_yaml_file(str(target_path.resolve()))
+    return {}
 
 @dataclass(frozen=True)
 class PriorityBreakdown:
@@ -121,7 +154,12 @@ def calculate_priority(
     urgency_bonus = min(urgency_cap, round(urgency_bonus, 2))
 
     # 3. Điểm cường độ câu (Intensity Bonus)
-    intensity_res = extract_intensity_bonus(text, is_negative_overall=(overall.label == "negative"))
+    cfg_intensity_bonus = float(rules.get("intensity_bonus", 5.0))
+    intensity_res = extract_intensity_bonus(
+        text,
+        is_negative_overall=(overall.label == "negative"),
+        bonus_value=cfg_intensity_bonus,
+    )
     intensity_bonus = intensity_res.bonus
     if intensity_res.reason:
         reasons.append(intensity_res.reason)
