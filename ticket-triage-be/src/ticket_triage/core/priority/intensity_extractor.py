@@ -13,9 +13,9 @@ class IntensityAnalysis:
     bonus: float
     reason: str | None
 
-def extract_intensity_bonus(text: str, is_negative_overall: bool) -> IntensityAnalysis:
+def extract_intensity_bonus(text: str, is_negative_overall: bool, bonus_value: float = 5.0) -> IntensityAnalysis:
     """Trích xuất cường độ cảm xúc từ cú pháp câu tiếng Anh:
-    - +5 điểm nếu có chuỗi '!!!' hoặc từ viết hoa (CAPS LOCK, len > 5)
+    - +5 điểm (hoặc theo cấu hình YAML) nếu có chuỗi '!!!' hoặc từ viết hoa (CAPS LOCK, len > 5)
       VÀ cảm xúc tổng thể là negative.
     """
     if not text:
@@ -35,8 +35,8 @@ def extract_intensity_bonus(text: str, is_negative_overall: bool) -> IntensityAn
     reason = None
 
     if triggers and is_negative_overall:
-        bonus = 5.0
-        reason = f"Cú pháp câu thể hiện bức xúc ({', '.join(triggers)}): +5.0"
+        bonus = float(bonus_value)
+        reason = f"Cú pháp câu thể hiện bức xúc ({', '.join(triggers)}): +{bonus:.1f}"
 
     return IntensityAnalysis(
         has_exclamation=has_excl,

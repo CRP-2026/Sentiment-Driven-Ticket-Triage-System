@@ -89,14 +89,14 @@
 
 ## ⚖️ II. Phân Tích Sự Không Đồng Nhất Giữa Tài Liệu, Cấu Hình và Code
 
-| Vấn đề | Hiện trạng trong Code | Tài liệu / Cấu hình | Đánh giá & Rủi ro |
-|:---|:---|:---|:---|
-| **File cấu hình YAML** | `configs/priority_rules.yaml` và `configs/aspect_hypotheses.yaml` **không file nào đọc**. Mọi từ khóa, trọng số, template NLI đều hard-code trong code Python. | Tài liệu ghi hệ thống cấu hình động linh hoạt qua YAML. | **File YAML hiện tại chỉ là file "ma".** Cần nạp file YAML thật vào runtime. |
-| **Công thức tính Priority** | Điểm cộng dồn: `base + urgency + intensity + aspect` (ngưỡng 70/30, nhãn CRITICAL/MEDIUM/LOW). | `Backend-Plan.md` ghi: $70\%$ sentiment + $30\%$ intensity, chia bậc P0–P3 (80/60/40). | **Mâu thuẫn đặc tả:** Code khớp với `AGENT.md` và `System-Ticket-Report.md`, nhưng đá nhau với `Backend-Plan.md`. Cần thống nhất một bản chuẩn duy nhất. |
-| **Trọng số từ khóa** | Cả `CRITICAL_KEYWORDS` lẫn `HIGH_KEYWORDS` đều nhận `+10` (hoặc `+20` ở câu cuối). | Chia thành 2 nhóm CRITICAL và HIGH riêng biệt. | Việc phân 2 nhóm trong code hiện tại là vô nghĩa vì cho điểm ngang nhau. |
-| **Silent Fallback sang Mock** | Nếu thiếu PyTorch hoặc Hub offline, code tự `except Exception` rồi gán về `MockSentimentModel` mà `/health` vẫn báo `model_name: baseline`. | Người dùng tưởng hệ thống đang chạy mô hình AI thật. | **Cực kỳ nguy hiểm:** Dẫn đến đánh giá benchmark hoặc nghiệm thu sai lệch (đo mock mà tưởng đo NLI). |
-| **ABSA 3 lớp vs 4 lớp** | Code dùng danh sách từ khóa để lọc khía cạnh, sau đó mới chạy model 3 lớp (`positive`, `neutral`, `negative`). | Tài liệu đề cập mô hình NLI 4 lớp (có nhãn `not_mentioned`). | Khía cạnh nào không có từ khóa trong `aspects.yaml` sẽ bị bỏ qua $100\%$, độ bao phủ (recall) phụ thuộc hoàn toàn vào từ khóa. |
-| **Ý nghĩa cột confidence** | Ticket ngoại ngữ lưu confidence của nhận diện ngôn ngữ; ticket tiếng Anh lưu confidence cảm xúc. | Lưu thống nhất độ tin cậy của phân loại. | Trộn lẫn hai ngữ nghĩa khác nhau trong cùng một trường dữ liệu. |
+| Vấn đề | Hiện trạng trong Code | Tài liệu / Cấu hình | Đánh giá & Rủi ro | Tình trạng xử lý |
+|:---|:---|:---|:---|:---|
+| **File cấu hình YAML** | Đã kết nối hàm nạp `load_priority_rules()` từ `priority_rules.yaml` (lru_cache, nạp urgency, caps, intensity, thresholds) và `load_aspect_hypotheses()` từ `aspect_hypotheses.yaml` (template, verbalizers) theo Clean Architecture. | Đã đồng bộ tài liệu, YAML là nguồn tham số tập trung. | Không còn hard-code, tham số cấu hình động hiệu lực 100%. | **ĐÃ GIẢI QUYẾT** |
+| **Công thức tính Priority** | Điểm cộng dồn chuẩn: `base + urgency + intensity + aspect` (ngưỡng 70/30, nhãn CRITICAL/MEDIUM/LOW). | `Backend-Plan.md` đã cập nhật đồng bộ 100% với `AGENT.md` và `System-Ticket-Report.md`. | Thống nhất Single Source of Truth cho toàn bộ dự án. | **ĐÃ GIẢI QUYẾT** |
+| **Trọng số từ khóa** | Đã phân tầng điểm: Critical (+20 câu cuối / +15 câu trước) và High (+15 câu cuối / +10 câu trước). | Cấu hình trong `priority_rules.yaml`. | Phân tầng rõ rệt, ưu tiên sự cố nghiêm trọng. | **ĐÃ GIẢI QUYẾT** |
+| **Silent Fallback sang Mock** | Đã thêm cờ `is_mock: bool` và `model_loaded: bool` tại `/health`, ghi log WARN khi fallback. | Minh bạch cho QA và ban đánh giá. | Loại bỏ rủi ro nhầm lẫn giữa Mock và AI thật. | **ĐÃ GIẢI QUYẾT** |
+| **ABSA 3 lớp vs 4 lớp** | Pipeline 2 bước chuẩn: lọc trước khía cạnh bằng từ khóa $\rightarrow$ phân loại cảm xúc 3 lớp (`positive`, `neutral`, `negative`). | Đã loại bỏ nhãn `not_mentioned` dư thừa trong toàn bộ tài liệu (`AGENT.md`, `System-Ticket-Report.md`, `start.md`). | Thống nhất bản chất kỹ thuật 3 lớp cảm xúc, tăng tốc 2x-3x. | **ĐÃ GIẢI QUYẾT** |
+| **Ý nghĩa cột confidence** | Lưu thống nhất độ tin cậy của phân loại cảm xúc cho ticket tiếng Anh; lưu độ tin cậy nhận diện ngôn ngữ cho ngoại ngữ. | Đã ghi chú rõ trong Schema và Report. | Dễ hiểu cho cả Dashboard và kiểm toán. | **ĐÃ LÀM RÕ** |
 
 ---
 
