@@ -16,7 +16,7 @@ không deploy lên server.
 
 ## Phạm vi mô hình (3 tầng, làm theo thứ tự)
 1. **LÕI (Must Have):** Với mỗi ticket, phân loại cảm xúc cho từng khía cạnh trong taxonomy 5 khía cạnh cố định (`customer_service`, `refund_payment`, `product_quality`, `shipping`, `general`).
-   Mỗi khía cạnh có 4 lớp: `not_mentioned`, `negative`, `neutral`, `positive`.
+   Mỗi khía cạnh có 4 lớp: `negative`, `neutral`, `positive`.
 2. **DỰ PHÒNG (Luôn chạy được):** Mô hình cảm xúc cấp văn bản (`MODEL_TASK=document`), trả `AbsaResult` với aspects rỗng.
 3. **MỞ RỘNG (Could Have, chỉ làm khi tầng 1 xong và được nhóm đồng ý):** ABTE, trích xuất cụm từ nêu khía cạnh,
    bật bằng `ENABLE_ABTE=true`. Không được làm hỏng hợp đồng của tầng 1.
@@ -49,3 +49,12 @@ không deploy lên server.
 - PR: Một việc, gắn `Fixes #<issue>`, CI xanh, có test, ít nhất 1 approval. PR đổi hợp đồng cần người của cả BE và FE review.
 - Chỉ làm đúng phạm vi yêu cầu. Thiếu thông tin thì nêu giả định trước khi code, không tự mở rộng tính năng.
 - Trước khi báo xong: Chạy `make lint test` và nói rõ lệnh nào đã chạy, kết quả ra sao.
+
+## Quick Paths & Environment
+- Python Virtualenv: `ticket-triage-be/.venv/Scripts/python.exe`
+- Backend source: `ticket-triage-be/src/ticket_triage`
+- Frontend source: `ticket-triage-fe/src`
+- Lệnh kiểm tra nhanh:
+  + Backend lint: `ticket-triage-be/.venv/Scripts/python.exe -m ruff check ticket-triage-be`
+  + Backend test: `ticket-triage-be/.venv/Scripts/python.exe -m pytest ticket-triage-be/tests`
+  + Frontend check: `pnpm --dir ticket-triage-fe run check`

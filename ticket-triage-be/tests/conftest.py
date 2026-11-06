@@ -59,6 +59,7 @@ def client(in_memory_db):
             db.close()
 
     app.dependency_overrides[get_db] = override_get_db
+    app.state.testing = True
     app.state.sentiment_model = MockSentimentModel()
 
     yaml_path = Path(__file__).resolve().parent.parent / "configs" / "aspects.yaml"
