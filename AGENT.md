@@ -15,8 +15,7 @@ không deploy lên server.
 -> `priority` (0-100, rule-based có breakdown) -> `queue` (max-heap heapq) + SQLite -> `dashboard`.
 
 ## Phạm vi mô hình (3 tầng, làm theo thứ tự)
-1. **LÕI (Must Have):** Với mỗi ticket, phân loại cảm xúc cho từng khía cạnh trong taxonomy 5 khía cạnh cố định (`customer_service`, `refund_payment`, `product_quality`, `shipping`, `general`).
-   Mỗi khía cạnh có 4 lớp: `negative`, `neutral`, `positive`.
+1. **LÕI (Must Have):** Với mỗi ticket, phát hiện các khía cạnh liên quan qua bộ lọc từ khóa (`keyword_prefilter`) và phân loại cảm xúc cho từng khía cạnh theo 3 lớp chuẩn: `negative`, `neutral`, `positive`. Khía cạnh không có tín hiệu sẽ không đưa vào kết quả đầu ra.
 2. **DỰ PHÒNG (Luôn chạy được):** Mô hình cảm xúc cấp văn bản (`MODEL_TASK=document`), trả `AbsaResult` với aspects rỗng.
 3. **MỞ RỘNG (Could Have, chỉ làm khi tầng 1 xong và được nhóm đồng ý):** ABTE, trích xuất cụm từ nêu khía cạnh,
    bật bằng `ENABLE_ABTE=true`. Không được làm hỏng hợp đồng của tầng 1.
