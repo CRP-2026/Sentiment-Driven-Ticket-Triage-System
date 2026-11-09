@@ -10,27 +10,27 @@ interface PriorityBadgeProps {
 
 export const PriorityBadge: React.FC<PriorityBadgeProps> = ({ score, showIcon = true }) => {
   let label = "Thấp";
-  let colorClass = "bg-emerald-50 text-emerald-700 border-emerald-200";
-  let icon = <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />;
+  let colorClass = "border-l-4 border-emerald-700 border-y-emerald-100 border-r-emerald-100 bg-emerald-50 text-emerald-900";
+  let icon = <CheckCircle2 className="h-3.5 w-3.5 text-emerald-700" />;
 
   if (score >= PRIORITY_HIGH) {
-    label = "Cao";
-    colorClass = "bg-red-50 text-red-700 border-red-200 font-semibold";
-    icon = <AlertCircle className="w-3.5 h-3.5 text-red-600" />;
+    label = "Nghiêm trọng";
+    colorClass = "border-l-4 border-red-800 border-y-red-200 border-r-red-200 bg-red-50 text-red-950";
+    icon = <AlertCircle className="h-3.5 w-3.5 text-red-800" />;
   } else if (score >= PRIORITY_MED) {
     label = "Trung bình";
-    colorClass = "bg-amber-50 text-amber-700 border-amber-200 font-medium";
-    icon = <AlertTriangle className="w-3.5 h-3.5 text-amber-600" />;
+    colorClass = "border-l-4 border-amber-700 border-y-amber-200 border-r-amber-200 bg-amber-50 text-amber-950";
+    icon = <AlertTriangle className="h-3.5 w-3.5 text-amber-700" />;
   }
 
   return (
     <span
-      className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs border ${colorClass}`}
+      className={`queue-priority-pill inline-flex h-8 whitespace-nowrap items-center gap-1.5 rounded-full border px-3 text-xs font-semibold ${colorClass}`}
       aria-label={`Mức ưu tiên: ${label}, điểm số ${formatScore(score)}`}
     >
       {showIcon && icon}
       <span>{label}</span>
-      <span className="opacity-75 font-mono">({formatScore(score)})</span>
+      <span className="font-mono tabular-nums">{formatScore(score)}</span>
     </span>
   );
 };
