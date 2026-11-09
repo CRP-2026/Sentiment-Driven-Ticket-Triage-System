@@ -105,19 +105,6 @@ Mở **Terminal 2** tại thư mục gốc:
 
 ---
 
-## 🌐 Các địa chỉ truy cập quan trọng
-
-Sau khi khởi động thành công (bằng Cách 1 hoặc Cách 2), mở trình duyệt truy cập:
-
-| Thành phần | Địa chỉ truy cập | Mô tả |
-| :--- | :--- | :--- |
-| **Giao diện Dashboard** | [http://localhost:5173](http://localhost:5173) | Hộp thư ưu tiên (Inbox), Live Tester, Bảng phân tích thống kê |
-| **Tài liệu API (Swagger UI)** | [http://localhost:8000/api/v1/docs](http://localhost:8000/api/v1/docs) | Giao diện thử nghiệm các RESTful endpoints trực tiếp |
-| **Kiểm tra trạng thái (Health)** | [http://localhost:8000/api/v1/health](http://localhost:8000/api/v1/health) | Trả về `{"status":"ok", "queue_size": N}` |
-| **Hợp đồng OpenAPI JSON** | [http://localhost:8000/api/v1/openapi.json](http://localhost:8000/api/v1/openapi.json) | Bản đặc tả chuẩn của API backend |
-
----
-
 ## 📋 Các tính năng chính trên Giao diện (Dashboard)
 
 1. **Hộp thư phân loại ưu tiên (`/` - Inbox):**
