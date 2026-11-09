@@ -42,10 +42,12 @@ def _split_sentences(text: str) -> list[str]:
     return [c.strip() for c in chunks if c.strip()]
 
 def _is_negated(sentence: str, kw_index: int) -> bool:
+    # Chỉ coi là bị phủ định khi từ phủ định đứng sát trước keyword (≤ 5 chars giữa)
+    # Ví dụ: "not working" -> phủ định | "did not receive my refund" -> không phủ định refund
     prefix = sentence[:kw_index]
     for neg in NEGATION_PATTERNS:
         match = re.search(neg, prefix, re.IGNORECASE)
-        if match and (kw_index - match.end() < 25):
+        if match and (kw_index - match.end() <= 5):
             return True
     return False
 
