@@ -17,21 +17,29 @@ def _read_hypotheses_yaml(path_str: str) -> dict:
     except (OSError, yaml.YAMLError):
         return {}
 
+def _find_config_file(filename: str = "aspect_hypotheses.yaml") -> Path | None:
+    """Tự động duyệt ngược từ vị trí file hiện tại và CWD để tìm file config an toàn."""
+    search_roots = [Path(__file__).resolve(), Path.cwd().resolve()]
+
+    for start_path in search_roots:
+        candidates = [start_path, *start_path.parents]
+        for parent in candidates:
+            target = parent / "configs" / filename
+            if target.is_file():
+                return target
+
+            nested_target = parent / "ticket-triage-be" / "configs" / filename
+            if nested_target.is_file():
+                return nested_target
+
+    return None
+
 def load_aspect_hypotheses(yaml_path: Path | str | None = None) -> dict:
     """Nạp template và định nghĩa khía cạnh từ configs/aspect_hypotheses.yaml."""
     if yaml_path is not None:
         target_path = Path(yaml_path)
     else:
-        # Tự tìm đường dẫn cấu hình độc lập, không import settings để tuân thủ Clean Architecture
-        base_configs = Path(__file__).resolve().parents[4] / "configs" / "aspect_hypotheses.yaml"
-        if base_configs.is_file():
-            target_path = base_configs
-        elif Path("configs/aspect_hypotheses.yaml").is_file():
-            target_path = Path("configs/aspect_hypotheses.yaml")
-        elif Path("ticket-triage-be/configs/aspect_hypotheses.yaml").is_file():
-            target_path = Path("ticket-triage-be/configs/aspect_hypotheses.yaml")
-        else:
-            return {}
+        target_path = _find_config_file("aspect_hypotheses.yaml")
 
     if target_path.is_file():
         return _read_hypotheses_yaml(str(target_path.resolve()))

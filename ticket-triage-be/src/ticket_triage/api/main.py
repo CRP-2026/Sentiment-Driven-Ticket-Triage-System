@@ -50,11 +50,11 @@ async def lifespan(app: FastAPI):
     aspects_loaded = aspects_yaml_path.is_file() and len(taxonomy.get_all()) > 0
     hypotheses_loaded = hypotheses_yaml_path.is_file() and bool(hypotheses_data)
 
-    print(f"Model Name: {model_name}")
-    print(f"aspects.yaml loaded: {aspects_loaded}")
-    print(f"aspect_hypotheses.yaml loaded: {hypotheses_loaded}", flush=True)
+    logger.info("Model Name: %s", model_name)
+    logger.info("aspects.yaml loaded: %s", aspects_loaded)
+    logger.info("aspect_hypotheses.yaml loaded: %s", hypotheses_loaded)
 
-    # 4. Khởi tạo hàng đợi In-memory Max-Heap
+    # 5. Khởi tạo hàng đợi In-memory Max-Heap
     if not is_testing:
         queue = TicketPriorityQueue()
         with SessionLocal() as db:
