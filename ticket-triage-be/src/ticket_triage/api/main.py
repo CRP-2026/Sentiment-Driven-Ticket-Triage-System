@@ -6,7 +6,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from ..core.queue.priority_queue import TicketPriorityQueue
-from ..core.sentiment.baseline import ZeroShotNliModel
+from ..core.sentiment.baseline import ZeroShotNliModel, load_aspect_hypotheses
 from ..core.sentiment.mock import MockSentimentModel
 from ..core.taxonomy import Taxonomy
 from ..db.init_db import init_db
@@ -29,27 +29,32 @@ async def lifespan(app: FastAPI):
     else:
         logger.info("Running in test mode: Skipping disk SQLite initialization in lifespan.")
 
-    # 2. Nạp Taxonomy từ YAML
+    # 2. Nạp Taxonomy từ configs/aspects.yaml
     aspects_yaml_path = Path(settings.configs_dir) / "aspects.yaml"
-    if aspects_yaml_path.is_file():
-        logger.info("Loading taxonomy from: %s", aspects_yaml_path)
-        taxonomy = Taxonomy.load_from_yaml(aspects_yaml_path)
-    else:
-        logger.warning("Aspects YAML not found at %s. Using empty taxonomy.", aspects_yaml_path)
-        taxonomy = Taxonomy([])
+    taxonomy = Taxonomy.load_from_yaml(aspects_yaml_path) if aspects_yaml_path.is_file() else Taxonomy([])
     app.state.taxonomy = taxonomy
 
-    # 3. Nạp mô hình cảm xúc (lazy / mock)
+    # 3. Nạp configs/aspect_hypotheses.yaml
+    hypotheses_yaml_path = Path(settings.configs_dir) / "aspect_hypotheses.yaml"
+    hypotheses_data = load_aspect_hypotheses(hypotheses_yaml_path)
+
+    # 4. Nạp mô hình cảm xúc (lazy / mock)
     model_name = settings.model_name.lower()
     app.state.model_name = model_name
     if model_name == "baseline":
-        logger.info("Initializing ZeroShotNliModel...")
-        app.state.sentiment_model = ZeroShotNliModel(model_name_or_path="valhalla/distilbart-mnli-12-3")
+        app.state.sentiment_model = ZeroShotNliModel(model_name_or_path=settings.model_path or "valhalla/distilbart-mnli-12-3")
     else:
-        logger.info("Initializing MockSentimentModel for development/testing...")
         app.state.sentiment_model = MockSentimentModel()
 
-    # 4. Khởi tạo hàng đợi In-memory Max-Heap
+    # In thông tin khởi động đơn giản
+    aspects_loaded = aspects_yaml_path.is_file() and len(taxonomy.get_all()) > 0
+    hypotheses_loaded = hypotheses_yaml_path.is_file() and bool(hypotheses_data)
+
+    logger.info("Model Name: %s", model_name)
+    logger.info("aspects.yaml loaded: %s", aspects_loaded)
+    logger.info("aspect_hypotheses.yaml loaded: %s", hypotheses_loaded)
+
+    # 5. Khởi tạo hàng đợi In-memory Max-Heap
     if not is_testing:
         queue = TicketPriorityQueue()
         with SessionLocal() as db:
