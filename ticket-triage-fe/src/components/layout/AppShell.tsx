@@ -4,14 +4,16 @@ import { Navigation } from "./Navigation";
 
 export const AppShell: React.FC = () => {
   return (
-    <div className="min-h-screen flex flex-col bg-slate-50">
+    <div className="app-shell min-h-screen md:flex">
       <Navigation />
-      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        <Outlet />
-      </main>
-      <footer className="border-t border-slate-200 bg-white py-4 text-center text-xs text-slate-500">
-        Đồ án Quản trị dự án phần mềm — Nhóm DogTowFaces (Học phần 2026) | Phiên bản Version 3.1
-      </footer>
+      <div className="app-workspace min-w-0 flex-1">
+        <main className="app-main w-full px-4 py-5 sm:px-6 lg:px-8 lg:py-7">
+          <Outlet />
+        </main>
+        <footer className="app-footer px-5 py-4 text-xs">
+        Đồ án Quản trị dự án phần mềm — Nhóm DogTowFaces (Học phần 2026) | Phiên bản 3.1
+        </footer>
+      </div>
     </div>
   );
 };
