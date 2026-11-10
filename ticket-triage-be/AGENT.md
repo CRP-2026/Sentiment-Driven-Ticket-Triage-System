@@ -40,8 +40,7 @@ class AbsaResult:
 - Mọi mô hình cùng interface `predict(text: str, candidates: list[str] | None = None) -> AbsaResult`. Chọn bằng `MODEL_NAME=mock|baseline|deberta`
   và `MODEL_TASK=absa|document` (document = dự phòng cấp văn bản). Import baseline/nli kiểu lazy
   để máy không cài torch vẫn chạy `mock`.
-- Bài toán lõi: Với mỗi khía cạnh trong taxonomy, phân loại 4 lớp `{not_mentioned, negative, neutral, positive}`
-  trên văn bản tiếng Anh; khía cạnh `not_mentioned` bị loại khỏi đầu ra.
+- Bài toán lõi: Pipeline 2 bước: (1) Lọc các khía cạnh tiềm năng bằng từ khóa (`keyword_prefilter`), (2) Phân loại 3 lớp cảm xúc `{negative, neutral, positive}` trên từng khía cạnh được phát hiện; các khía cạnh không có tín hiệu sẽ không đưa vào danh sách `aspects` của đầu ra.
 - `overall` lấy từ đầu ra phân loại cảm xúc tổng thể của ticket, không được để trống.
 - ABTE (Could Have): Nằm trong `core/sentiment/abte.py`, chỉ chạy khi `ENABLE_ABTE=true`, chỉ điền `terms`.
   Tắt thì hệ thống chạy y hệt tầng lõi.

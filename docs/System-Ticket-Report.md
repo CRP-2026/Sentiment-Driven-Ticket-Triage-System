@@ -166,14 +166,10 @@ Danh mục khía cạnh được quản lý độc lập tại tệp cấu hình
 
 ### 4.3. Kiến trúc mô hình Zero-shot NLI & Mẫu giả thuyết
 - **Mô hình triển khai:** Kiến trúc suy luận ngôn ngữ tự nhiên Natural Language Inference với `distilbart-mnli` (baseline nhanh, nhẹ) hoặc `deberta-v3-base-zeroshot` (độ chính xác cao), fine-tuned trên dữ liệu phản hồi CSKH tiếng Anh qua kỹ thuật LoRA/PEFT (WBS 1.4.3).
-- **Cơ chế suy luận 4 lớp:** Với mỗi khía cạnh trong danh mục, mô hình đánh giá 4 lớp: `{not_mentioned, negative, neutral, positive}`.
-- **Mẫu giả thuyết (Hypothesis Templates - WBS 1.2.5):**
-  - Khám phá sự xuất hiện của khía cạnh:  
-    *Premise:* `"{ticket_text}"`  
-    *Hypothesis:* `"This customer feedback is related to {aspect}."`
-  - Đánh giá cảm xúc khía cạnh:  
-    *Hypothesis:* `"The customer expresses a {sentiment} feeling towards {aspect}."`
-- Khía cạnh được xác định là `not_mentioned` sẽ bị loại khỏi danh sách đầu ra của `AbsaResult`.
+- **Cơ chế phân tách 2 bước & Suy luận cảm xúc 3 lớp:**
+  - **Bước 1 (Lọc trước khía cạnh):** Bộ lọc trước từ khóa (`keyword_prefilter.py`) quét các chỉ báo đặc thù để lọc ra danh sách ứng viên (candidate aspects) hoặc kích hoạt template NLI phát hiện khía cạnh khi cần: `"This customer feedback is related to {aspect}."`
+  - **Bước 2 (Phân loại cảm xúc 3 lớp):** Với từng khía cạnh được phát hiện, mô hình suy luận 3 lớp cảm xúc: `{negative, neutral, positive}` theo mẫu giả thuyết: `"The customer expresses a {sentiment} feeling towards {aspect}."`
+  - Khía cạnh không xuất hiện trong văn bản sẽ không được đưa vào danh sách `aspects` của `AbsaResult` (thay vì gán nhãn `not_mentioned` dư thừa, giúp giảm 2x–3x thời gian suy luận).
 
 ---
 
