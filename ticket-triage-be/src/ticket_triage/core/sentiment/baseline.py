@@ -1,4 +1,5 @@
 import logging
+from functools import lru_cache
 from pathlib import Path
 from typing import Any
 
@@ -8,23 +9,40 @@ from .base import AbsaResult, AspectSentiment, BaseSentimentModel, SentimentResu
 
 logger = logging.getLogger(__name__)
 
+@lru_cache(maxsize=4)
+def _read_hypotheses_yaml(path_str: str) -> dict:
+    try:
+        with open(path_str, "r", encoding="utf-8") as f:
+            return yaml.safe_load(f) or {}
+    except (OSError, yaml.YAMLError):
+        return {}
+
+def _find_config_file(filename: str = "aspect_hypotheses.yaml") -> Path | None:
+    """Tự động duyệt ngược từ vị trí file hiện tại và CWD để tìm file config an toàn."""
+    search_roots = [Path(__file__).resolve(), Path.cwd().resolve()]
+
+    for start_path in search_roots:
+        candidates = [start_path, *start_path.parents]
+        for parent in candidates:
+            target = parent / "configs" / filename
+            if target.is_file():
+                return target
+
+            nested_target = parent / "ticket-triage-be" / "configs" / filename
+            if nested_target.is_file():
+                return nested_target
+
+    return None
+
 def load_aspect_hypotheses(yaml_path: Path | str | None = None) -> dict:
     """Nạp template và định nghĩa khía cạnh từ configs/aspect_hypotheses.yaml."""
-    if yaml_path is None:
-        try:
-            from ...settings import settings
-            yaml_path = Path(settings.configs_dir) / "aspect_hypotheses.yaml"
-        except (ImportError, AttributeError):
-            yaml_path = Path("configs/aspect_hypotheses.yaml")
+    if yaml_path is not None:
+        target_path = Path(yaml_path)
     else:
-        yaml_path = Path(yaml_path)
+        target_path = _find_config_file("aspect_hypotheses.yaml")
 
-    if yaml_path.is_file():
-        try:
-            with open(yaml_path, "r", encoding="utf-8") as f:
-                return yaml.safe_load(f) or {}
-        except (OSError, yaml.YAMLError):
-            return {}
+    if target_path.is_file():
+        return _read_hypotheses_yaml(str(target_path.resolve()))
     return {}
 
 class ZeroShotNliModel(BaseSentimentModel):
@@ -72,14 +90,22 @@ class ZeroShotNliModel(BaseSentimentModel):
             from .mock import MockSentimentModel
             return MockSentimentModel().predict(text, candidates)
 
-        candidate_labels = ["negative", "neutral", "positive"]
+        sentiment_cfg = self._config.get("sentiments", {})
+        if sentiment_cfg:
+            verbalizer_to_sentiment = {v: k for k, v in sentiment_cfg.items()}
+            candidate_labels = list(verbalizer_to_sentiment.keys())
+        else:
+            verbalizer_to_sentiment = {k: k for k in ["negative", "neutral", "positive"]}
+            candidate_labels = ["negative", "neutral", "positive"]
+
         overall_res = self._classifier(
             text,
             candidate_labels=candidate_labels,
             hypothesis_template="The sentiment of this customer review is {}.",
         )
 
-        top_label = str(overall_res["labels"][0])
+        top_verbalizer = str(overall_res["labels"][0])
+        top_label = verbalizer_to_sentiment.get(top_verbalizer, top_verbalizer)
         top_conf = round(float(overall_res["scores"][0]), 2)
 
         aspect_names = self._config.get("aspect_names", {})
@@ -97,7 +123,8 @@ class ZeroShotNliModel(BaseSentimentModel):
                 candidate_labels=candidate_labels,
                 hypothesis_template=template,
             )
-            asp_label = str(asp_res["labels"][0])
+            asp_verbalizer = str(asp_res["labels"][0])
+            asp_label = verbalizer_to_sentiment.get(asp_verbalizer, asp_verbalizer)
             asp_conf = round(float(asp_res["scores"][0]), 2)
 
             aspect_items.append(

@@ -229,7 +229,7 @@ flowchart TD
          overall: SentimentResult            # label (negative/neutral/positive), confidence [0.0, 1.0]
          aspects: list[AspectSentiment]      # aspect, sentiment, confidence, terms
      ```
-   - Khía cạnh không xuất hiện (`not_mentioned`) tuyệt đối không đưa vào danh sách `aspects`.
+   - Khía cạnh không có tín hiệu xuất hiện trong văn bản tuyệt đối không đưa vào danh sách `aspects`.
    - Mục tiêu nghiệm thu tại cột mốc **M5 (Tuần 9)**: Đạt **F1-macro per-aspect $\ge 0.78$**.
 
 ---
