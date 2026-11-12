@@ -8,19 +8,19 @@ import { Send, Sparkles, AlertCircle, CheckCircle2 } from "lucide-react";
 
 const SAMPLE_PROMPTS = [
   {
-    label: "Bị trừ tiền hai lần (Critical)",
+    label: "Bị trừ tiền hai lần (Nghiêm trọng)",
     text: "I was charged twice for order #9921! Please refund immediately or I will dispute the chargeback with my bank!",
   },
   {
-    label: "Giao trễ + Hỏng hóc (Critical)",
+    label: "Giao trễ + Hỏng hóc (Nghiêm trọng)",
     text: "My package is 12 days late and the tracking number is broken. This is totally unacceptable!!!",
   },
   {
-    label: "Chất lượng sản phẩm kém (Medium)",
+    label: "Chất lượng sản phẩm kém (Trung bình)",
     text: "The jacket material feels very cheap and the zipper broke on first use. Disappointed with the quality.",
   },
   {
-    label: "Hỏi đáp thông thường (Low)",
+    label: "Hỏi đáp thông thường (Thấp)",
     text: "Could you please help me check if this wireless headset is compatible with Windows 11?",
   },
   {
@@ -54,16 +54,16 @@ export const TesterPage: React.FC = () => {
       <div>
         <h1 className="text-xl font-bold text-slate-900 tracking-tight flex items-center gap-2">
           <Sparkles className="w-5 h-5 text-blue-600" />
-          <span>Khung mô phỏng kiểm thử thời gian thực (Live Tester)</span>
+          <span>Mô phỏng kiểm thử trực tiếp</span>
         </h1>
         <p className="text-xs text-slate-500 mt-0.5">
-          Nhập bất kỳ đoạn văn bản ticket phản hồi nào để kiểm chứng toàn trình 2 bài toán (ABSA NLI + Priority Engine)
+          Nhập nội dung phản hồi để kiểm tra quy trình phân tích cảm xúc và tính điểm ưu tiên.
         </p>
       </div>
 
-      {/* Input Form */}
+      {/* Biểu mẫu nhập liệu */}
       <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-4">
-        {/* Sample Buttons */}
+        {/* Tình huống mẫu */}
         <div>
           <span className="text-xs font-semibold text-slate-500 uppercase block mb-2">Thử nhanh tình huống mẫu:</span>
           <div className="flex flex-wrap gap-2">
@@ -100,7 +100,7 @@ export const TesterPage: React.FC = () => {
               className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white text-sm font-semibold shadow-md shadow-blue-500/20 transition-all"
             >
               <Send className="w-4 h-4" />
-              <span>{triageMutation.isPending ? "Đang phân tích..." : "Phân tích & Triage ngay"}</span>
+              <span>{triageMutation.isPending ? "Đang phân tích..." : "Phân tích ngay"}</span>
             </button>
           </div>
         </form>
@@ -113,7 +113,7 @@ export const TesterPage: React.FC = () => {
         )}
       </div>
 
-      {/* Analysis Output Result */}
+      {/* Kết quả phân tích */}
       {result && (
         <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-5 animate-in fade-in duration-300">
           <div className="flex items-center justify-between border-b pb-3">
@@ -132,7 +132,7 @@ export const TesterPage: React.FC = () => {
             </div>
 
             <div className="p-3.5 bg-slate-50 rounded-xl border border-slate-200">
-              <span className="text-xs text-slate-500 block mb-1">Cảm xúc tổng thể (ABSA):</span>
+              <span className="text-xs text-slate-500 block mb-1">Cảm xúc tổng thể:</span>
               <span className="text-sm font-semibold capitalize text-slate-800">
                 {result.sentiment_label || "Chưa xác định"}{" "}
                 {result.confidence && `(${(result.confidence * 100).toFixed(0)}%)`}
@@ -150,7 +150,7 @@ export const TesterPage: React.FC = () => {
 
           {/* Aspects list */}
           <div>
-            <h4 className="text-xs font-semibold text-slate-500 uppercase mb-2">Các khía cạnh phát hiện được (ABSA):</h4>
+            <h4 className="text-xs font-semibold text-slate-500 uppercase mb-2">Các khía cạnh được phát hiện:</h4>
             <AspectChips aspects={result.aspects} maxDisplay={10} />
           </div>
 
