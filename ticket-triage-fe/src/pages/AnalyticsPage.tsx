@@ -14,8 +14,8 @@ import {
 } from "recharts";
 import { BarChart3, TrendingUp, AlertTriangle } from "lucide-react";
 
-const SENTIMENT_COLORS = ["#EF4444", "#64748B", "#10B981"];
-const PRIORITY_COLORS = ["#EF4444", "#F59E0B", "#10B981"];
+const SENTIMENT_COLORS = ["#b94342", "#7c8c91", "#168a73"];
+const PRIORITY_COLORS = ["#a72729", "#a66a08", "#087443"];
 
 export const AnalyticsPage: React.FC = () => {
   const { data: stats, isLoading: isStatsLoading } = useStatsOverview();
@@ -39,7 +39,7 @@ export const AnalyticsPage: React.FC = () => {
 
   // Chuẩn bị dữ liệu cho biểu đồ Mức ưu tiên
   const priorityData = [
-    { name: "Cao (Critical)", value: stats?.priority_counts?.CRITICAL ?? 0 },
+    { name: "Nghiêm trọng", value: stats?.priority_counts?.CRITICAL ?? 0 },
     { name: "Trung bình", value: stats?.priority_counts?.MEDIUM ?? 0 },
     { name: "Thấp", value: stats?.priority_counts?.LOW ?? 0 },
   ].filter((d) => d.value > 0);
@@ -57,7 +57,7 @@ export const AnalyticsPage: React.FC = () => {
       <div>
         <h1 className="text-xl font-bold text-slate-900 tracking-tight flex items-center gap-2">
           <BarChart3 className="w-5 h-5 text-blue-600" />
-          <span>Bảng phân tích thống kê khía cạnh cảm xúc (Analytics)</span>
+          <span>Phân tích thống kê cảm xúc theo khía cạnh</span>
         </h1>
         <p className="text-xs text-slate-500 mt-0.5">
           Trực quan hóa ma trận khía cạnh phàn nàn, tỷ lệ phân bố cảm xúc và cấp độ ưu tiên trong hệ thống
@@ -70,7 +70,7 @@ export const AnalyticsPage: React.FC = () => {
         <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
           <h3 className="text-sm font-bold text-slate-800 mb-4 flex items-center gap-2">
             <TrendingUp className="w-4 h-4 text-blue-500" />
-            <span>Phân bố Cảm xúc tổng thể</span>
+          <span>Phân bố cảm xúc tổng thể</span>
           </h3>
           <div className="h-64">
             {sentimentData.length > 0 ? (
@@ -84,6 +84,7 @@ export const AnalyticsPage: React.FC = () => {
                     outerRadius={80}
                     paddingAngle={5}
                     dataKey="value"
+                    isAnimationActive={false}
                     label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
                   >
                     {sentimentData.map((_, index) => (
@@ -106,7 +107,7 @@ export const AnalyticsPage: React.FC = () => {
         <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
           <h3 className="text-sm font-bold text-slate-800 mb-4 flex items-center gap-2">
             <AlertTriangle className="w-4 h-4 text-amber-500" />
-            <span>Phân bố Cấp độ ưu tiên (Rule-based)</span>
+            <span>Phân bố mức độ ưu tiên (theo quy tắc)</span>
           </h3>
           <div className="h-64">
             {priorityData.length > 0 ? (
@@ -120,6 +121,7 @@ export const AnalyticsPage: React.FC = () => {
                     outerRadius={80}
                     paddingAngle={5}
                     dataKey="value"
+                    isAnimationActive={false}
                     label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
                   >
                     {priorityData.map((_, index) => (
@@ -142,7 +144,7 @@ export const AnalyticsPage: React.FC = () => {
       {/* Biểu đồ thanh Khía cạnh phàn nàn */}
       <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
         <h3 className="text-sm font-bold text-slate-800 mb-4">
-          Tần suất xuất hiện theo Khía cạnh CSKH (Aspect Distribution)
+          Tần suất xuất hiện theo khía cạnh chăm sóc khách hàng
         </h3>
         <div className="h-72">
           {aspectDistributionData.length > 0 ? (
@@ -151,7 +153,7 @@ export const AnalyticsPage: React.FC = () => {
                 <XAxis dataKey="aspect" tick={{ fontSize: 12 }} />
                 <YAxis allowDecimals={false} tick={{ fontSize: 12 }} />
                 <Tooltip />
-                <Bar dataKey="count" fill="#3B82F6" radius={[6, 6, 0, 0]} name="Số lượng ticket" />
+                <Bar dataKey="count" fill="#126B67" radius={[6, 6, 0, 0]} name="Số lượng ticket" isAnimationActive={false} />
               </BarChart>
             </ResponsiveContainer>
           ) : (
