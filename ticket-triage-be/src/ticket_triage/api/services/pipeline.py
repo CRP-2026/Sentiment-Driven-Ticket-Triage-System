@@ -11,6 +11,7 @@ from ...core.priority.priority_engine import (
     load_priority_rules,
 )
 from ...core.queue.priority_queue import TicketPriorityQueue
+from ...core.sentiment.abte import extract_aspect_terms
 from ...core.sentiment.base import AbsaResult, BaseSentimentModel
 from ...core.taxonomy import Taxonomy
 from ...db.models import Ticket
@@ -35,6 +36,8 @@ def process_ticket_pipeline(
     taxonomy: Taxonomy | None = None,
     priority_rules: PriorityRules | None = None,
     model_task: str = "absa",
+    aspect_keywords: dict[str, list[str]] | None = None,
+    enable_abte: bool = False,
 ) -> Ticket:
     """Điều phối toàn trình 2 bài toán:
     1. Module 1: Preprocessing + Language Validator + Keyword Pre-filter
@@ -43,7 +46,7 @@ def process_ticket_pipeline(
     4. Bài toán 2: Lưu SQLite và đẩy vào Max-Heap
     """
     # 1. Tiền xử lý
-    pre = preprocess_ticket(raw_text)
+    pre = preprocess_ticket(raw_text, aspect_keywords=aspect_keywords)
 
     # 2. Xử lý ranh giới ngoại ngữ (English-only)
     if not pre.is_english:
@@ -121,7 +124,17 @@ def process_ticket_pipeline(
             "aspect": asp.aspect,
             "sentiment": asp.sentiment,
             "confidence": asp.confidence,
-            "terms": list(asp.terms),
+            "terms": (
+                list(asp.terms)
+                if asp.terms or not enable_abte
+                else list(
+                    extract_aspect_terms(
+                        pre.clean_text,
+                        asp.aspect,
+                        aspect_keywords=aspect_keywords,
+                    )
+                )
+            ),
         }
         for asp in absa_res.aspects
     ]

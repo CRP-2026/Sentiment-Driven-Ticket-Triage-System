@@ -144,10 +144,10 @@ Gồm chuỗi 3 công đoạn xử lý tuần tự trước khi đưa văn bản
    - Loại bỏ mã HTML tags, URLs và các địa chỉ email cá nhân gây nhiễu.
    - Rút gọn chuỗi ký tự lặp quá mức (ví dụ: `baaaaad!!!!` → `bad!`).
    - **Bảo toàn:** Giữ nguyên các ký tự viết hoa (CAPS LOCK), các dấu câu biểu đạt bức xúc (`!`, `?`) và các từ phủ định (`not`, `never`, `no`) phục vụ cho Module Intensity và Urgency.
-2. **Xác thực ngôn ngữ tiếng Anh (`src/preprocessing/lang_validator.py` - WBS 1.3.2):**
+2. **Xác thực ngôn ngữ tiếng Anh (`core/preprocessing/lang_validator.py` - WBS 1.3.2):**
    - Sử dụng thư viện `langdetect` để kiểm tra ngôn ngữ.
-   - Nếu kết quả là tiếng Anh (`en`) với xác suất tin cậy: Tiếp tục chuyển vào pipeline ABSA.
-   - Nếu phát hiện ngôn ngữ khác (tiếng Việt, tiếng Pháp, Tây Ban Nha...): Hệ thống **không kích hoạt mô hình NLI**, tự động thiết lập `language_flag = "unsupported"`, `needs_manual_review = True`, gán điểm an toàn `priority_score = 50.0` và chuyển thẳng về hàng đợi chờ duyệt.
+   - Nếu kết quả là tiếng Anh (`en`) hoặc chuỗi quá ngắn/ASCII (fallback an toàn): Tiếp tục chuyển vào pipeline ABSA.
+   - Nếu phát hiện ngôn ngữ khác (tiếng Việt, tiếng Pháp, Tây Ban Nha...) hoặc không xác định được: Hệ thống **không kích hoạt mô hình NLI**, lưu `language_flag` bằng mã ngôn ngữ phát hiện được (ví dụ `vi`, `fr`, `unknown`), thiết lập `needs_manual_review = True`, gán điểm an toàn `priority_score = 50.0` (`MEDIUM`) và chuyển thẳng về hàng đợi chờ duyệt (HTTP `201 Created`).
 3. **Bộ lọc trước từ khóa khía cạnh (`src/preprocessing/keyword_prefilter.py` - WBS 1.3.3):**
    - Quét sự xuất hiện của các từ vựng chỉ báo đặc trưng của từng khía cạnh trong văn bản.
    - Chỉ kích hoạt suy luận NLI trên các khía cạnh có chỉ báo tiềm năng; nếu không phát hiện từ khóa cụ thể thì chuyển sang đánh giá khía cạnh `general`.
@@ -263,10 +263,10 @@ erDiagram
     TICKETS ||--o{ TICKET_ASPECTS : contains
     
     TICKETS {
-        string id PK "Mã định danh UUID"
-        text raw_text "Nội dung phản hồi tiếng Anh"
-        text processed_text "Văn bản sau tiền xử lý"
-        string detected_lang "Ngôn ngữ phát hiện (en/other)"
+        integer id PK "Khóa chính tự tăng"
+        text content "Nội dung phản hồi thô"
+        text processed_content "Văn bản sau tiền xử lý"
+        string language_flag "Mã ngôn ngữ phát hiện (en, vi, fr, unknown)"
         string sentiment_label "Cảm xúc tổng thể (negative/neutral/positive)"
         float confidence "Độ tin cậy cảm xúc [0.0, 1.0]"
         float priority_score "Điểm ưu tiên [0.0, 100.0]"
@@ -283,11 +283,11 @@ erDiagram
 
     TICKET_ASPECTS {
         integer id PK "Khóa chính tự tăng"
-        string ticket_id FK "Liên kết tickets.id (CASCADE DELETE)"
-        string aspect_category "ID khía cạnh (customer_service, shipping...)"
+        integer ticket_id FK "Liên kết tickets.id (CASCADE DELETE)"
+        string aspect "ID khía cạnh (customer_service, shipping...)"
         string sentiment "negative / neutral / positive"
         float confidence "Độ tin cậy của khía cạnh [0.0, 1.0]"
-        json terms "Cụm từ trích xuất (tùy chọn ABTE)"
+        json terms "Cụm từ trích xuất (bật qua ENABLE_ABTE=true)"
     }
 ```
 
@@ -297,13 +297,16 @@ erDiagram
 
 | Phương thức | Đường dẫn API | Mục đích & Nghiệp vụ | Mã HTTP |
 | :---: | :--- | :--- | :---: |
-| `POST` | `/api/v1/tickets` | Tiếp nhận ticket tiếng Anh thô, chạy toàn trình (ABSA → Priority Engine), lưu SQLite, đẩy vào Heap. | `201 Created` |
+| `POST` | `/api/v1/tickets` | Tiếp nhận ticket thô, chạy toàn trình (Preprocess → ABSA → Priority Engine), lưu SQLite, đẩy vào Heap. | `201 Created` |
+| `POST` | `/api/v1/tickets/triage` | Phân tích thử nghiệm một đoạn văn bản (dry-run / Tester UI) mà không lưu xuống CSDL. | `200 OK` |
 | `GET` | `/api/v1/tickets` | Lấy danh sách ticket từ CSDL sắp xếp theo thứ tự ưu tiên giảm dần; hỗ trợ lọc `status`, `aspect`, `sentiment` và phân trang. | `200 OK` |
+| `GET` | `/api/v1/tickets/queue` | Truy vấn danh sách ticket theo đúng thứ tự hàng đợi ưu tiên (`PriorityQueue`) đang mở. | `200 OK` |
 | `GET` | `/api/v1/tickets/{id}` | Lấy thông tin chi tiết một ticket kèm danh sách `aspects` và bản giải trình `priority_breakdown`. | `200 OK` |
-| `PATCH` | `/api/v1/tickets/{id}/status` | Cập nhật trạng thái vòng đời (`status`) và người phụ trách (`assigned_to`). | `200 OK` |
+| `PATCH` | `/api/v1/tickets/{id}/status` | Cập nhật trạng thái vòng đời (`status`) và người phụ trách (`assigned_to`) theo luật FSM. | `200 OK` |
 | `GET` | `/api/v1/meta/aspects` | Lấy danh mục chuẩn các khía cạnh CSKH từ `configs/aspects.yaml`. | `200 OK` |
-| `GET` | `/api/v1/stats/overview` | Thống kê phân bố cảm xúc, ma trận khía cạnh x cảm xúc và tỷ lệ phân cấp ưu tiên phục vụ Dashboard. | `200 OK` |
-| `GET` | `/api/v1/health` | Kiểm tra tình trạng hoạt động (Healthcheck) của API và kết nối CSDL. | `200 OK` |
+| `GET` | `/api/v1/stats/overview` | Thống kê phân bố cảm xúc, số lượng ticket theo trạng thái và tỷ lệ phân cấp ưu tiên phục vụ Dashboard. | `200 OK` |
+| `GET` | `/api/v1/stats/aspects` | Thống kê chi tiết ma trận Khía cạnh × Cảm xúc (`positive` / `neutral` / `negative`) cho biểu đồ Stacked Bar. | `200 OK` |
+| `GET` | `/api/v1/health` | Kiểm tra tình trạng hoạt động (Healthcheck) của API, kết nối CSDL và trạng thái nạp mô hình AI (`model_loaded`, `is_mock`). | `200 OK` |
 
 ---
 
@@ -322,11 +325,11 @@ Dashboard được tổ chức thành 3 khung nhìn tương tác chính phục v
 - Bộ lọc động theo khía cạnh (`aspect`), trạng thái xử lý (`status`) và cảm xúc (`sentiment`).
 
 ### 7.2. Bảng phân tích thống kê khía cạnh cảm xúc (Aspect Analytics View - WBS 1.7.2)
-- Tích hợp các biểu đồ tương tác thời gian thực sử dụng thư viện Plotly:
-  - **Aspect Distribution:** Biểu đồ thanh ngang thể hiện các khía cạnh phàn nàn nhiều nhất.
-  - **Aspect Sentiment Heatmap:** Ma trận nhiệt trực quan hóa tương quan giữa danh mục khía cạnh và 3 trạng thái cảm xúc.
-  - **Priority Breakdown Distribution:** Biểu đồ tròn phân bổ tỷ lệ các mức ưu tiên trong hệ thống.
-  - **Resolution Progress:** Biểu đồ theo dõi tiến độ xử lý ticket theo 4 trạng thái vòng đời.
+- Tích hợp các biểu đồ tương tác thời gian thực trên React Frontend sử dụng thư viện `Recharts`:
+  - **Aspect Frequency Bar Chart:** Biểu đồ thanh ngang thể hiện các khía cạnh xuất hiện nhiều nhất.
+  - **Sentiment & Priority Pie Charts:** Biểu đồ tròn phân bổ tỷ lệ cảm xúc và các mức ưu tiên (`CRITICAL` / `MEDIUM` / `LOW`) từ `/api/v1/stats/overview`.
+  - **KPI Overview Cards:** Thẻ chỉ số tổng số vé, số vé khẩn cấp, số vé cần kiểm duyệt thủ công và tỷ lệ đã giải quyết.
+  - *(Backend hiện cũng đã cung cấp endpoint `GET /api/v1/stats/aspects` trả về ma trận Khía cạnh × Cảm xúc để Frontend mở rộng biểu đồ Stacked Bar ở bước tiếp theo).*
 
 ### 7.3. Khung kiểm thử phân loại thời gian thực (Live Tester Simulator - WBS 1.7.3)
 - Hộp nhập liệu văn bản ticket tiếng Anh bất kỳ để kiểm thử trực tiếp năng lực phân loại của hệ thống.

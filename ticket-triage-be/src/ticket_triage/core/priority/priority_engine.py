@@ -6,6 +6,7 @@ from typing import Any
 
 import yaml
 
+from ..config_utils import find_config_file as _find_config_file
 from ..sentiment.base import AbsaResult
 from .intensity_extractor import extract_intensity_bonus
 
@@ -66,24 +67,6 @@ class PriorityRules:
     high_other_sentence: float = 10.0
     threshold_high: float = 70.0
     threshold_medium: float = 30.0
-
-
-def _find_config_file(filename: str = "priority_rules.yaml") -> Path | None:
-    """Tự động duyệt ngược từ vị trí module hiện tại và CWD để tìm file config an toàn."""
-    search_roots = [Path(__file__).resolve(), Path.cwd().resolve()]
-
-    for start_path in search_roots:
-        candidates = [start_path, *start_path.parents]
-        for parent in candidates:
-            target = parent / "configs" / filename
-            if target.is_file():
-                return target
-
-            nested_target = parent / "ticket-triage-be" / "configs" / filename
-            if nested_target.is_file():
-                return nested_target
-
-    return None
 
 
 def _non_negative_float(value: Any, default: float) -> float:

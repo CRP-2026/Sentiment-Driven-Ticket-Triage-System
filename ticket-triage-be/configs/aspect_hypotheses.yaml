@@ -1,3 +1,4 @@
+overall_sentiment_template: "The sentiment of this customer review is {}."
 aspect_detection_template: "This customer feedback is related to {aspect}."
 aspect_sentiment_template: "The customer expresses a {sentiment} feeling towards {aspect}."
 

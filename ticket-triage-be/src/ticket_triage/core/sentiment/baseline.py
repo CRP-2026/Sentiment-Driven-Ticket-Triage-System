@@ -5,6 +5,7 @@ from typing import Any
 
 import yaml
 
+from ..config_utils import find_config_file as _find_config_file
 from .base import AbsaResult, AspectSentiment, BaseSentimentModel, SentimentResult
 
 logger = logging.getLogger(__name__)
@@ -23,24 +24,6 @@ def _read_hypotheses_yaml(path_str: str) -> dict[str, Any]:
             return data if isinstance(data, dict) else {}
     except (OSError, yaml.YAMLError):
         return {}
-
-
-def _find_config_file(filename: str = "aspect_hypotheses.yaml") -> Path | None:
-    """Tự động duyệt ngược từ vị trí file hiện tại và CWD để tìm file config an toàn."""
-    search_roots = [Path(__file__).resolve(), Path.cwd().resolve()]
-
-    for start_path in search_roots:
-        candidates = [start_path, *start_path.parents]
-        for parent in candidates:
-            target = parent / "configs" / filename
-            if target.is_file():
-                return target
-
-            nested_target = parent / "ticket-triage-be" / "configs" / filename
-            if nested_target.is_file():
-                return nested_target
-
-    return None
 
 
 def load_aspect_hypotheses(yaml_path: Path | str | None = None) -> dict[str, Any]:
