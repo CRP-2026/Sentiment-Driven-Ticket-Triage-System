@@ -27,7 +27,7 @@ class MockSentimentModel(BaseSentimentModel):
 
     def predict(self, text: str, candidates: list[str] | None = None) -> AbsaResult:
         text_lower = text.lower() if text else ""
-        aspect_keys = candidates or ["general"]
+        aspect_keys = ["general"] if candidates is None else candidates
 
         # Cố định seed dựa trên hash nội dung để kiểm thử mang tính xác định (deterministic)
         seed_val = int(hashlib.md5(text_lower.encode("utf-8")).hexdigest()[:8], 16) if text_lower else 42

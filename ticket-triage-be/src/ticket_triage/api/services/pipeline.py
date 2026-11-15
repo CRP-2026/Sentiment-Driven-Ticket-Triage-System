@@ -11,7 +11,8 @@ from ...core.priority.priority_engine import (
     load_priority_rules,
 )
 from ...core.queue.priority_queue import TicketPriorityQueue
-from ...core.sentiment.base import BaseSentimentModel
+from ...core.sentiment.abte import extract_aspect_terms
+from ...core.sentiment.base import AbsaResult, BaseSentimentModel
 from ...core.taxonomy import Taxonomy
 from ...db.models import Ticket
 from ...db.repository import TicketRepository
@@ -34,6 +35,9 @@ def process_ticket_pipeline(
     priority_queue: TicketPriorityQueue | None = None,
     taxonomy: Taxonomy | None = None,
     priority_rules: PriorityRules | None = None,
+    model_task: str = "absa",
+    aspect_keywords: dict[str, list[str]] | None = None,
+    enable_abte: bool = False,
 ) -> Ticket:
     """Điều phối toàn trình 2 bài toán:
     1. Module 1: Preprocessing + Language Validator + Keyword Pre-filter
@@ -42,7 +46,7 @@ def process_ticket_pipeline(
     4. Bài toán 2: Lưu SQLite và đẩy vào Max-Heap
     """
     # 1. Tiền xử lý
-    pre = preprocess_ticket(raw_text)
+    pre = preprocess_ticket(raw_text, aspect_keywords=aspect_keywords)
 
     # 2. Xử lý ranh giới ngoại ngữ (English-only)
     if not pre.is_english:
@@ -84,8 +88,13 @@ def process_ticket_pipeline(
 
         return ticket
 
-    # 3. Tiếng Anh hợp lệ -> Kích hoạt Bài toán 1 (ABSA)
-    absa_res = sentiment_model.predict(pre.clean_text, candidates=pre.candidate_aspects)
+    # 3. Tiếng Anh hợp lệ -> Kích hoạt Bài toán 1 (ABSA hoặc chế độ dự phòng Document)
+    task_mode = (model_task or "absa").strip().lower()
+    if task_mode == "document":
+        raw_res = sentiment_model.predict(pre.clean_text, candidates=[])
+        absa_res = AbsaResult(overall=raw_res.overall, aspects=[])
+    else:
+        absa_res = sentiment_model.predict(pre.clean_text, candidates=pre.candidate_aspects)
     is_low_conf = absa_res.overall.confidence < 0.50
 
     # 4. Trích xuất trọng số khía cạnh từ Taxonomy
@@ -115,7 +124,17 @@ def process_ticket_pipeline(
             "aspect": asp.aspect,
             "sentiment": asp.sentiment,
             "confidence": asp.confidence,
-            "terms": list(asp.terms),
+            "terms": (
+                list(asp.terms)
+                if asp.terms or not enable_abte
+                else list(
+                    extract_aspect_terms(
+                        pre.clean_text,
+                        asp.aspect,
+                        aspect_keywords=aspect_keywords,
+                    )
+                )
+            ),
         }
         for asp in absa_res.aspects
     ]

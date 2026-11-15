@@ -15,7 +15,10 @@ class PreprocessedTicket:
     needs_manual_review: bool
     candidate_aspects: list[str] = field(default_factory=list)
 
-def preprocess_ticket(raw_text: str) -> PreprocessedTicket:
+def preprocess_ticket(
+    raw_text: str,
+    aspect_keywords: dict[str, list[str]] | None = None,
+) -> PreprocessedTicket:
     """Chuỗi tiền xử lý tích hợp:
     1. Làm sạch văn bản (clean_text)
     2. Xác thực ngôn ngữ tiếng Anh (validate_english)
@@ -25,7 +28,7 @@ def preprocess_ticket(raw_text: str) -> PreprocessedTicket:
     lang_res = validate_english(cleaned)
 
     if lang_res.is_english:
-        candidates = filter_candidate_aspects(cleaned)
+        candidates = filter_candidate_aspects(cleaned, aspect_keywords=aspect_keywords)
     else:
         candidates = []
 
