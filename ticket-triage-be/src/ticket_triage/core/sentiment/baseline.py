@@ -9,13 +9,21 @@ from .base import AbsaResult, AspectSentiment, BaseSentimentModel, SentimentResu
 
 logger = logging.getLogger(__name__)
 
+DEFAULT_HF_MODELS: dict[str, str] = {
+    "baseline": "valhalla/distilbart-mnli-12-3",
+    "deberta": "MoritzLaurer/deberta-v3-base-zeroshot-v1.1-all-33",
+}
+
+
 @lru_cache(maxsize=4)
-def _read_hypotheses_yaml(path_str: str) -> dict:
+def _read_hypotheses_yaml(path_str: str) -> dict[str, Any]:
     try:
         with open(path_str, "r", encoding="utf-8") as f:
-            return yaml.safe_load(f) or {}
+            data = yaml.safe_load(f)
+            return data if isinstance(data, dict) else {}
     except (OSError, yaml.YAMLError):
         return {}
+
 
 def _find_config_file(filename: str = "aspect_hypotheses.yaml") -> Path | None:
     """Tự động duyệt ngược từ vị trí file hiện tại và CWD để tìm file config an toàn."""
@@ -34,16 +42,18 @@ def _find_config_file(filename: str = "aspect_hypotheses.yaml") -> Path | None:
 
     return None
 
-def load_aspect_hypotheses(yaml_path: Path | str | None = None) -> dict:
+
+def load_aspect_hypotheses(yaml_path: Path | str | None = None) -> dict[str, Any]:
     """Nạp template và định nghĩa khía cạnh từ configs/aspect_hypotheses.yaml."""
     if yaml_path is not None:
         target_path = Path(yaml_path)
     else:
         target_path = _find_config_file("aspect_hypotheses.yaml")
 
-    if target_path.is_file():
+    if target_path is not None and target_path.is_file():
         return _read_hypotheses_yaml(str(target_path.resolve()))
     return {}
+
 
 class ZeroShotNliModel(BaseSentimentModel):
     """Mô hình ABSA Zero-shot NLI (distilbart-mnli / deberta-v3-base-zeroshot):
@@ -51,11 +61,18 @@ class ZeroShotNliModel(BaseSentimentModel):
     - Dự đoán cảm xúc từng khía cạnh qua NLI cross-encoder hypothesis testing.
     """
 
-    def __init__(self, model_name_or_path: str = "valhalla/distilbart-mnli-12-3"):
+    def __init__(
+        self,
+        model_name_or_path: str = DEFAULT_HF_MODELS["baseline"],
+        hypotheses_path: Path | str | None = None,
+        hypotheses: dict[str, Any] | None = None,
+    ):
         self.model_name_or_path = model_name_or_path
         self._classifier: Any = None
         self._has_logged_fallback = False
-        self._config = load_aspect_hypotheses()
+        self._config = (
+            hypotheses if hypotheses is not None else load_aspect_hypotheses(hypotheses_path)
+        )
 
     @property
     def is_mock(self) -> bool:
@@ -98,10 +115,14 @@ class ZeroShotNliModel(BaseSentimentModel):
             verbalizer_to_sentiment = {k: k for k in ["negative", "neutral", "positive"]}
             candidate_labels = ["negative", "neutral", "positive"]
 
+        overall_template = self._config.get(
+            "overall_sentiment_template",
+            "The sentiment of this customer review is {}.",
+        )
         overall_res = self._classifier(
             text,
             candidate_labels=candidate_labels,
-            hypothesis_template="The sentiment of this customer review is {}.",
+            hypothesis_template=overall_template,
         )
 
         top_verbalizer = str(overall_res["labels"][0])
