@@ -1,10 +1,11 @@
 import React, { useEffect, useState } from "react";
-import { useTriageTicket } from "../api/hooks";
-import { PriorityBadge } from "../components/tickets/PriorityBadge";
-import { AspectChips } from "../components/tickets/AspectChips";
-import { PriorityBreakdown } from "../components/tickets/PriorityBreakdown";
+import { AlertCircle, AlertTriangle, CheckCircle2, Clock, Send, Sparkles } from "lucide-react";
+import { useHealth, useTriageTicket } from "../api/hooks";
 import { TicketOut } from "../api/schema";
-import { Send, Sparkles, Clock, AlertCircle, CheckCircle2 } from "lucide-react";
+import { AspectChips } from "../components/tickets/AspectChips";
+import { PriorityBadge } from "../components/tickets/PriorityBadge";
+import { PriorityBreakdown } from "../components/tickets/PriorityBreakdown";
+import { SENTIMENT_CONFIG } from "../lib/constants";
 
 const SAMPLE_PROMPTS = [
   {
@@ -74,6 +75,7 @@ export const TesterPage: React.FC = () => {
   const [completedSubmittedAt, setCompletedSubmittedAt] = useState(0);
   const [executionTime, setExecutionTime] = useState<number>(0);
 
+  const { data: health, isError: isHealthError } = useHealth();
   const triageMutation = useTriageTicket();
 
   useEffect(() => {
@@ -96,8 +98,24 @@ export const TesterPage: React.FC = () => {
       !triageMutation.isError);
 
   const animatedConfidence = useCountUp(
-    !isVisualLoading && result?.confidence ? Math.round(result.confidence * 100) : 0
+    !isVisualLoading && result?.confidence != null ? Math.round(result.confidence * 100) : 0
   );
+
+  const modelDisplayName = isHealthError
+    ? "Không kết nối BE"
+    : health?.model_name ?? "Đang kiểm tra...";
+  const modelStatusBadge = isHealthError
+    ? { label: "Mất kết nối", className: "border-red-200 bg-red-50 text-red-700" }
+    : !health
+      ? null
+      : !health.model_loaded && !health.is_mock
+        ? { label: "Chưa nạp model", className: "border-amber-200 bg-amber-50 text-amber-800" }
+        : health.is_mock
+          ? { label: "Mock", className: "border-slate-200 bg-slate-100 text-slate-700" }
+          : { label: "AI thật", className: "border-emerald-200 bg-emerald-50 text-emerald-700" };
+  const resultSentimentMeta = result?.sentiment_label
+    ? SENTIMENT_CONFIG[result.sentiment_label]
+    : undefined;
 
   const handleAnalyze = (e: React.FormEvent) => {
     e.preventDefault();
@@ -140,13 +158,25 @@ export const TesterPage: React.FC = () => {
             >
               <Sparkles className="h-4 w-4" />
             </span>
-            <div>
+            <div className="min-w-0">
               <span className="block text-[10px] font-semibold uppercase tracking-wider text-slate-400">
                 MÔ HÌNH PHÂN TÍCH
               </span>
-              <span className="block text-sm font-bold leading-tight text-slate-700">
-                ABSA · English
-              </span>
+              <div className="flex items-center gap-1.5">
+                <span
+                  className="block max-w-[200px] truncate text-sm font-bold leading-tight text-slate-700"
+                  title={health?.model_name ?? modelDisplayName}
+                >
+                  {modelDisplayName}
+                </span>
+                {modelStatusBadge && (
+                  <span
+                    className={`shrink-0 rounded-full border px-1.5 py-0.5 text-[10px] font-semibold leading-none ${modelStatusBadge.className}`}
+                  >
+                    {modelStatusBadge.label}
+                  </span>
+                )}
+              </div>
             </div>
           </div>
 
@@ -170,6 +200,18 @@ export const TesterPage: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {health && !health.model_loaded && !health.is_mock && (
+        <div
+          role="alert"
+          className="flex items-center gap-2.5 rounded-xl border border-amber-300 bg-amber-50 px-4 py-3 text-xs font-medium text-amber-900"
+        >
+          <AlertTriangle className="h-4 w-4 shrink-0 text-amber-700" aria-hidden="true" />
+          <span>
+            Mô hình AI ({health.model_name}) hiện chưa nạp xong trên máy chủ. Kết quả phân tích có thể bị gián đoạn hoặc chuyển sang kiểm tra thủ công.
+          </span>
+        </div>
+      )}
 
       {/* Biểu mẫu nhập liệu */}
       <div className="tester-workbench-grid grid grid-cols-1 items-stretch gap-5 lg:grid-cols-[minmax(0,1.35fr)_minmax(340px,1fr)]">
@@ -198,7 +240,7 @@ export const TesterPage: React.FC = () => {
               rows={6}
               style={{ resize: "none" }}
               aria-label="Nội dung phản hồi của khách hàng"
-              placeholder="Nhập nội dung phản hồi của khách hàng bằng tiếng Anh (ví dụ: 'My order hasn't arrived after 2 weeks and I want my money back!')..."
+              placeholder="Nhập nội dung phản hồi của khách hàng bằng tiếng Anh..."
               className="tester-textarea min-h-[176px] w-full flex-1 resize-none rounded-xl border border-slate-200 bg-slate-50/50 p-4 font-sans text-sm leading-6 text-slate-900 shadow-inner transition focus:border-teal-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-teal-500/20"
               required
             />
@@ -213,9 +255,8 @@ export const TesterPage: React.FC = () => {
                 className="tester-submit-btn inline-flex min-h-10 items-center gap-2 rounded-xl px-5 py-2.5 text-sm font-semibold text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#126B67] focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-55"
               >
                 <svg
-                  className={`tester-spin mr-0.5 h-4 w-4 animate-spin text-white ${
-                    triageMutation.isPending ? "inline-block" : "hidden"
-                  }`}
+                  className={`tester-spin mr-0.5 h-4 w-4 animate-spin text-white ${triageMutation.isPending ? "inline-block" : "hidden"
+                    }`}
                   xmlns="http://www.w3.org/2000/svg"
                   fill="none"
                   viewBox="0 0 24 24"
@@ -236,9 +277,8 @@ export const TesterPage: React.FC = () => {
                   />
                 </svg>
                 <Send
-                  className={`tester-send-icon h-4 w-4 ${
-                    triageMutation.isPending ? "hidden" : "inline-block"
-                  }`}
+                  className={`tester-send-icon h-4 w-4 ${triageMutation.isPending ? "hidden" : "inline-block"
+                    }`}
                   aria-hidden="true"
                 />
                 <span>{triageMutation.isPending ? "Đang phân tích..." : "Phân tích ngay"}</span>
@@ -282,17 +322,15 @@ export const TesterPage: React.FC = () => {
                 key={idx}
                 type="button"
                 onClick={() => setContent(sample.text)}
-                className={`tester-sample-btn flex items-center justify-between text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#126B67] focus-visible:ring-offset-1 ${
-                  content === sample.text ? "is-active" : ""
-                }`}
+                className={`tester-sample-btn flex items-center justify-between text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#126B67] focus-visible:ring-offset-1 ${content === sample.text ? "is-active" : ""
+                  }`}
               >
                 <span className="flex flex-1 items-center justify-between gap-2">
                   <span
-                    className={`tester-sample-label text-[13px] ${
-                      content === sample.text
+                    className={`tester-sample-label text-[13px] ${content === sample.text
                         ? "font-semibold text-teal-950"
                         : "font-medium text-slate-700"
-                    }`}
+                      }`}
                   >
                     {sample.label.replace(/\s*\([^)]+\)\s*$/, "")}
                   </span>
@@ -428,7 +466,7 @@ export const TesterPage: React.FC = () => {
                 Mức ưu tiên tính toán
               </span>
               <div className="mt-4 flex items-end justify-start">
-                <PriorityBadge score={result.priority_score} />
+                <PriorityBadge score={result.priority_score} level={result.priority_level} />
               </div>
             </div>
 
@@ -437,13 +475,18 @@ export const TesterPage: React.FC = () => {
                 Cảm xúc tổng thể
               </span>
               <div className="tester-metric-value mt-4 flex items-end justify-between pr-20">
-                <span className="tester-value-pill rounded-full px-2.5 py-1 text-sm font-medium capitalize">
-                  {result.sentiment_label || "Chưa xác định"}
+                <span
+                  className={`tester-value-pill rounded-full px-2.5 py-1 text-sm font-medium ${result.sentiment_label ? `is-${result.sentiment_label}` : ""
+                    }`}
+                >
+                  {resultSentimentMeta?.label ?? "Chưa xác định"}
                 </span>
               </div>
-              <span className="tester-value-mono pointer-events-none absolute bottom-4 right-5 select-none font-mono text-2xl font-black leading-none tabular-nums text-slate-700/80">
-                {result.confidence && `${animatedConfidence}%`}
-              </span>
+              {result.confidence != null && (
+                <span className="tester-value-mono pointer-events-none absolute bottom-4 right-5 select-none font-mono text-2xl font-black leading-none tabular-nums text-slate-700/80">
+                  {`${animatedConfidence}%`}
+                </span>
+              )}
             </div>
 
             <div className="tester-metric-card tester-metric-lang relative flex min-h-[96px] flex-col justify-between p-5">
@@ -451,8 +494,15 @@ export const TesterPage: React.FC = () => {
                 Ngôn ngữ & Cờ duyệt
               </span>
               <div className="tester-metric-value mt-4 flex items-end justify-between pr-16">
-                <span className="tester-value-pill rounded-full px-2.5 py-1 text-sm font-medium">
-                  {result.needs_manual_review ? "(Cần duyệt)" : "(Hợp lệ)"}
+                <span
+                  className={`tester-value-pill rounded-full px-2.5 py-1 text-sm font-medium ${result.needs_manual_review || result.low_confidence ? "is-warn" : ""
+                    }`}
+                >
+                  {result.needs_manual_review
+                    ? "Cần duyệt thủ công"
+                    : result.low_confidence
+                      ? "Độ tin cậy thấp"
+                      : "Hợp lệ"}
                 </span>
               </div>
               <span className="tester-lang-code pointer-events-none absolute bottom-4 right-5 select-none font-mono text-2xl font-black leading-none tracking-tight text-slate-700/80">

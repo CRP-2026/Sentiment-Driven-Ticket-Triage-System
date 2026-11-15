@@ -1,44 +1,44 @@
 import React from "react";
-import { PriorityBreakdownOut } from "../../api/schema";
-import { formatScore } from "../../lib/format";
 import { AlertCircle, CheckCircle2 } from "lucide-react";
+import { useAspects } from "../../api/hooks";
+import { AspectMetaItem, PriorityBreakdownOut } from "../../api/schema";
+import { formatScore } from "../../lib/format";
+import {
+  getAspectDisplayName,
+  getEvidenceLevel,
+  getEvidenceTone,
+} from "../../lib/ticketHelpers";
 
 interface PriorityBreakdownProps {
   breakdown?: PriorityBreakdownOut | null;
   dominantAspect?: string | null;
   needsManualReview?: boolean;
+  aspectsMeta?: readonly AspectMetaItem[];
 }
 
-const getEvidenceTone = (reason: string) => {
-  if (/keyword|urgent|immediately|asap|lawsuit|fraud|scam|chargeback|refund|cancel|broken|stolen|dispute/i.test(reason)) return "urgency";
-  if (/intensity|caps lock|!!!/i.test(reason)) return "intensity";
-  if (/aspect|dominant|weight=|_[a-z]+/i.test(reason)) return "aspect";
-  return "sentiment";
-};
-
-const criticalEvidenceTerms = ["urgent", "immediately", "asap", "lawsuit", "sue", "lawyer", "fraud", "scam", "chargeback", "stolen"];
-const highEvidenceTerms = ["broken", "refund", "cancel", "not working", "never received", "dispute", "charged twice", "missing", "damaged", "overcharged"];
-
 const renderEvidenceText = (reason: string) =>
-  reason.split(/('[^']+')/g).map((part, index) =>
-    {
-      const phrase = part.slice(1, -1).toLowerCase();
-      const level = criticalEvidenceTerms.includes(phrase)
-        ? "critical"
-        : highEvidenceTerms.includes(phrase)
-          ? "high"
-          : "aspect";
-      return part.startsWith("'") && part.endsWith("'")
-        ? <mark className={`audit-evidence-highlight audit-evidence-level-${level}`} key={index}>{part}</mark>
-        : part;
-    },
-  );
+  reason.split(/('[^']+')/g).map((part, index) => {
+    if (part.startsWith("'") && part.endsWith("'") && part.length >= 2) {
+      const phrase = part.slice(1, -1);
+      const level = getEvidenceLevel(phrase);
+      return (
+        <mark className={`audit-evidence-highlight audit-evidence-level-${level}`} key={index}>
+          {part}
+        </mark>
+      );
+    }
+    return part;
+  });
 
 export const PriorityBreakdown: React.FC<PriorityBreakdownProps> = ({
   breakdown,
   dominantAspect,
   needsManualReview,
+  aspectsMeta,
 }) => {
+  const { data: fetchedAspects } = useAspects();
+  const resolvedMeta = aspectsMeta ?? fetchedAspects;
+
   if (!breakdown) {
     return (
       <div className="audit-breakdown-empty p-4 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-500 italic">
@@ -51,7 +51,7 @@ export const PriorityBreakdown: React.FC<PriorityBreakdownProps> = ({
     <div className="audit-breakdown bg-white border border-slate-200 rounded-lg p-4 shadow-sm space-y-3">
       <div className="audit-breakdown-header flex items-center justify-between border-b pb-2">
         <div>
-          <h4 className="text-sm font-semibold text-slate-900">Chi tiết chấm điểm ưu tiên (theo quy tắc)</h4>
+          <h4 className="text-sm font-semibold text-slate-900">Chi tiết chấm điểm ưu tiên</h4>
           <p className="text-xs text-slate-500">Minh bạch, kiểm toán được theo công thức nghiệp vụ</p>
         </div>
         <div className="text-right">
@@ -68,7 +68,11 @@ export const PriorityBreakdown: React.FC<PriorityBreakdownProps> = ({
       )}
 
       {/* Grid các thành phần điểm */}
-      <div className="audit-contribution-track" role="img" aria-label={`Score component contributions: base ${formatScore(breakdown.base)}, urgency ${formatScore(breakdown.urgency_bonus)}, intensity ${formatScore(breakdown.intensity_bonus)}, aspect ${formatScore(breakdown.aspect_bonus)}`}>
+      <div
+        className="audit-contribution-track"
+        role="img"
+        aria-label={`Phân bổ thành phần điểm: điểm nền ${formatScore(breakdown.base)}, từ khóa khẩn cấp ${formatScore(breakdown.urgency_bonus)}, cường độ ${formatScore(breakdown.intensity_bonus)}, khía cạnh ${formatScore(breakdown.aspect_bonus)}`}
+      >
         <span className="audit-segment-base" style={{ flexGrow: breakdown.base }} />
         <span className="audit-segment-urgency" style={{ flexGrow: breakdown.urgency_bonus }} />
         <span className="audit-segment-intensity" style={{ flexGrow: breakdown.intensity_bonus }} />
@@ -96,14 +100,17 @@ export const PriorityBreakdown: React.FC<PriorityBreakdownProps> = ({
 
       {dominantAspect && (
         <div className="audit-dominant-aspect text-xs text-slate-600">
-          Khía cạnh quyết định: <strong className="capitalize text-slate-900">{dominantAspect.replace("_", " ")}</strong>
+          Khía cạnh quyết định:{" "}
+          <strong className="text-slate-900">
+            {getAspectDisplayName(dominantAspect, resolvedMeta)}
+          </strong>
         </div>
       )}
 
       {/* Danh sách lý do minh chứng */}
       <details className="audit-evidence">
         <summary className="audit-evidence-summary">
-        <span className="text-xs font-medium text-slate-700 block mb-1">Căn cứ giải trình cụ thể:</span>
+          <span className="text-xs font-medium text-slate-700 block mb-1">Căn cứ giải trình cụ thể:</span>
         </summary>
         <ul className="audit-evidence-list space-y-1">
           {breakdown.reasons.map((reason, idx) => {

@@ -1,13 +1,36 @@
 import React from "react";
 import { NavLink } from "react-router-dom";
 import { Inbox, FlaskConical, BarChart3, ShieldCheck } from "lucide-react";
+import { useHealth } from "../../api/hooks";
 
 export const Navigation: React.FC = () => {
+  const { data: health, isError: isHealthError } = useHealth();
+
   const navItems = [
     { to: "/", label: "Hộp thư ưu tiên", icon: <Inbox className="w-[18px] h-[18px]" /> },
     { to: "/tester", label: "Kiểm thử trực tiếp", icon: <FlaskConical className="w-[18px] h-[18px]" /> },
     { to: "/analytics", label: "Phân tích thống kê", icon: <BarChart3 className="w-[18px] h-[18px]" /> },
   ];
+
+  let dotClass = "";
+  let statusText = "Đang theo dõi hàng đợi";
+  let statusTitle: string | undefined;
+
+  if (isHealthError) {
+    dotClass = "is-error";
+    statusText = "Mất kết nối máy chủ";
+  } else if (health) {
+    statusTitle = `Mô hình: ${health.model_name} (v${health.version})`;
+    if (!health.model_loaded && !health.is_mock) {
+      dotClass = "is-warn";
+      statusText = `Model chưa sẵn sàng · Hàng đợi: ${health.queue_size}`;
+    } else if (health.is_mock) {
+      dotClass = "is-mock";
+      statusText = `Chế độ Mock · Hàng đợi: ${health.queue_size}`;
+    } else {
+      statusText = `Trực tuyến · Hàng đợi: ${health.queue_size}`;
+    }
+  }
 
   return (
     <aside className="app-sidebar">
@@ -41,9 +64,9 @@ export const Navigation: React.FC = () => {
           </section>
         ))}
       </nav>
-      <div className="app-sidebar-foot">
-        <span className="app-live-dot" />
-        <span>Đang theo dõi hàng đợi</span>
+      <div className="app-sidebar-foot" title={statusTitle}>
+        <span className={`app-live-dot ${dotClass}`} />
+        <span>{statusText}</span>
       </div>
     </aside>
   );

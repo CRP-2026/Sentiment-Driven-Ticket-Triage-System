@@ -318,31 +318,30 @@ Các gói công việc WBS liên quan: `WBS 1.7.1`, `1.7.2`, `1.7.3`, `1.7.4`.
 Dashboard được tổ chức thành 3 khung nhìn tương tác chính phục vụ các vai trò vận hành khác nhau:
 
 ### 7.1. Hộp thư ưu tiên (Triage Inbox View - WBS 1.7.1)
-- Hiển thị danh sách ticket xếp theo `priority_score` giảm dần từ cao xuống thấp.
-- Mỗi hàng ticket hiển thị thẻ phân màu theo mức độ (`CRITICAL`: Đỏ, `MEDIUM`: Vàng, `LOW`: Xanh), kèm nhãn văn bản và điểm số rõ ràng.
-- Gắn chip khía cạnh trực quan: Mỗi chip hiển thị tên khía cạnh kèm biểu tượng cảm xúc (Tiêu cực: Đỏ, Trung tính: Xám, Tích cực: Xanh). Ưu tiên xếp chip tiêu cực lên trước.
-- Hiển thị huy hiệu cảnh báo nổi bật cho các ticket bị gắn cờ `needs_manual_review` hoặc `low_confidence`.
-- Bộ lọc động theo khía cạnh (`aspect`), trạng thái xử lý (`status`) và cảm xúc (`sentiment`).
+- Hiển thị danh sách ticket xếp theo `priority_score` giảm dần từ cao xuống thấp, hỗ trợ phân trang từ server (`offset` / `limit = 50`).
+- Mỗi hàng ticket hiển thị thẻ phân màu theo mức độ ưu tiên lấy trực tiếp từ `priority_level` của API (`CRITICAL`: Nghiêm trọng, `MEDIUM`: Trung bình, `LOW`: Thấp), kèm điểm số và `aria-label` rõ ràng.
+- Gắn chip khía cạnh trực quan theo tên tiếng Việt từ `/api/v1/meta/aspects`: Mỗi chip hiển thị tên khía cạnh kèm sắc thái cảm xúc (Tiêu cực: Đỏ, Trung tính: Xám, Tích cực: Xanh), ưu tiên xếp chip tiêu cực lên trước.
+- Hiển thị huy hiệu cảnh báo nổi bật cho các ticket bị gắn cờ ngoại ngữ, `needs_manual_review` hoặc `low_confidence`.
+- Hiển thị bảng **Phân bố khía cạnh** từ `stats.aspect_counts` của server cùng bộ lọc cố định layout theo khía cạnh (`aspect`), trạng thái xử lý (`status`) và cảm xúc (`sentiment`).
 
 ### 7.2. Bảng phân tích thống kê khía cạnh cảm xúc (Aspect Analytics View - WBS 1.7.2)
 - Tích hợp các biểu đồ tương tác thời gian thực trên React Frontend sử dụng thư viện `Recharts`:
-  - **Aspect Frequency Bar Chart:** Biểu đồ thanh ngang thể hiện các khía cạnh xuất hiện nhiều nhất.
-  - **Sentiment & Priority Pie Charts:** Biểu đồ tròn phân bổ tỷ lệ cảm xúc và các mức ưu tiên (`CRITICAL` / `MEDIUM` / `LOW`) từ `/api/v1/stats/overview`.
-  - **KPI Overview Cards:** Thẻ chỉ số tổng số vé, số vé khẩn cấp, số vé cần kiểm duyệt thủ công và tỷ lệ đã giải quyết.
-  - *(Backend hiện cũng đã cung cấp endpoint `GET /api/v1/stats/aspects` trả về ma trận Khía cạnh × Cảm xúc để Frontend mở rộng biểu đồ Stacked Bar ở bước tiếp theo).*
+  - **KPI Overview Cards:** 4 thẻ chỉ số tổng hợp gồm **Tổng số ticket**, **Ưu tiên Nghiêm trọng** (kèm `%` hàng đợi), **Chưa đóng** (Mới / Đã giao / Xử lý) và **Đã giải quyết** (kèm `%` hoàn tất).
+  - **Sentiment & Priority Pie Charts:** Hai biểu đồ tròn phân bổ tỷ lệ cảm xúc tổng thể và mức độ ưu tiên từ `GET /api/v1/stats/overview` (mỗi lát cắt gắn màu cố định theo nhóm trước khi lọc hạng mục `> 0`, tránh lệch màu).
+  - **Aspect × Sentiment Stacked Bar Chart:** Biểu đồ cột xếp chồng **Ma trận Khía cạnh × Cảm xúc** dựng trực tiếp từ `GET /api/v1/stats/aspects`, trực quan hóa số lượng phản hồi Tiêu cực / Trung tính / Tích cực trên từng khía cạnh (`name_vi`).
+  - **Aspect Frequency Bar Chart:** Biểu đồ cột thể hiện tần suất xuất hiện của từng khía cạnh CSKH (`name_vi`) từ `/api/v1/stats/overview`.
 
 ### 7.3. Khung kiểm thử phân loại thời gian thực (Live Tester Simulator - WBS 1.7.3)
-- Hộp nhập liệu văn bản ticket tiếng Anh bất kỳ để kiểm thử trực tiếp năng lực phân loại của hệ thống.
-- Bấm nút **Analyze Ticket** để kích hoạt luồng xử lý toàn trình và trả về kết quả trong vòng 1–2 giây:
-  - Cảm xúc tổng thể kèm độ tin cậy;
-  - Bảng danh sách các khía cạnh trích xuất được;
-  - Bảng điểm ưu tiên và **danh sách giải trình chi tiết từng thành phần (`reasons`)**;
-  - Dự báo vị trí hàng đợi nếu ticket được lưu vào hệ thống.
+- Kết nối `GET /api/v1/health` để hiển thị tên mô hình đang nạp và trạng thái (`Mock` / `AI thật` / `Chưa nạp model` / `Mất kết nối`).
+- Hộp nhập liệu văn bản ticket kèm các nút mẫu thử nhanh để kiểm thử trực tiếp luồng xử lý toàn trình qua `POST /api/v1/tickets`:
+  - Mức ưu tiên tính toán (`PriorityBadge`), cảm xúc tổng thể tiếng Việt kèm độ tin cậy, ngôn ngữ & cờ duyệt;
+  - Danh sách các khía cạnh trích xuất được (`AspectChips`);
+  - Bảng điểm ưu tiên và **danh sách giải trình chi tiết từng thành phần (`PriorityBreakdown` & `reasons`)**.
 
 ### 7.4. Thành phần thao tác cập nhật (Ticket Action Component - WBS 1.7.4)
-- Cho phép nhân viên CSKH chọn một ticket trên giao diện để xem toàn bộ nội dung gốc.
-- Thao tác nhanh: Gán nhân sự xử lý (`assigned_to`), chuyển đổi trạng thái (`assigned` → `in_progress` → `resolved`).
-- Cập nhật tức thì vào SQLite và tự động đồng bộ làm mới lại hàng đợi hiển thị trên Inbox.
+- Cho phép nhân viên CSKH chọn một ticket trên bảng Inbox để mở hộp thoại chi tiết (render qua Portal cố định header/footer) xem toàn bộ nội dung gốc kèm highlight từ khóa chứng cứ và `PriorityBreakdown`.
+- Thao tác nhanh trên bảng (`StatusSelect`): cập nhật trạng thái hợp lệ theo FSM (`new` → `assigned` / `in_progress`, `assigned` → `in_progress` / `new`, `in_progress` → `resolved` / `assigned`, `resolved` → `new`), khóa sẵn các lựa chọn bị cấm ở tầng UX (Backend `StateManager` giữ quyền kiểm duyệt cuối) kèm optimistic update và rollback khi lỗi.
+- Tự động đồng bộ làm mới cache `tickets`, `stats` và `health` sau khi cập nhật.
 
 ---
 
