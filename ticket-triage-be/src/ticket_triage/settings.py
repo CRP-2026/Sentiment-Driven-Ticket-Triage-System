@@ -11,6 +11,7 @@ class Settings(BaseSettings):
     testing: bool = False
     model_name: str = "mock"          # mock | baseline | deberta
     model_path: str = str(BASE_DIR / "models")
+    model_id: str = ""                # Repo HuggingFace tùy chọn (vd: MoritzLaurer/deberta-v3-base-zeroshot-v1.1-all-33)
     model_task: str = "absa"          # absa | document
     enable_abte: bool = False
     cors_origins: list[str] = ["http://localhost:5173", "http://localhost:8080"]
