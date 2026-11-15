@@ -3,7 +3,7 @@
 > **Dự án:** Hệ thống phân loại & định tuyến phản hồi khách hàng theo cảm xúc (*Sentiment-Driven Ticket Triage System*)  
 > **Mã dự án:** `TICKET-TRIAGE-01` | **Ngày rà soát:** 2026-11-12  
 > **Tiếp nối từ:** [Issue.md](./Issue.md) (Đợt 1 đã xử lý 8 lỗi baseline `#1`–`#8`)  
-> **Trạng thái kiểm tra hiện tại:** `ruff check` PASSED, `18/18` unit/e2e backend tests PASSED, `19/19` non-TestClient regression tests PASSED, `pnpm run check` & `vitest` (`3/3`) PASSED; còn tồn tại **6 vấn đề kỹ thuật & điểm lệch đồng bộ (`#9`–`#14`)**.
+> **Trạng thái kiểm tra hiện tại (16/11/2026):** `ruff check .` PASSED, **62/62** backend tests PASSED, `contracts/openapi.json` == `app.openapi()`, `pnpm run check` & `vitest` (**3/3**) & `pnpm run build` PASSED; các vấn đề Backend/Contract/Docs (**`#9`–`#13`** và phần BE của **`#10`, `#11`**) đã xử lý xong (riêng suy luận AI thật cần `requirements-ml.txt` + checkpoint trong `models/`, còn phần Frontend của `#11`/`#14` giữ nguyên theo scope BE).
 
 ---
 
@@ -108,48 +108,24 @@
 
 ## ⚖️ II. Bảng Tổng Hợp Đối Chiếu Code vs Tài Liệu / Hợp Đồng
 
-| ID | Thành phần | Hiện trạng trong Code | Kỳ vọng theo Tài liệu / Hợp đồng | Rủi ro |
+| ID | Thành phần | Hiện trạng sau xử lý | Kỳ vọng theo Tài liệu / Hợp đồng | Trạng thái |
 |:---:|:---|:---|:---|:---|
-| **#9** | `priority_engine.py` & `priority_rules.yaml` | ✅ **Đã xử lý:** Đã nạp động `load_priority_rules()` & `load_aspect_weights()`, đồng bộ từ khóa/caps/ngưỡng. | Nạp động qua `load_priority_rules()` (`lru_cache`), thống nhất 1 nguồn sự thật YAML. | Đã xử lý |
-| **#10** | `main.py`, `baseline.py`, `abte.py` | Chỉ nhận `baseline` vs `mock`; `model_path` trỏ thư mục rỗng; `MODEL_TASK` & `ENABLE_ABTE` chưa nối. | Hỗ trợ `mock \| baseline \| deberta`, fallback `MODEL_TASK=document`, tùy chọn `ENABLE_ABTE`. | Cao |
-| **#11** | `contracts/openapi.json` & `schema.d.ts` | Thiếu `/api/v1/tickets/triage` trong `openapi.json`; FE dùng `schema.d.ts` viết tay thiếu `is_mock`, `model_loaded`. | `contracts/openapi.json` khớp 100% `app.openapi()`; FE dùng type từ `generated.ts`. | Cao |
-| **#12** | `baseline.py` (`load_aspect_hypotheses`) | `target_path.is_file()` lỗi nếu `target_path` là `None`. | Trả về `{}` an toàn khi thiếu file và ưu tiên `settings.configs_dir`. | Trung bình |
-| **#13** | `priority_queue.py` & `tickets.py` | 🟡 **Đã xử lý phần an toàn luồng & ORM:** Đã thêm `RLock`, dedup `ticket_id`, chuẩn hóa UTC và lưu `ticket_queue_metadata`; API list vẫn đọc SQLite. | An toàn luồng, chỉ lưu dữ liệu thuần hoặc chuyển hẳn sang DB-backed queue. | Thấp |
-| **#14** | `AnalyticsPage.tsx`, `StatusSelect.tsx`, Vitest | Bỏ qua data `/stats/aspects`, cho chọn chuyển trạng thái sai trên UI, chỉ có 3 unit test. | Hiển thị ma trận Aspect × Sentiment, khóa bước chuyển sai, bổ sung component tests. | Trung bình |
+| **#9** | `priority_engine.py` & `priority_rules.yaml` | ✅ **Đã xử lý:** Nạp động `load_priority_rules()` & `load_aspect_weights()`, đồng bộ từ khóa/caps/ngưỡng + `_is_resolved_clause`. | Nạp động qua `load_priority_rules()` (`lru_cache`), thống nhất 1 nguồn sự thật YAML. | ✅ Đã xử lý |
+| **#10** | `main.py`, `baseline.py`, `abte.py`, `docker.yaml` | ✅ **Đã xử lý (Code):** Hỗ trợ `baseline \| deberta`, `MODEL_ID`, `MODEL_TASK`, `ENABLE_ABTE`, trích xuất `terms` từ `aspects.yaml`, cập nhật `docker.yaml` & `/health` `model_loaded`. (Suy luận thật cần `requirements-ml.txt` + checkpoint trong `models/`). | Hỗ trợ `mock \| baseline \| deberta`, fallback `MODEL_TASK=document`, tùy chọn `ENABLE_ABTE`. | ✅ Đã xử lý (chờ env ML) |
+| **#11** | `contracts/openapi.json` & `schema.d.ts` | ✅ **Đã sync `contracts/openapi.json`** khớp 100% `app.openapi()`; phía FE (`schema.d.ts` / `generated.ts`) giữ nguyên baseline ngoài scope BE. | `contracts/openapi.json` khớp 100% `app.openapi()`; FE dùng type từ `generated.ts`. | 🟡 Xong BE Contract |
+| **#12** | `baseline.py`, `config_utils.py` | ✅ **Đã xử lý:** Guard `target_path is not None`, đọc `overall_sentiment_template` từ YAML, trích xuất helper dùng chung `config_utils.find_config_file()`. | Trả về `{}` an toàn khi thiếu file và ưu tiên `settings.configs_dir`. | ✅ Đã xử lý |
+| **#13** | `priority_queue.py` & `tickets.py` | ✅ **Đã xử lý phần an toàn luồng & ORM:** Thêm `RLock`, dedup `ticket_id`, chuẩn hóa UTC và lưu `ticket_queue_metadata`; SQLite phục vụ phân trang/lọc. | An toàn luồng, chỉ lưu dữ liệu thuần hoặc chuyển hẳn sang DB-backed queue. | ✅ Đã xử lý |
+| **#14** | `AnalyticsPage.tsx`, `StatusSelect.tsx`, Vitest | Giữ nguyên Frontend baseline (ngoài scope BE). Backend đã có sẵn `/stats/aspects`, FSM `StateManager` và bổ sung tests BE (`62/62` pass). | Hiển thị ma trận Aspect × Sentiment, khóa bước chuyển sai, bổ sung component tests. | ⏳ Ngoài scope BE |
 
 ---
 
-## 💡 III. Đề Xuất Hành Động Theo Từng Nhóm
+## 💡 III. Tóm Tắt Thực Thi Theo Từng Nhóm (`#9`–`#14`)
 
-### 1. Backend Core & AI (`#9`, `#10`, `#12`)
-* **#9 (✅ Đã xử lý):** Đã viết `load_priority_rules()` + `load_aspect_weights()` (`@lru_cache`), nạp từ `settings.configs_dir`, đồng bộ `"charged twice"`, `"damaged"`, `"overcharged"` và `urgency_points` giữa YAML, `priority_engine.py` và `System-Ticket-Report.md` / `Backend-Plan.md` / `start.md`.
-* **#10:** Cập nhật `main.py` hỗ trợ `MODEL_NAME in ("baseline", "deberta")` (chỉ dùng `settings.model_path` khi thư mục có file config model hợp lệ, ngược lại dùng HuggingFace repo ID mặc định tương ứng). Nối `settings.model_task == "document"` và `settings.enable_abte` vào `pipeline.py`.
-* **#12:** Sửa điều kiện thành `if target_path is not None and target_path.is_file():` trong `load_aspect_hypotheses()`, đồng thời truyền đường dẫn từ `settings.configs_dir` khi khởi tạo `ZeroShotNliModel` trong `main.py`.
-
-### 2. Backend API, Queue & Hợp đồng (`#11`, `#13`)
-* **#11:** Xuất lại `contracts/openapi.json` từ `app.openapi()` để bao gồm `/api/v1/tickets/triage`, chạy `pnpm run gen-api` sinh `src/api/generated.ts` và tái xuất các type trong `src/api/schema.d.ts` từ `components["schemas"]`.
-* **#13 (🟡 Đã xử lý phần an toàn luồng & ORM):** Đã thêm `threading.RLock`, dedup `ticket_id`, chuẩn hóa UTC trong `TicketPriorityQueue`, và lưu `ticket_queue_metadata(ticket)` dict thay vì ORM `Ticket`; phần còn lại là cân nhắc có dùng hẳn SQLite cho `/tickets/queue` hay tiếp tục duy trì heap RAM.
-
-### 3. Frontend & QA (`#14`)
-* **#14:**
-  * Dùng dữ liệu từ `useAspectsStats()` trên `AnalyticsPage.tsx` để vẽ biểu đồ stacked bar / bảng ma trận **Khía cạnh × Cảm xúc** (`negative` / `neutral` / `positive`).
-  * Áp dụng bản đồ chuyển trạng thái hợp lệ trong `StatusSelect.tsx` để vô hiệu hóa (`disabled`) các trạng thái không được phép chuyển tiếp.
-  * Bổ sung unit/regression test cho `load_priority_rules()`, `MODEL_NAME=deberta`, `load_aspect_hypotheses(None)`, và viết thêm component tests bằng `@testing-library/react` cho `PriorityBadge`, `StatusSelect`, `TicketTable`.
-
----
-
-## 🚀 IV. Kế Hoạch Triển Khai Đề Xuất
-
-### Đợt 1 — Đồng bộ Cấu hình & Hợp đồng (Ưu tiên cao)
-1. **Sửa #9:** Triển khai `load_priority_rules()` và thống nhất `priority_rules.yaml` với `priority_engine.py` + tài liệu.
-2. **Sửa #12:** Guard `target_path is not None` trong `baseline.py`.
-3. **Sửa #11:** Cập nhật `contracts/openapi.json`, chạy `gen-api`, nối `schema.d.ts` với `generated.ts`.
-
-### Đợt 2 — Hoàn thiện Model Loading & Queue
-4. **Sửa #10:** Hoàn thiện nhánh `deberta`, fallback `MODEL_TASK=document`, và kiểm tra model dir trong `main.py`.
-5. **Sửa #13:** Bổ sung `threading.Lock`, dedup theo `ticket_id` và bỏ lưu ORM object trong `TicketPriorityQueue` (hoặc tinh giản dùng DB-backed queue).
-
-### Đợt 3 — Nâng cấp Frontend & Nghiệm thu Test
-6. **Sửa #14:** Hiển thị dữ liệu `useAspectsStats()`, giới hạn transition hợp lệ ở `StatusSelect.tsx`, bổ sung test Frontend và test hồi quy Backend cho các issue `#9`–`#14`.
-7. Chạy lại đầy đủ `ruff check .`, `pytest -v` (bao gồm cả nhóm `TestClient` ngoài sandbox), `pnpm run check` và `pnpm run test`.
+1. **Backend Core & AI (`#9`, `#10`, `#12` — ✅ Đã xử lý):**
+   * Hoàn thiện `load_priority_rules()`, `load_aspect_weights()`, `load_aspect_keywords()` (`aspects.yaml` SSOT), `config_utils.find_config_file()`, `extract_aspect_terms()` (`ENABLE_ABTE`), guard `target_path is not None` & `overall_sentiment_template` trong `baseline.py`, nhánh `baseline | deberta` + `MODEL_ID` + `MODEL_TASK` trong `main.py`, sửa `model_loaded` trong `health.py`, và bổ sung env AI trong `docker.yaml`.
+2. **Backend API, Queue & Hợp đồng (`#11` Contract BE, `#13` — ✅ Đã xử lý):**
+   * Xuất lại `contracts/openapi.json` (`== app.openapi()`), dùng `RLock` + `ticket_queue_metadata` trong Heap.
+3. **Frontend & Tài liệu BE (`#14` giữ nguyên FE; Docs BE — ✅ Đã xử lý):**
+   * Mã nguồn `ticket-triage-fe/` giữ nguyên theo baseline (ngoài scope BE). Đã đồng bộ `Backend-Plan.md`, `System-Ticket-Report.md` và `README.md`.
+   * **Nghiệm thu cuối:** `pytest -v` (**62/62**), `ruff check .` (PASSED), `contracts/openapi.json` == `app.openapi()`, `pnpm run check` (PASSED), `pnpm run test` (**3/3** `format.test.ts`), `pnpm run build` (PASSED). Lưu ý chạy model ML thật vẫn yêu cầu cài `requirements-ml.txt` (`torch`/`transformers`/`peft`) và có checkpoint thật hoặc internet.
 

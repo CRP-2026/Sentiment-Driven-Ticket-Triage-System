@@ -1,4 +1,10 @@
-from ticket_triage.core.preprocessing.keyword_prefilter import filter_candidate_aspects
+from pathlib import Path
+
+from ticket_triage.core.preprocessing.keyword_prefilter import (
+    DEFAULT_ASPECT_KEYWORDS,
+    filter_candidate_aspects,
+    load_aspect_keywords,
+)
 from ticket_triage.core.preprocessing.lang_validator import validate_english
 from ticket_triage.core.preprocessing.normalizer import clean_text
 from ticket_triage.core.preprocessing.pipeline import preprocess_ticket
@@ -52,3 +58,33 @@ def test_preprocess_ticket_pipeline():
     assert res.is_english is True
     assert "refund_payment" in res.candidate_aspects or "product_quality" in res.candidate_aspects
     assert res.needs_manual_review is False
+
+
+def test_load_aspect_keywords_from_yaml_and_fallback(tmp_path):
+    repo_aspects = Path(__file__).resolve().parents[1] / "configs" / "aspects.yaml"
+    loaded = load_aspect_keywords(repo_aspects)
+    assert "never received" in loaded["shipping"]
+    assert "charged twice" in loaded["refund_payment"]
+
+    custom_yaml = tmp_path / "aspects.yaml"
+    custom_yaml.write_text(
+        """
+aspects:
+  - id: security_privacy
+    weight: 1.5
+    keywords:
+      - data breach
+      - leaked password
+  - id: general
+    weight: 0.5
+    keywords: []
+""",
+        encoding="utf-8",
+    )
+    custom_keywords = load_aspect_keywords(custom_yaml)
+    assert filter_candidate_aspects("Possible data breach detected!", aspect_keywords=custom_keywords) == [
+        "security_privacy"
+    ]
+
+    missing_keywords = load_aspect_keywords(tmp_path / "missing.yaml")
+    assert missing_keywords == DEFAULT_ASPECT_KEYWORDS

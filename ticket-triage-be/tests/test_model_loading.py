@@ -8,6 +8,7 @@ from starlette.testclient import TestClient
 
 from ticket_triage.api.main import _resolve_nli_model_source
 from ticket_triage.core.sentiment import baseline as baseline_mod
+from ticket_triage.core.sentiment.abte import extract_aspect_terms
 from ticket_triage.core.sentiment.baseline import (
     DEFAULT_HF_MODELS,
     ZeroShotNliModel,
@@ -125,6 +126,8 @@ def test_lifespan_model_selection_from_settings(client: TestClient, tmp_path, mo
     orig_model = getattr(client.app.state, "sentiment_model", None)
     orig_name = getattr(client.app.state, "model_name", None)
     orig_task = getattr(client.app.state, "model_task", None)
+    orig_abte = getattr(client.app.state, "enable_abte", None)
+    orig_keywords = getattr(client.app.state, "aspect_keywords", None)
     orig_hf_offline = os.environ.get("HF_HUB_OFFLINE")
 
     monkeypatch.setattr(settings, "configs_dir", str(configs_dir))
@@ -167,9 +170,11 @@ def test_lifespan_model_selection_from_settings(client: TestClient, tmp_path, mo
         monkeypatch.setattr(settings, "model_name", "mock")
         monkeypatch.setattr(settings, "model_path", str(local_models))
         monkeypatch.setattr(settings, "model_task", "document")
+        monkeypatch.setattr(settings, "enable_abte", False)
         with TestClient(client.app) as scoped:
             assert isinstance(scoped.app.state.sentiment_model, MockSentimentModel)
             assert scoped.app.state.model_task == "document"
+            assert scoped.app.state.enable_abte is False
             resp = scoped.post(
                 "/api/v1/tickets",
                 json={"content": "My package is broken and never received! Urgent refund."},
@@ -179,6 +184,23 @@ def test_lifespan_model_selection_from_settings(client: TestClient, tmp_path, mo
             assert body["aspects"] == []
             assert body["dominant_aspect"] is None
             assert body["priority_breakdown"]["aspect_bonus"] == 0.0
+
+        # Case E: ENABLE_ABTE=true populates extracted aspect terms in ABSA mode
+        monkeypatch.setattr(settings, "model_name", "mock")
+        monkeypatch.setattr(settings, "model_task", "absa")
+        monkeypatch.setattr(settings, "enable_abte", True)
+        with TestClient(client.app) as scoped:
+            assert scoped.app.state.enable_abte is True
+            resp = scoped.post(
+                "/api/v1/tickets",
+                json={"content": "My package never received and I need a refund to my credit card."},
+            )
+            assert resp.status_code == 201
+            aspects_by_id = {item["aspect"]: item for item in resp.json()["aspects"]}
+            assert "shipping" in aspects_by_id
+            assert "never received" in aspects_by_id["shipping"]["terms"]
+            assert "refund_payment" in aspects_by_id
+            assert "credit card" in aspects_by_id["refund_payment"]["terms"]
     finally:
         if orig_hf_offline is None:
             os.environ.pop("HF_HUB_OFFLINE", None)
@@ -190,3 +212,37 @@ def test_lifespan_model_selection_from_settings(client: TestClient, tmp_path, mo
             client.app.state.model_name = orig_name
         if orig_task is not None:
             client.app.state.model_task = orig_task
+        if orig_abte is not None:
+            client.app.state.enable_abte = orig_abte
+        if orig_keywords is not None:
+            client.app.state.aspect_keywords = orig_keywords
+
+
+def test_extract_aspect_terms_longest_match_first():
+    terms = extract_aspect_terms(
+        "My Package was NEVER RECEIVED and I was double charged on my Credit Card.",
+        "refund_payment",
+    )
+    assert terms == ("double charged", "Credit Card")
+
+
+def test_health_reports_model_loaded_false_on_nli_fallback(client: TestClient, monkeypatch):
+    orig_model = getattr(client.app.state, "sentiment_model", None)
+    orig_name = getattr(client.app.state, "model_name", None)
+    try:
+        fallback_nli = ZeroShotNliModel(model_name_or_path="org/missing-model", hypotheses={})
+        monkeypatch.setattr(fallback_nli, "_ensure_loaded", lambda: None)
+        fallback_nli._classifier = None
+        client.app.state.model_name = "deberta"
+        client.app.state.sentiment_model = fallback_nli
+
+        res = client.get("/api/v1/health")
+        assert res.status_code == 200
+        payload = res.json()
+        assert payload["is_mock"] is True
+        assert payload["model_loaded"] is False
+    finally:
+        if orig_model is not None:
+            client.app.state.sentiment_model = orig_model
+        if orig_name is not None:
+            client.app.state.model_name = orig_name
