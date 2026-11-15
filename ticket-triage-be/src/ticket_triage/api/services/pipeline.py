@@ -11,7 +11,7 @@ from ...core.priority.priority_engine import (
     load_priority_rules,
 )
 from ...core.queue.priority_queue import TicketPriorityQueue
-from ...core.sentiment.base import BaseSentimentModel
+from ...core.sentiment.base import AbsaResult, BaseSentimentModel
 from ...core.taxonomy import Taxonomy
 from ...db.models import Ticket
 from ...db.repository import TicketRepository
@@ -34,6 +34,7 @@ def process_ticket_pipeline(
     priority_queue: TicketPriorityQueue | None = None,
     taxonomy: Taxonomy | None = None,
     priority_rules: PriorityRules | None = None,
+    model_task: str = "absa",
 ) -> Ticket:
     """Điều phối toàn trình 2 bài toán:
     1. Module 1: Preprocessing + Language Validator + Keyword Pre-filter
@@ -84,8 +85,13 @@ def process_ticket_pipeline(
 
         return ticket
 
-    # 3. Tiếng Anh hợp lệ -> Kích hoạt Bài toán 1 (ABSA)
-    absa_res = sentiment_model.predict(pre.clean_text, candidates=pre.candidate_aspects)
+    # 3. Tiếng Anh hợp lệ -> Kích hoạt Bài toán 1 (ABSA hoặc chế độ dự phòng Document)
+    task_mode = (model_task or "absa").strip().lower()
+    if task_mode == "document":
+        raw_res = sentiment_model.predict(pre.clean_text, candidates=[])
+        absa_res = AbsaResult(overall=raw_res.overall, aspects=[])
+    else:
+        absa_res = sentiment_model.predict(pre.clean_text, candidates=pre.candidate_aspects)
     is_low_conf = absa_res.overall.confidence < 0.50
 
     # 4. Trích xuất trọng số khía cạnh từ Taxonomy

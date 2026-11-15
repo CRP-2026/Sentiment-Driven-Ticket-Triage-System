@@ -23,6 +23,7 @@ def triage_ticket(
     queue = request.app.state.priority_queue
     taxonomy = request.app.state.taxonomy
     priority_rules = getattr(request.app.state, "priority_rules", None)
+    model_task = getattr(request.app.state, "model_task", "absa")
 
     ticket = process_ticket_pipeline(
         raw_text=payload.content,
@@ -31,6 +32,7 @@ def triage_ticket(
         priority_queue=queue,
         taxonomy=taxonomy,
         priority_rules=priority_rules,
+        model_task=model_task,
     )
     return ticket # type: ignore
 

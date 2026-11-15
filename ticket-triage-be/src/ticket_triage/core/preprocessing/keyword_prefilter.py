@@ -21,7 +21,7 @@ ASPECT_KEYWORDS: dict[str, list[str]] = {
         "ship", "shipping", "deliver", "delivery", "delivered", "package",
         "parcel", "box", "tracking", "track", "transit", "carrier", "courier",
         "usps", "fedex", "ups", "late", "delay", "delayed", "never arrived",
-        "lost package", "wrong address", "customs"
+        "never received", "lost package", "wrong address", "customs"
     ],
     "general": [
         "account", "login", "password", "website", "app", "policy", "faq",
