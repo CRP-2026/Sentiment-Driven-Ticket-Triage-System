@@ -5,7 +5,7 @@ from ...core.queue.state_manager import InvalidStateTransitionError
 from ...db.repository import TicketRepository
 from ...db.session import get_db
 from ..schemas import StatusUpdateIn, TicketCreateIn, TicketListResponse, TicketOut
-from ..services.pipeline import process_ticket_pipeline
+from ..services.pipeline import process_ticket_pipeline, ticket_queue_metadata
 
 router = APIRouter(prefix="/tickets", tags=["Tickets"])
 
@@ -22,6 +22,7 @@ def triage_ticket(
     model = request.app.state.sentiment_model
     queue = request.app.state.priority_queue
     taxonomy = request.app.state.taxonomy
+    priority_rules = getattr(request.app.state, "priority_rules", None)
 
     ticket = process_ticket_pipeline(
         raw_text=payload.content,
@@ -29,6 +30,7 @@ def triage_ticket(
         sentiment_model=model,
         priority_queue=queue,
         taxonomy=taxonomy,
+        priority_rules=priority_rules,
     )
     return ticket # type: ignore
 
@@ -114,6 +116,11 @@ def update_ticket_status(
         if updated.status == "resolved":
             queue.remove(ticket_id)
         elif old_status == "resolved" and updated.status != "resolved":
-            queue.push(updated.id, updated.priority_score, updated.created_at, updated)
+            queue.push(
+                updated.id,
+                updated.priority_score,
+                updated.created_at,
+                ticket_queue_metadata(updated),
+            )
 
     return updated # type: ignore

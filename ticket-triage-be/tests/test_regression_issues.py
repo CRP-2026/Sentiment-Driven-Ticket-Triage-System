@@ -220,3 +220,70 @@ def test_issue_8_stats_and_health_schemas(client: TestClient):
     aspects_data = [AspectStatItem(**item) for item in aspects_res.json()]
     assert isinstance(aspects_data, list)
 
+
+
+def test_priority_rules_configs_dir_lifespan_and_queue_metadata_isolation(
+    client: TestClient,
+    tmp_path,
+    monkeypatch,
+):
+    import shutil
+    from pathlib import Path
+
+    from ticket_triage.core.priority.priority_engine import load_priority_rules
+    from ticket_triage.db.models import Ticket
+    from ticket_triage.settings import settings
+
+    repo_configs = Path(__file__).resolve().parents[1] / "configs"
+    for filename in ("aspects.yaml", "aspect_hypotheses.yaml"):
+        src = repo_configs / filename
+        if src.is_file():
+            shutil.copy2(src, tmp_path / filename)
+
+    (tmp_path / "priority_rules.yaml").write_text(
+        """
+urgency_keywords:
+  critical:
+    - "platinum_outage"
+  high: []
+urgency_cap: 35.0
+aspect_cap: 20.0
+intensity_bonus: 5.0
+urgency_points:
+  critical_last_sentence: 35.0
+  critical_other_sentence: 20.0
+  high_last_sentence: 15.0
+  high_other_sentence: 10.0
+priority_thresholds:
+  high: 50.0
+  medium: 20.0
+""",
+        encoding="utf-8",
+    )
+
+    orig_rules = getattr(client.app.state, "priority_rules", None)
+    monkeypatch.setattr(settings, "configs_dir", str(tmp_path))
+
+    try:
+        with TestClient(client.app) as scoped_client:
+            assert "platinum_outage" in scoped_client.app.state.priority_rules.critical_keywords
+            res = scoped_client.post(
+                "/api/v1/tickets",
+                json={"content": "Please check this platinum_outage on checkout."},
+            )
+            assert res.status_code in (200, 201)
+            payload = res.json()
+            assert payload["priority_breakdown"]["urgency_bonus"] == 35.0
+            assert payload["priority_level"] == "CRITICAL"
+
+            queue = scoped_client.app.state.priority_queue
+            matching = [item for item in queue.to_sorted_list() if item.ticket_id == payload["id"]]
+            assert len(matching) == 1
+            assert isinstance(matching[0].data, dict)
+            assert not isinstance(matching[0].data, Ticket)
+            assert matching[0].data["id"] == payload["id"]
+            assert matching[0].data["priority_level"] == "CRITICAL"
+    finally:
+        load_priority_rules.cache_clear()
+        if orig_rules is not None:
+            client.app.state.priority_rules = orig_rules
