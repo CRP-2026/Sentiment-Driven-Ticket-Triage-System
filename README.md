@@ -115,21 +115,21 @@ Mở **Terminal 2** tại thư mục gốc:
 ## 📋 Các tính năng chính trên Giao diện (Dashboard)
 
 1. **Hộp thư phân loại ưu tiên (`/` - Inbox):**
-   - Danh sách ticket tự động sắp xếp theo điểm ưu tiên `priority_score` giảm dần từ cao xuống thấp.
-   - Thẻ màu nhận diện trực quan:
-     - <span style="color:red">**CRITICAL / Cao (≥ 70 điểm)**</span>: Viền đỏ, xử lý khẩn cấp.
+   - Danh sách ticket tự động sắp xếp theo điểm ưu tiên `priority_score` giảm dần từ cao xuống thấp, hỗ trợ phân trang (`offset`/`limit`, 50 yêu cầu/trang) và bộ lọc theo trạng thái / khía cạnh / cảm xúc kèm thống kê khía cạnh toàn hệ thống từ `/api/v1/stats/overview`.
+   - Thẻ màu nhận diện trực quan ưu tiên sử dụng trường `priority_level` từ API (fallback ngưỡng 70 / 30):
+     - <span style="color:red">**CRITICAL / Nghiêm trọng (≥ 70 điểm)**</span>: Viền đỏ, xử lý khẩn cấp.
      - <span style="color:orange">**MEDIUM / Trung bình (30 - 69 điểm)**</span>: Viền vàng.
      - <span style="color:green">**LOW / Thấp (< 30 điểm)**</span>: Viền xanh.
-   - Chip khía cạnh cảm xúc (tiêu cực xếp trước).
-   - Click vào bất kỳ dòng nào để xem **Bảng giải trình chi tiết từng thành phần điểm (`reasons`)**.
-   - Cập nhật trực tiếp trạng thái (`new` → `assigned` → `in_progress` → `resolved`).
+   - Chip khía cạnh cảm xúc hiển thị nhãn tiếng Việt từ `/api/v1/meta/aspects` (tiêu cực xếp trước).
+   - Click vào bất kỳ dòng nào để xem **Bảng giải trình chi tiết từng thành phần điểm (`reasons`)** trong modal overlay toàn màn hình.
+   - Cập nhật trực tiếp trạng thái kèm kiểm tra FSM (`StatusSelect` vô hiệu hóa các bước chuyển không hợp lệ như `new` → `resolved`; chỉ mở `new` → `assigned`/`in_progress`, `assigned` ↔ `in_progress`, `in_progress` → `resolved`, `resolved` → `new`).
 2. **Khung mô phỏng thời gian thực (`/tester` - Live Tester):**
    - Thử nghiệm các nút kịch bản mẫu ("Bị trừ tiền 2 lần", "Hàng hỏng + trễ", "Hỏi đáp", "Ngoại ngữ tiếng Việt").
-   - Nhập nội dung bất kỳ và nhấn **Phân tích & Triage ngay** để theo dõi kết quả ABSA và công thức điểm ưu tiên trong 1-2 giây.
+   - Nhập nội dung bất kỳ và nhấn **Phân tích & Triage ngay** để theo dõi kết quả ABSA và công thức điểm ưu tiên; thanh điều hướng và trang Tester đồng thời hiển thị trạng thái model thực tế từ `/api/v1/health` (`model_name`, `Mock` / `AI thật`, cảnh báo khi `model_loaded=false` và kích thước hàng đợi).
 3. **Phân tích thống kê (`/analytics`):**
-   - Biểu đồ phân bố tỷ lệ cảm xúc (Tiêu cực / Trung tính / Tích cực).
-   - Biểu đồ phân cấp ưu tiên.
-   - Biểu đồ tần suất các khía cạnh phàn nàn nhiều nhất.
+   - 4 thẻ KPI tổng quan: Tổng số ticket, Ưu tiên Nghiêm trọng, Chưa đóng, Đã giải quyết.
+   - Biểu đồ phân bố tỷ lệ cảm xúc (Tiêu cực / Trung tính / Tích cực) và phân cấp ưu tiên (giữ nguyên bảng màu cố định theo từng hạng mục).
+   - Biểu đồ cột xếp chồng **Ma trận Khía cạnh × Cảm xúc** từ `/api/v1/stats/aspects` cùng biểu đồ tần suất các khía cạnh (`name_vi`).
 
 ---
 
@@ -141,7 +141,7 @@ Mở **Terminal 2** tại thư mục gốc:
 | `make seed` | Nạp dữ liệu mẫu vào CSDL SQLite |
 | `make test` | Chạy kiểm thử tự động (pytest + vitest) |
 | `make lint` | Kiểm tra cú pháp và định dạng mã nguồn (ruff + eslint) |
-| `make gen-api` | Tự động đồng bộ hợp đồng OpenAPI sang TypeScript schema |
+| `make gen-api` | Tự động đồng bộ hợp đồng OpenAPI sang TypeScript schema (`src/api/generated.ts`) |
 | `make reset-db` | Xóa và tạo mới lại cơ sở dữ liệu SQLite sạch |
 | `make demo` | Khởi chạy bản đóng gói phục vụ thuyết trình bảo vệ đồ án |
 
@@ -156,14 +156,15 @@ Mở **Terminal 2** tại thư mục gốc:
 │   │   ├── core/            # Logic nghiệp vụ thuần (ABSA, Priority Engine, heapq, State Machine)
 │   │   ├── db/              # ORM models, session SQLite, Repository DAL CRUD
 │   │   └── api/             # FastAPI routers, schemas, services
-│   ├── configs/             # YAML: aspects, hypotheses, priority rules
+│   ├── configs/             # YAML bắt buộc: aspects, hypotheses, priority rules
 │   ├── tests/               # Test suite đầy đủ (pytest)
 │   └── scripts/             # Script seed dữ liệu mẫu
 ├── ticket-triage-fe/         # Frontend: React, Vite, TypeScript, pnpm, TailwindCSS
 │   ├── src/
-│   │   ├── api/             # Fetch client, TanStack Query hooks, schema types
-│   │   ├── components/      # PriorityBadge, AspectChips, TicketTable, StatusSelect
-│   │   └── pages/           # InboxPage, TesterPage, AnalyticsPage
+│   │   ├── api/             # Fetch client, TanStack Query hooks, generated.ts & schema types
+│   │   ├── components/      # PriorityBadge, AspectChips, TicketTable, StatusSelect, PriorityBreakdown
+│   │   ├── lib/             # format, ticketHelpers (FSM, evidence highlight, matrix), unit tests
+│   │   └── pages/           # InboxPage, TesterPage, AnalyticsPage (+ Vitest static SSR specs)
 ├── contracts/               # Hợp đồng openapi.json giao tiếp giữa BE và FE
 ├── docs/                    # Hồ sơ dự án: Charter, WBS, System Architecture Report
 ├── docker.yaml              # Docker Compose dev environment

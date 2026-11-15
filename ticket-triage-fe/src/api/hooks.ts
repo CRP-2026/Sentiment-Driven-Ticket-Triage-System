@@ -7,12 +7,59 @@ import {
   TicketCreateIn,
   StatusUpdateIn,
   AspectMetaItem,
+  AspectStatItem,
+  HealthResponse,
   StatsOverview,
 } from "./schema";
-import { POLL_QUEUE_MS, POLL_STATS_MS } from "../lib/constants";
+import { POLL_HEALTH_MS, POLL_QUEUE_MS, POLL_STATS_MS } from "../lib/constants";
 import { MOCK_TICKETS, MOCK_ASPECTS, MOCK_STATS } from "../mocks/tickets";
 
 const USE_MOCK = import.meta.env.VITE_USE_MOCK === "true";
+
+const TICKETS_LIST_QUERY_PREFIX = ["tickets", "list"] as const;
+
+const MOCK_ASPECT_STATS: AspectStatItem[] = [
+  { aspect: "customer_service", sentiment: "negative", count: 12 },
+  { aspect: "customer_service", sentiment: "neutral", count: 4 },
+  { aspect: "customer_service", sentiment: "positive", count: 3 },
+  { aspect: "refund_payment", sentiment: "negative", count: 18 },
+  { aspect: "refund_payment", sentiment: "neutral", count: 3 },
+  { aspect: "refund_payment", sentiment: "positive", count: 1 },
+  { aspect: "product_quality", sentiment: "negative", count: 14 },
+  { aspect: "product_quality", sentiment: "neutral", count: 5 },
+  { aspect: "product_quality", sentiment: "positive", count: 4 },
+  { aspect: "shipping", sentiment: "negative", count: 16 },
+  { aspect: "shipping", sentiment: "neutral", count: 6 },
+  { aspect: "shipping", sentiment: "positive", count: 2 },
+  { aspect: "general", sentiment: "negative", count: 3 },
+  { aspect: "general", sentiment: "neutral", count: 20 },
+  { aspect: "general", sentiment: "positive", count: 8 },
+];
+
+type UpdateStatusContext = {
+  previousLists: Array<[readonly unknown[], TicketListResponse | undefined]>;
+  previousDetail: TicketOut | undefined;
+};
+
+export function useHealth() {
+  return useQuery<HealthResponse>({
+    queryKey: queryKeys.health,
+    queryFn: async () => {
+      if (USE_MOCK) {
+        return {
+          status: "ok",
+          version: "0.1.0",
+          model_name: "mock",
+          is_mock: true,
+          model_loaded: true,
+          queue_size: MOCK_TICKETS.filter((t) => t.status !== "resolved").length,
+        };
+      }
+      return api.get<HealthResponse>("/health");
+    },
+    refetchInterval: POLL_HEALTH_MS,
+  });
+}
 
 export function useTickets(filters: {
   status?: string;
@@ -29,7 +76,14 @@ export function useTickets(filters: {
         if (filters.status) items = items.filter((t) => t.status === filters.status);
         if (filters.aspect) items = items.filter((t) => t.aspects.some((a) => a.aspect === filters.aspect));
         if (filters.sentiment) items = items.filter((t) => t.sentiment_label === filters.sentiment);
-        return { items, total: items.length, limit: filters.limit ?? 50, offset: filters.offset ?? 0 };
+        const limit = filters.limit ?? 50;
+        const offset = filters.offset ?? 0;
+        return {
+          items: items.slice(offset, offset + limit),
+          total: items.length,
+          limit,
+          offset,
+        };
       }
 
       const params = new URLSearchParams();
@@ -84,19 +138,11 @@ export function useStatsOverview() {
 }
 
 export function useAspectsStats() {
-  return useQuery<Array<{ aspect: string; sentiment: string; count: number }>>({
+  return useQuery<AspectStatItem[]>({
     queryKey: queryKeys.stats.aspects,
     queryFn: async () => {
-      if (USE_MOCK) {
-        return [
-          { aspect: "customer_service", sentiment: "negative", count: 12 },
-          { aspect: "refund_payment", sentiment: "negative", count: 18 },
-          { aspect: "product_quality", sentiment: "negative", count: 14 },
-          { aspect: "shipping", sentiment: "negative", count: 16 },
-          { aspect: "general", sentiment: "neutral", count: 20 },
-        ];
-      }
-      return api.get<Array<{ aspect: string; sentiment: string; count: number }>>("/stats/aspects");
+      if (USE_MOCK) return MOCK_ASPECT_STATS;
+      return api.get<AspectStatItem[]>("/stats/aspects");
     },
     refetchInterval: POLL_STATS_MS,
   });
@@ -139,29 +185,92 @@ export function useTriageTicket() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.tickets.all });
       queryClient.invalidateQueries({ queryKey: queryKeys.stats.overview });
+      queryClient.invalidateQueries({ queryKey: queryKeys.stats.aspects });
+      queryClient.invalidateQueries({ queryKey: queryKeys.health });
     },
   });
 }
 
 export function useUpdateStatus() {
   const queryClient = useQueryClient();
-  return useMutation<TicketOut, Error, { id: number; payload: StatusUpdateIn }>({
+  return useMutation<TicketOut, Error, { id: number; payload: StatusUpdateIn }, UpdateStatusContext>({
     mutationFn: async ({ id, payload }) => {
       if (USE_MOCK) {
-        const t = MOCK_TICKETS.find((item) => item.id === id);
-        if (t) {
-          t.status = payload.status;
-          if (payload.assigned_to !== undefined) t.assigned_to = payload.assigned_to;
-          t.updated_at = new Date().toISOString();
+        const index = MOCK_TICKETS.findIndex((item) => item.id === id);
+        if (index === -1) {
+          throw new Error(`Không tìm thấy ticket #${id} trong dữ liệu mẫu`);
         }
-        return t!;
+        const updated: TicketOut = {
+          ...MOCK_TICKETS[index],
+          status: payload.status,
+          assigned_to: payload.assigned_to !== undefined ? payload.assigned_to : MOCK_TICKETS[index].assigned_to,
+          updated_at: new Date().toISOString(),
+        };
+        MOCK_TICKETS[index] = updated;
+        return updated;
       }
       return api.patch<TicketOut>(`/tickets/${id}/status`, payload);
     },
-    onSuccess: (_, vars) => {
+    onMutate: async ({ id, payload }) => {
+      await queryClient.cancelQueries({ queryKey: queryKeys.tickets.all });
+
+      const previousLists = queryClient.getQueriesData<TicketListResponse>({
+        queryKey: TICKETS_LIST_QUERY_PREFIX,
+      });
+      const detailKey = queryKeys.tickets.detail(id);
+      const previousDetail = queryClient.getQueryData<TicketOut>(detailKey);
+      const nowIso = new Date().toISOString();
+
+      queryClient.setQueriesData<TicketListResponse>(
+        { queryKey: TICKETS_LIST_QUERY_PREFIX },
+        (old) => {
+          if (!old) return old;
+          return {
+            ...old,
+            items: old.items.map((item) =>
+              item.id === id
+                ? {
+                    ...item,
+                    status: payload.status,
+                    assigned_to: payload.assigned_to !== undefined ? payload.assigned_to : item.assigned_to,
+                    updated_at: nowIso,
+                  }
+                : item
+            ),
+          };
+        }
+      );
+
+      if (previousDetail) {
+        queryClient.setQueryData<TicketOut>(detailKey, {
+          ...previousDetail,
+          status: payload.status,
+          assigned_to: payload.assigned_to !== undefined ? payload.assigned_to : previousDetail.assigned_to,
+          updated_at: nowIso,
+        });
+      }
+
+      return { previousLists, previousDetail };
+    },
+    onError: (_err, vars, context) => {
+      if (context?.previousLists) {
+        for (const [key, data] of context.previousLists) {
+          queryClient.setQueryData(key, data);
+        }
+      }
+      if (context?.previousDetail !== undefined) {
+        queryClient.setQueryData(queryKeys.tickets.detail(vars.id), context.previousDetail);
+      }
+    },
+    onSuccess: (updatedTicket, vars) => {
+      queryClient.setQueryData(queryKeys.tickets.detail(vars.id), updatedTicket);
       queryClient.invalidateQueries({ queryKey: queryKeys.tickets.detail(vars.id) });
-      queryClient.invalidateQueries({ queryKey: queryKeys.tickets.all });
       queryClient.invalidateQueries({ queryKey: queryKeys.stats.overview });
+      queryClient.invalidateQueries({ queryKey: queryKeys.stats.aspects });
+      queryClient.invalidateQueries({ queryKey: queryKeys.health });
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.tickets.all });
     },
   });
 }
