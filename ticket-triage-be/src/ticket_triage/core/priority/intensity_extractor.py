@@ -3,7 +3,8 @@ from dataclasses import dataclass
 
 CAPS_WORD_RE = re.compile(r"\b[A-Z]{6,}\b")
 EXCLAMATION_RE = re.compile(r"!{3,}")
-QUESTION_RE = re.compile(r"\?{2,}")
+QUESTION_RE = re.compile(r"\?{3,}")
+
 
 @dataclass(frozen=True)
 class IntensityAnalysis:
@@ -13,9 +14,12 @@ class IntensityAnalysis:
     bonus: float
     reason: str | None
 
-def extract_intensity_bonus(text: str, is_negative_overall: bool, bonus_value: float = 5.0) -> IntensityAnalysis:
+
+def extract_intensity_bonus(
+    text: str, is_negative_overall: bool, bonus_value: float = 5.0
+) -> IntensityAnalysis:
     """Trích xuất cường độ cảm xúc từ cú pháp câu tiếng Anh:
-    - +5 điểm (hoặc theo cấu hình YAML) nếu có chuỗi '!!!' hoặc từ viết hoa (CAPS LOCK, len > 5)
+    - +5 điểm (hoặc theo cấu hình YAML) nếu có '!!!', '???' hoặc từ viết hoa (CAPS LOCK, len >= 6)
       VÀ cảm xúc tổng thể là negative.
     """
     if not text:
@@ -28,6 +32,8 @@ def extract_intensity_bonus(text: str, is_negative_overall: bool, bonus_value: f
     triggers = []
     if has_excl:
         triggers.append("dấu cảm thán liên tiếp '!!!'")
+    if has_q:
+        triggers.append("dấu hỏi dồn dập '???'")
     if has_caps:
         triggers.append("từ viết hoa toàn bộ (CAPS LOCK)")
 
@@ -35,7 +41,7 @@ def extract_intensity_bonus(text: str, is_negative_overall: bool, bonus_value: f
     reason = None
 
     if triggers and is_negative_overall:
-        bonus = float(bonus_value)
+        bonus = max(0.0, float(bonus_value))
         reason = f"Cú pháp câu thể hiện bức xúc ({', '.join(triggers)}): +{bonus:.1f}"
 
     return IntensityAnalysis(
