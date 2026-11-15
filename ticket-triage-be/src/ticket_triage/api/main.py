@@ -5,6 +5,7 @@ from pathlib import Path
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from ..core.priority.priority_engine import load_priority_rules
 from ..core.queue.priority_queue import TicketPriorityQueue
 from ..core.sentiment.baseline import ZeroShotNliModel, load_aspect_hypotheses
 from ..core.sentiment.mock import MockSentimentModel
@@ -14,6 +15,7 @@ from ..db.repository import TicketRepository
 from ..db.session import SessionLocal, engine
 from ..settings import settings
 from .routers import health, meta, stats, tickets
+from .services.pipeline import ticket_queue_metadata
 
 logger = logging.getLogger("ticket_triage")
 logging.basicConfig(level=logging.INFO)
@@ -38,6 +40,17 @@ async def lifespan(app: FastAPI):
     hypotheses_yaml_path = Path(settings.configs_dir) / "aspect_hypotheses.yaml"
     hypotheses_data = load_aspect_hypotheses(hypotheses_yaml_path)
 
+    # 3b. Nạp configs/priority_rules.yaml (Single Source of Truth cho Priority Engine)
+    rules_yaml_path = Path(settings.configs_dir) / "priority_rules.yaml"
+    load_priority_rules.cache_clear()
+    priority_rules_loaded = rules_yaml_path.is_file()
+    app.state.priority_rules = (
+        load_priority_rules(rules_yaml_path)
+        if priority_rules_loaded
+        else load_priority_rules()
+    )
+    logger.info("priority_rules.yaml loaded: %s", priority_rules_loaded)
+
     # 4. Nạp mô hình cảm xúc (lazy / mock)
     model_name = settings.model_name.lower()
     app.state.model_name = model_name
@@ -60,7 +73,9 @@ async def lifespan(app: FastAPI):
         with SessionLocal() as db:
             unresolved = TicketRepository.get_unresolved_tickets(db)
             for t in unresolved:
-                queue.push(t.id, t.priority_score, t.created_at, t)
+                queue.push(
+                    t.id, t.priority_score, t.created_at, ticket_queue_metadata(t)
+                )
             logger.info("Reloaded %d unresolved tickets from SQLite into priority heap.", len(unresolved))
         app.state.priority_queue = queue
     else:

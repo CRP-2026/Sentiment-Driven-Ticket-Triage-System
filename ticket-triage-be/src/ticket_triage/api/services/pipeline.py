@@ -3,12 +3,28 @@ from typing import Any
 from sqlalchemy.orm import Session
 
 from ...core.preprocessing.pipeline import preprocess_ticket
-from ...core.priority.priority_engine import PriorityBreakdown, calculate_priority
+from ...core.priority.priority_engine import (
+    PriorityBreakdown,
+    PriorityRules,
+    calculate_priority,
+    classify_priority_level,
+    load_priority_rules,
+)
 from ...core.queue.priority_queue import TicketPriorityQueue
 from ...core.sentiment.base import BaseSentimentModel
 from ...core.taxonomy import Taxonomy
 from ...db.models import Ticket
 from ...db.repository import TicketRepository
+
+
+def ticket_queue_metadata(ticket: Ticket) -> dict[str, int | str | None]:
+    """Tạo metadata nguyên thủy cho priority_queue để tránh giữ ORM object tách session."""
+    return {
+        "id": ticket.id,
+        "priority_level": ticket.priority_level,
+        "status": ticket.status,
+        "dominant_aspect": ticket.dominant_aspect,
+    }
 
 
 def process_ticket_pipeline(
@@ -17,6 +33,7 @@ def process_ticket_pipeline(
     sentiment_model: BaseSentimentModel,
     priority_queue: TicketPriorityQueue | None = None,
     taxonomy: Taxonomy | None = None,
+    priority_rules: PriorityRules | None = None,
 ) -> Ticket:
     """Điều phối toàn trình 2 bài toán:
     1. Module 1: Preprocessing + Language Validator + Keyword Pre-filter
@@ -50,7 +67,7 @@ def process_ticket_pipeline(
             confidence=pre.lang_confidence,
             low_confidence=False,
             priority_score=50.0,
-            priority_level="MEDIUM",
+            priority_level=classify_priority_level(50.0, priority_rules or load_priority_rules()),
             priority_breakdown=breakdown_dict,
             dominant_aspect="general",
             status="new",
@@ -58,7 +75,12 @@ def process_ticket_pipeline(
         )
 
         if priority_queue is not None:
-            priority_queue.push(ticket.id, ticket.priority_score, ticket.created_at, ticket)
+            priority_queue.push(
+                ticket.id,
+                ticket.priority_score,
+                ticket.created_at,
+                ticket_queue_metadata(ticket),
+            )
 
         return ticket
 
@@ -76,6 +98,7 @@ def process_ticket_pipeline(
         result=absa_res,
         text=pre.clean_text,
         aspect_weights=aspect_weights,
+        rules=priority_rules,
     )
 
     breakdown_dict = {
@@ -117,6 +140,11 @@ def process_ticket_pipeline(
 
     # 7. Đẩy vào hàng đợi ưu tiên in-memory
     if priority_queue is not None:
-        priority_queue.push(ticket.id, ticket.priority_score, ticket.created_at, ticket)
+        priority_queue.push(
+            ticket.id,
+            ticket.priority_score,
+            ticket.created_at,
+            ticket_queue_metadata(ticket),
+        )
 
     return ticket

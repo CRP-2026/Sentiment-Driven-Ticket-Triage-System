@@ -10,6 +10,7 @@ urgency_keywords:
     - scam
     - chargeback
     - stolen
+    - charged twice
   high:
     - broken
     - refund
@@ -17,8 +18,15 @@ urgency_keywords:
     - not working
     - never received
     - dispute
-    - charged twice
     - missing
+    - damaged
+    - overcharged
+
+urgency_points:
+  critical_last_sentence: 30.0
+  critical_other_sentence: 20.0
+  high_last_sentence: 15.0
+  high_other_sentence: 10.0
 
 urgency_cap: 30.0
 aspect_cap: 20.0
