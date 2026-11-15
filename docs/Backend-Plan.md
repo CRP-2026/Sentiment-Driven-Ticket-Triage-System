@@ -93,7 +93,7 @@ Toàn bộ tham số nghiệp vụ được tách biệt khỏi mã nguồn Pyth
     *   **Vai trò:** "Người gác cổng" (Gatekeeper) bảo vệ ranh giới chuyên biệt tiếng Anh (English-only Boundary). Vẫn tiếp nhận ticket (HTTP `201 Created`) với mức ưu tiên mặc định `50.0` (`MEDIUM`) và gắn cờ chờ kiểm duyệt thủ công thay vì chạy qua mô hình NLI.
     *   **Trạng thái:** **Dùng thật 100%**.
 *   [core/preprocessing/keyword_prefilter.py](../ticket-triage-be/src/ticket_triage/core/preprocessing/keyword_prefilter.py)
-    *   **Logic bên trong:** Quét nhanh sự xuất hiện của từ khóa đặc trưng theo từng khía cạnh bằng Regex boundary `\b...\b`; đọc cấu hình trực tiếp từ `configs/aspects.yaml` (`load_aspect_keywords()`) và có fallback sang `DEFAULT_ASPECT_KEYWORDS`.
+    *   **Logic bên trong:** Quét nhanh sự xuất hiện của từ khóa đặc trưng theo từng khía cạnh bằng Regex boundary `\b...\b`; bắt buộc nạp cấu hình từ `configs/aspects.yaml` qua `load_aspect_keywords()` theo cơ chế fail-fast (`FileNotFoundError` / `ValueError` / `TypeError`, không giữ bộ từ khóa fallback trong Python).
     *   **Vai trò:** Thu hẹp danh sách khía cạnh cần suy luận (Candidate Aspects), giúp giảm $2\times - 3\times$ thời gian chạy so với việc quét vét cạn trên mô hình AI nặng.
     *   **Trạng thái:** **Dùng thật 100%**.
 *   [core/preprocessing/pipeline.py](../ticket-triage-be/src/ticket_triage/core/preprocessing/pipeline.py)
