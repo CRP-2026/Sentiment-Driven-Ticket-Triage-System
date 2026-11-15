@@ -67,7 +67,7 @@ Toàn bộ tham số nghiệp vụ được tách biệt khỏi mã nguồn Pyth
     *   **Vai trò:** Dùng cho mô hình Zero-shot NLI để suy luận xác suất giữa văn bản khiếu nại và khía cạnh/cảm xúc liên quan.
     *   **Trạng thái:** **Dùng thật 100%**.
 *   [priority_rules.yaml](../ticket-triage-be/configs/priority_rules.yaml)
-    *   **Logic bên trong:** Định nghĩa danh mục từ khóa khẩn cấp (`critical`, `high`), trần điểm khẩn cấp (`urgency_cap = 30.0`), trần điểm khía cạnh (`aspect_cap = 20.0`), điểm cường độ cú pháp (`intensity_bonus = 5.0`), và các ngưỡng phân cấp ưu tiên (`high: 70.0`, `medium: 30.0`).
+    *   **Logic bên trong:** Định nghĩa danh mục từ khóa khẩn cấp (`critical`, `high`), điểm cộng vị trí câu `urgency_points` (`critical_last_sentence: 30.0`, `critical_other_sentence: 20.0`, `high_last_sentence: 15.0`, `high_other_sentence: 10.0`), trần điểm khẩn cấp (`urgency_cap = 30.0`), trần điểm khía cạnh (`aspect_cap = 20.0`), điểm cường độ cú pháp (`intensity_bonus = 5.0`), và các ngưỡng phân cấp ưu tiên (`high: 70.0`, `medium: 30.0`).
     *   **Vai trò:** Quản lý tập trung mọi tham số và luật tính điểm phân loại ưu tiên có thể tinh chỉnh mà không cần sửa code.
     *   **Trạng thái:** **Dùng thật 100%**.
 
@@ -122,29 +122,29 @@ Toàn bộ tham số nghiệp vụ được tách biệt khỏi mã nguồn Pyth
 #### D. Phân hệ Tính điểm Ưu tiên (`core/priority/` - Bài toán 2)
 *   [core/priority/intensity_extractor.py](../ticket-triage-be/src/ticket_triage/core/priority/intensity_extractor.py)
     *   **Logic bên trong:**
-        1. Đo tỷ lệ viết hoa toàn bộ (All-caps ratio).
-        2. Đếm các cụm dấu chấm than liên tiếp `!{2,}` hoặc dấu hỏi chấm `?!`.
-        3. Phát hiện từ khóa phủ định tiếng Anh (`not`, `never`, `cannot`, `won't`) đứng trước từ tích cực để đảo chiều sắc thái.
-        4. Tra cứu danh sách từ ngữ bức xúc, khẩn cấp (`stolen`, `fraud`, `lawsuit`, `urgent`).
-    *   **Vai trò:** Tính ra điểm cường độ cảm xúc khách hàng ($I_{bonus} \in [0, 100]$) và ghi nhận lý do chi tiết vào audit log.
+        1. Bắt từ viết hoa toàn bộ (`\b[A-Z]{6,}\b`, CAPS LOCK từ 6 ký tự trở lên).
+        2. Bắt chuỗi dấu chấm than liên tiếp (`!{3,}`) và dấu hỏi dồn dập (`\?{3,}`).
+        3. Chỉ cộng điểm `bonus_value` (mặc định `5.0` từ `priority_rules.yaml`) khi `overall.label == "negative"` để tránh cộng nhầm câu khen phấn khích.
+    *   **Vai trò:** Tính điểm cường độ cảm xúc khách hàng (`intensity_bonus`) và ghi nhận lý do chi tiết vào danh sách giải trình `reasons`.
     *   **Trạng thái:** **Dùng thật 100%**.
 *   [core/priority/priority_engine.py](../ticket-triage-be/src/ticket_triage/core/priority/priority_engine.py)
     *   **Logic bên trong:** Triển khai công thức toán học minh bạch theo nguyên lý **Worst-Aspect-Wins**:
         $$\text{score} = \min\left(100.0, \; \text{base} + \text{urgency\_bonus} + \text{intensity\_bonus} + \text{aspect\_bonus}\right)$$
         *   Điểm nền `base`: Negative ($60.0 \times \text{confidence}$), Neutral ($20.0$), Positive ($5.0$).
-        *   Điểm khẩn cấp `urgency_bonus`: Từ khóa critical/high (+20 ở câu cuối, +15/+10 câu trước), xử lý phủ định cho từ hạ nhiệt, trần $30.0$.
-        *   Điểm cường độ `intensity_bonus`: +5.0 nếu có `!!!` hoặc CAPS LOCK và cảm xúc overall là negative.
-        *   Điểm khía cạnh `aspect_bonus`: Khía cạnh tiêu cực nặng nhất cộng đủ 100% ($W_{\text{worst}} \times \text{conf} \times 10.0$), các khía cạnh tiêu cực còn lại phạt dồn 25%, trần $20.0$.
-        *   Phân cấp: `CRITICAL` (≥ 70.0, Đỏ), `MEDIUM` (30.0 – 69.9, Vàng), `LOW` (< 30.0, Xanh).
+        *   Điểm khẩn cấp `urgency_bonus`: Nạp từ `priority_rules.yaml` (`critical`: `+30.0` câu kết / `+20.0` câu trước; `high`: `+15.0` câu kết / `+10.0` câu trước; trần $30.0$). Xử lý đa phủ định (`re.finditer`), giữ nhóm `REMEDY_ACTION_KEYWORDS` (`refund`, `cancel`) khi bị từ chối quyền lợi (`no refund`, `could not cancel`), bỏ qua mệnh đề đã giải quyết (có chống phủ định ngược) và tách mệnh đề tương phản (`but`, `however`, `although`, `though`).
+        *   Điểm cường độ `intensity_bonus`: +5.0 nếu có `!!!`, `???` hoặc CAPS LOCK ($\ge 6$ ký tự) và cảm xúc overall là `negative`.
+        *   Điểm khía cạnh `aspect_bonus`: Khía cạnh tiêu cực nặng nhất cộng đủ 100% ($W_{\text{worst}} \times \text{conf} \times 10.0$), các khía cạnh tiêu cực còn lại phạt dồn 25%, trần $20.0$. Trọng số mặc định tự đồng bộ từ `aspects.yaml` qua `load_aspect_weights()` khi caller không truyền `aspect_weights`.
+        *   Phân cấp qua `classify_priority_level()`: `CRITICAL` ($\ge 70.0$, Đỏ), `MEDIUM` ($30.0 - 69.9$, Vàng), `LOW` ($< 30.0$, Xanh).
         *   Tự động sinh danh sách giải trình minh bạch `reasons` cho từng thành phần điểm.
     *   **Vai trò:** Trái tim ra quyết định của Bài toán 2; tuyệt đối minh bạch, có thể giải trình và kiểm toán (Auditable).
     *   **Trạng thái:** **Dùng thật 100%**.
 
 #### E. Phân hệ Hàng đợi & Trạng thái (`core/queue/` - Bài toán 2)
 *   [core/queue/priority_queue.py](../ticket-triage-be/src/ticket_triage/core/queue/priority_queue.py)
-    *   **Logic bên trong:** Triển khai hàng đợi **Max-Heap** trong RAM bằng module chuẩn `heapq` với khóa:
-        $$\text{Heap Item} = \left(-\text{priority\_score}, \; \text{created\_at}, \; \text{ticket\_id}\right)$$
-        *   Cơ chế **FIFO Tie-Break**: Khi hai ticket có cùng điểm số (ví dụ cùng 85.0 điểm), ticket nào được gửi đến trước (`created_at` nhỏ hơn) sẽ được ưu tiên bốc ra phục vụ trước.
+    *   **Logic bên trong:** Triển khai hàng đợi **Max-Heap** an toàn đa luồng (`threading.RLock`) trong RAM bằng module chuẩn `heapq` với khóa:
+        $$\text{Heap Item} = \left(-\text{priority\_score}, \; \text{sort\_dt (UTC)}, \; \text{ticket\_id}\right)$$
+        *   Cơ chế **FIFO Tie-Break**: Khi hai ticket có cùng điểm số (ví dụ cùng 85.0 điểm), ticket nào được gửi đến trước (`created_at` chuẩn hóa UTC nhỏ hơn) sẽ được ưu tiên bốc ra phục vụ trước.
+        *   Chống trùng lặp `push()` theo `ticket_id` và chỉ lưu metadata nguyên thủy (`ticket_queue_metadata`) thay vì giữ ORM `Ticket` instance.
     *   **Vai trò:** Tối ưu hóa việc phân phối ticket cho tổng đài viên với tốc độ đỉnh hàng đợi $O(1)$ và cập nhật $O(\log N)$.
     *   **Trạng thái:** **Dùng thật 100%**.
 *   [core/queue/state_manager.py](../ticket-triage-be/src/ticket_triage/core/queue/state_manager.py)
