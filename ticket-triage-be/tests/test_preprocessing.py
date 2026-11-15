@@ -36,6 +36,9 @@ def test_filter_candidate_aspects():
     candidates = filter_candidate_aspects(text_shipping)
     assert "shipping" in candidates
 
+    text_never_received = "I never received my order even though the status shows complete."
+    assert "shipping" in filter_candidate_aspects(text_never_received)
+
     text_refund = "Please issue a refund for the double charge on my credit card."
     candidates = filter_candidate_aspects(text_refund)
     assert "refund_payment" in candidates

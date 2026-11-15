@@ -41,3 +41,25 @@ def test_full_e2e_pipeline_non_english(in_memory_db, sample_taxonomy):
     assert ticket.needs_manual_review is True
     assert ticket.priority_score == 50.0
     assert queue.size() == 1
+
+
+def test_full_e2e_pipeline_document_task_mode(in_memory_db, sample_taxonomy):
+    model = MockSentimentModel()
+    queue = TicketPriorityQueue()
+    raw = "My delivery is 15 days late and package is damaged! Urgent help needed."
+
+    ticket = process_ticket_pipeline(
+        raw_text=raw,
+        db=in_memory_db,
+        sentiment_model=model,
+        priority_queue=queue,
+        taxonomy=sample_taxonomy,
+        model_task="document",
+    )
+
+    assert ticket.id is not None
+    assert ticket.sentiment_label == "negative"
+    assert ticket.aspects == []
+    assert ticket.dominant_aspect is None
+    assert ticket.priority_breakdown["aspect_bonus"] == 0.0
+    assert ticket.priority_score > 0
