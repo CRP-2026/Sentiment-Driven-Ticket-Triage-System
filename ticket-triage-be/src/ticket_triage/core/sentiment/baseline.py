@@ -136,7 +136,8 @@ class ZeroShotNliModel(BaseSentimentModel):
         )
 
         aspect_items: list[AspectSentiment] = []
-        for asp in (candidates or ["general"]):
+        aspect_candidates = ["general"] if candidates is None else candidates
+        for asp in aspect_candidates:
             asp_clean = aspect_names.get(asp, asp.replace("_", " "))
             template = aspect_template.replace("{aspect}", asp_clean).replace("{sentiment}", "{}")
             asp_res = self._classifier(

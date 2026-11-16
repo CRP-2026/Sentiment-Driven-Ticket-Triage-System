@@ -65,6 +65,13 @@ def test_zero_shot_nli_model_uses_injected_hypotheses_and_templates(monkeypatch)
     assert captured_calls[0]["hypothesis_template"] == "Overall tone is {}."
     assert captured_calls[1]["hypothesis_template"] == "Feedback on billing refunds sounds {}."
 
+    # Empty candidates list (document fallback mode) skips per-aspect NLI calls
+    captured_calls.clear()
+    doc_result = model.predict("Please refund my card.", candidates=[])
+    assert doc_result.overall.label == "negative"
+    assert doc_result.aspects == []
+    assert len(captured_calls) == 1
+
 
 def test_resolve_nli_model_source_priority(tmp_path):
     empty_models = tmp_path / "empty_models"
@@ -117,6 +124,7 @@ def test_lifespan_model_selection_from_settings(client: TestClient, tmp_path, mo
 
     orig_model = getattr(client.app.state, "sentiment_model", None)
     orig_name = getattr(client.app.state, "model_name", None)
+    orig_task = getattr(client.app.state, "model_task", None)
     orig_hf_offline = os.environ.get("HF_HUB_OFFLINE")
 
     monkeypatch.setattr(settings, "configs_dir", str(configs_dir))
@@ -126,9 +134,11 @@ def test_lifespan_model_selection_from_settings(client: TestClient, tmp_path, mo
         monkeypatch.setattr(settings, "model_name", "deberta")
         monkeypatch.setattr(settings, "model_path", str(empty_models))
         monkeypatch.setattr(settings, "model_id", "")
+        monkeypatch.setattr(settings, "model_task", "absa")
         monkeypatch.setattr(settings, "hf_hub_offline", False)
         with TestClient(client.app) as scoped:
             assert scoped.app.state.model_name == "deberta"
+            assert scoped.app.state.model_task == "absa"
             assert isinstance(scoped.app.state.sentiment_model, ZeroShotNliModel)
             assert (
                 scoped.app.state.sentiment_model.model_name_or_path
@@ -156,8 +166,19 @@ def test_lifespan_model_selection_from_settings(client: TestClient, tmp_path, mo
         # Case D: MODEL_NAME=mock always picks MockSentimentModel even if config.json exists
         monkeypatch.setattr(settings, "model_name", "mock")
         monkeypatch.setattr(settings, "model_path", str(local_models))
+        monkeypatch.setattr(settings, "model_task", "document")
         with TestClient(client.app) as scoped:
             assert isinstance(scoped.app.state.sentiment_model, MockSentimentModel)
+            assert scoped.app.state.model_task == "document"
+            resp = scoped.post(
+                "/api/v1/tickets",
+                json={"content": "My package is broken and never received! Urgent refund."},
+            )
+            assert resp.status_code == 201
+            body = resp.json()
+            assert body["aspects"] == []
+            assert body["dominant_aspect"] is None
+            assert body["priority_breakdown"]["aspect_bonus"] == 0.0
     finally:
         if orig_hf_offline is None:
             os.environ.pop("HF_HUB_OFFLINE", None)
@@ -167,3 +188,5 @@ def test_lifespan_model_selection_from_settings(client: TestClient, tmp_path, mo
             client.app.state.sentiment_model = orig_model
         if orig_name is not None:
             client.app.state.model_name = orig_name
+        if orig_task is not None:
+            client.app.state.model_task = orig_task

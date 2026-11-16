@@ -88,7 +88,15 @@ async def lifespan(app: FastAPI):
     # 4. Nạp mô hình cảm xúc (lazy / mock) từ cấu hình .env
     os.environ["HF_HUB_OFFLINE"] = "1" if settings.hf_hub_offline else "0"
     model_name = settings.model_name.strip().lower() or "mock"
+    raw_task = settings.model_task.strip().lower() or "absa"
+    if raw_task not in ("absa", "document"):
+        logger.warning("Unknown MODEL_TASK='%s'; defaulting to 'absa'.", raw_task)
+        model_task = "absa"
+    else:
+        model_task = raw_task
+
     app.state.model_name = model_name
+    app.state.model_task = model_task
     if model_name == "mock":
         app.state.sentiment_model = MockSentimentModel()
     else:
@@ -115,6 +123,7 @@ async def lifespan(app: FastAPI):
     hypotheses_loaded = hypotheses_yaml_path.is_file() and bool(hypotheses_data)
 
     logger.info("Model Name: %s", model_name)
+    logger.info("Model Task: %s", model_task)
     logger.info("aspects.yaml loaded: %s", aspects_loaded)
     logger.info("aspect_hypotheses.yaml loaded: %s", hypotheses_loaded)
 
