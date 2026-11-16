@@ -36,9 +36,7 @@ def mock_model():
 @pytest.fixture
 def sample_taxonomy():
     yaml_path = Path(__file__).resolve().parent.parent / "configs" / "aspects.yaml"
-    if yaml_path.is_file():
-        return Taxonomy.load_from_yaml(yaml_path)
-    return Taxonomy([])
+    return Taxonomy.load_from_yaml(yaml_path)
 
 @pytest.fixture
 def priority_queue():
@@ -63,7 +61,7 @@ def client(in_memory_db):
     app.state.sentiment_model = MockSentimentModel()
 
     yaml_path = Path(__file__).resolve().parent.parent / "configs" / "aspects.yaml"
-    app.state.taxonomy = Taxonomy.load_from_yaml(yaml_path) if yaml_path.is_file() else Taxonomy([])
+    app.state.taxonomy = Taxonomy.load_from_yaml(yaml_path)
 
     with TestClient(app) as test_client:
         test_client.app.state.priority_queue = TicketPriorityQueue()

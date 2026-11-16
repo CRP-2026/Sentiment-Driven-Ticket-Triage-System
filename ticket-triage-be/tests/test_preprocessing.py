@@ -1,7 +1,10 @@
 from pathlib import Path
 
+import pytest
+import yaml
+
+from ticket_triage.core.preprocessing import keyword_prefilter as prefilter_mod
 from ticket_triage.core.preprocessing.keyword_prefilter import (
-    DEFAULT_ASPECT_KEYWORDS,
     filter_candidate_aspects,
     load_aspect_keywords,
 )
@@ -60,7 +63,11 @@ def test_preprocess_ticket_pipeline():
     assert res.needs_manual_review is False
 
 
-def test_load_aspect_keywords_from_yaml_and_fallback(tmp_path):
+def test_load_aspect_keywords_from_yaml_and_fail_fast(tmp_path, monkeypatch):
+    assert not hasattr(prefilter_mod, "DEFAULT_ASPECT_KEYWORDS")
+    assert not hasattr(prefilter_mod, "ASPECT_KEYWORDS")
+
+    load_aspect_keywords.cache_clear()
     repo_aspects = Path(__file__).resolve().parents[1] / "configs" / "aspects.yaml"
     loaded = load_aspect_keywords(repo_aspects)
     assert "never received" in loaded["shipping"]
@@ -82,9 +89,57 @@ aspects:
         encoding="utf-8",
     )
     custom_keywords = load_aspect_keywords(custom_yaml)
+    assert custom_keywords == {
+        "security_privacy": ["data breach", "leaked password"],
+        "general": [],
+    }
     assert filter_candidate_aspects("Possible data breach detected!", aspect_keywords=custom_keywords) == [
         "security_privacy"
     ]
 
-    missing_keywords = load_aspect_keywords(tmp_path / "missing.yaml")
-    assert missing_keywords == DEFAULT_ASPECT_KEYWORDS
+    with pytest.raises(FileNotFoundError):
+        load_aspect_keywords(tmp_path / "missing.yaml")
+
+    bad_syntax = tmp_path / "bad_syntax.yaml"
+    bad_syntax.write_text("aspects: [\n", encoding="utf-8")
+    with pytest.raises(yaml.YAMLError):
+        load_aspect_keywords(bad_syntax)
+
+    invalid_structure = tmp_path / "invalid_structure.yaml"
+    invalid_structure.write_text("aspects: {}\n", encoding="utf-8")
+    with pytest.raises(TypeError):
+        load_aspect_keywords(invalid_structure)
+
+    duplicate_id = tmp_path / "duplicate_id.yaml"
+    duplicate_id.write_text(
+        """
+aspects:
+  - id: billing
+    keywords: [refund]
+  - id: billing
+    keywords: [chargeback]
+""",
+        encoding="utf-8",
+    )
+    with pytest.raises(ValueError):
+        load_aspect_keywords(duplicate_id)
+
+    bad_keywords = tmp_path / "bad_keywords.yaml"
+    bad_keywords.write_text(
+        """
+aspects:
+  - id: billing
+    keywords: "refund"
+""",
+        encoding="utf-8",
+    )
+    with pytest.raises(TypeError):
+        load_aspect_keywords(bad_keywords)
+
+    load_aspect_keywords.cache_clear()
+    monkeypatch.setattr(prefilter_mod, "_find_config_file", lambda _filename="": None)
+    try:
+        with pytest.raises(FileNotFoundError):
+            load_aspect_keywords()
+    finally:
+        load_aspect_keywords.cache_clear()

@@ -4,9 +4,11 @@ import sys
 import types
 from pathlib import Path
 
+import pytest
 from starlette.testclient import TestClient
 
 from ticket_triage.api.main import _resolve_nli_model_source
+from ticket_triage.core.preprocessing.keyword_prefilter import load_aspect_keywords
 from ticket_triage.core.sentiment import baseline as baseline_mod
 from ticket_triage.core.sentiment.abte import extract_aspect_terms
 from ticket_triage.core.sentiment.baseline import (
@@ -246,3 +248,15 @@ def test_health_reports_model_loaded_false_on_nli_fallback(client: TestClient, m
             client.app.state.sentiment_model = orig_model
         if orig_name is not None:
             client.app.state.model_name = orig_name
+
+
+def test_lifespan_fails_fast_when_aspects_yaml_missing(client: TestClient, tmp_path, monkeypatch):
+    empty_configs = tmp_path / "empty_configs"
+    empty_configs.mkdir()
+    monkeypatch.setattr(settings, "configs_dir", str(empty_configs))
+
+    try:
+        with pytest.raises(FileNotFoundError), TestClient(client.app):
+            pass
+    finally:
+        load_aspect_keywords.cache_clear()

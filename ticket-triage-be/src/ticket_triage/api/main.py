@@ -66,16 +66,12 @@ async def lifespan(app: FastAPI):
     else:
         logger.info("Running in test mode: Skipping disk SQLite initialization in lifespan.")
 
-    # 2. Nạp Taxonomy và danh mục từ khóa lọc từ configs/aspects.yaml
+    # 2. Nạp Taxonomy và danh mục từ khóa lọc từ configs/aspects.yaml (bắt buộc, fail-fast)
     aspects_yaml_path = Path(settings.configs_dir) / "aspects.yaml"
-    taxonomy = Taxonomy.load_from_yaml(aspects_yaml_path) if aspects_yaml_path.is_file() else Taxonomy([])
+    taxonomy = Taxonomy.load_from_yaml(aspects_yaml_path)
     app.state.taxonomy = taxonomy
     load_aspect_keywords.cache_clear()
-    app.state.aspect_keywords = (
-        load_aspect_keywords(aspects_yaml_path)
-        if aspects_yaml_path.is_file()
-        else load_aspect_keywords()
-    )
+    app.state.aspect_keywords = load_aspect_keywords(aspects_yaml_path)
 
     # 3. Nạp configs/aspect_hypotheses.yaml
     hypotheses_yaml_path = Path(settings.configs_dir) / "aspect_hypotheses.yaml"
