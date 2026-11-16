@@ -116,16 +116,16 @@ class AbsaResult:
 **Cấu trúc chi tiết của trường `priority_breakdown`:**
 ```json
 {
-  "score": 85.0,
+  "score": 95.0,
   "base": 60.0,
-  "urgency_bonus": 20.0,
+  "urgency_bonus": 30.0,
   "intensity_bonus": 5.0,
   "aspect_bonus": 10.0,
   "reasons": [
-    "Cảm xúc tổng thể tiêu cực (base = 60.0)",
-    "Khía cạnh nghiêm trọng nhất: refund_payment (tiêu cực, trọng số = 1.0)",
-    "Phát hiện từ khóa khẩn cấp ở câu kết: 'chargeback' (+20.0)",
-    "Cú pháp câu chứa dấu cảm thán liên tiếp '!!!' (+5.0)"
+    "Cảm xúc tổng thể tiêu cực (1.00): base = 60.0",
+    "Từ khóa CRITICAL 'chargeback' ở câu kết: +30.0",
+    "Cú pháp câu thể hiện bức xúc (dấu cảm thán liên tiếp '!!!'): +5.0",
+    "Khía cạnh nghiêm trọng nhất 'refund_payment' (trọng số 1.0, conf 1.00): +10.00"
   ]
 }
 ```
@@ -191,18 +191,21 @@ Xác định dựa trên `result.overall.label` và độ tin cậy `confidence`
 
 #### Thành phần 2: Điểm từ khóa khẩn cấp ($\text{urgency\_bonus}$)
 Quét danh mục từ khóa khẩn cấp quy định trong `configs/priority_rules.yaml` (WBS 1.5.1):
-- Danh mục từ khóa: `urgent`, `immediately`, `asap`, `lawsuit`, `sue`, `lawyer`, `fraud`, `scam`, `charged twice`, `chargeback`, `stolen`, `broken`, `never arrived`, `dispute`.
-- **Cơ chế cộng điểm vị trí:**
-  - Từ khóa xuất hiện ở câu cuối cùng (câu kết thúc yêu cầu): **+20 điểm**.
-  - Từ khóa xuất hiện ở các câu phía trước: **+10 điểm**.
-  - Mỗi nhóm từ khóa chỉ tính điểm một lần.
+- **Nhóm `critical`:** `urgent`, `immediately`, `asap`, `lawsuit`, `sue`, `lawyer`, `fraud`, `scam`, `chargeback`, `stolen`, `charged twice`.
+- **Nhóm `high`:** `broken`, `refund`, `cancel`, `not working`, `never received`, `dispute`, `missing`, `damaged`, `overcharged`.
+- **Cơ chế cộng điểm theo nhóm và vị trí (`urgency_points`):**
+  - Từ khóa nhóm `critical`: **+30.0 điểm** ở câu cuối cùng, **+20.0 điểm** ở các câu phía trước.
+  - Từ khóa nhóm `high`: **+15.0 điểm** ở câu cuối cùng, **+10.0 điểm** ở các câu phía trước.
+  - Mỗi từ khóa chỉ tính điểm một lần (khớp không phân biệt hoa/thường theo ranh giới từ `\b...\b`).
   - Trần điểm khẩn cấp: $\text{urgency\_cap} = 30.0$.
-- **Xử lý phủ định:** Nếu từ khóa khẩn cấp nằm ngay sau các từ phủ định (`not`, `never`, `no`, `won't`) hoặc trong ngữ cảnh đã giải quyết (`thanks for resolving`, `refund received`), điểm cộng cho từ khóa đó bị hủy bỏ (giảm 100%).
+- **Xử lý phủ định & ngữ cảnh giải quyết:**
+  - Hủy điểm khi từ khóa nằm sát sau từ phủ định (`not`, `never`, `no`, `won't`, `doesn't`, `don't`, `didn't`, `without`), trừ nhóm hành động/quyền lợi `REMEDY_ACTION_KEYWORDS` (`refund`, `cancel`) vì cụm như `"no refund"` hoặc `"could not cancel"` vẫn là khiếu nại khẩn cấp.
+  - Bỏ qua mệnh đề xác nhận đã giải quyết (`thanks for resolving`, `refund received`, `received my refund`, `issue resolved`, `already resolved`) nếu không kèm phủ định (`not received`, `not yet received`), đồng thời tách mệnh đề tương phản (`but`, `however`, `although`, `though`, `;`, `, `) để không bỏ sót sự cố mới ở vế sau.
 
 #### Thành phần 3: Điểm cường độ cú pháp câu ($\text{intensity\_bonus}$)
-Trích xuất từ module `src/priority/intensity_extractor.py` (WBS 1.5.2):
-- Cộng **+5 điểm** khi và chỉ khi:
-  - Ticket chứa chuỗi dấu chấm than liên tiếp (`!!!`), HOẶC chứa từ viết hoa toàn bộ (CAPS LOCK với độ dài > 5 ký tự);
+Trích xuất từ module `src/ticket_triage/core/priority/intensity_extractor.py` (WBS 1.5.2):
+- Cộng **+5.0 điểm** (theo `intensity_bonus` trong `priority_rules.yaml`) khi và chỉ khi:
+  - Ticket chứa dấu chấm than liên tiếp (`!!!`), dấu hỏi dồn dập (`???`), HOẶC từ viết hoa toàn bộ (`CAPS LOCK`, độ dài $\ge 6$ ký tự);
   - **ĐIỀU KIỆN KÈM THEO:** Cảm xúc tổng thể `overall.label` phải là `negative` (tránh cộng nhầm trường hợp khách hàng phấn khích khen ngợi: *"EXCELLENT SERVICE!!!"*).
 
 #### Thành phần 4: Điểm khía cạnh tiêu cực ($\text{aspect\_bonus}$)
@@ -346,7 +349,7 @@ Bảng minh họa các ca kiểm thử điển hình phản ánh sự tương t�
 
 | # | Nội dung phản hồi của khách hàng (`raw_text`) | Kết quả ABSA (Bài toán 1) | Tính toán điểm ưu tiên (Bài toán 2) | Điểm số & Phân cấp | Vị trí hàng đợi |
 | :-: | :--- | :--- | :--- | :---: | :---: |
-| **1** | *"I was charged twice for order #9921. Please refund immediately or I will dispute the chargeback with my bank!"* | `refund_payment` (neg, 0.95)<br>`overall`: neg (0.92) | Base: $60 \times 0.92 = 55.2$<br>Urgency: "chargeback" câu cuối (+20.0)<br>Aspect: $1.0 \times 0.95 \times 10 = +9.5$ | **84.7**<br><span style="color:red">**CRITICAL**</span> | **Đầu hàng đợi (#1)** |
+| **1** | *"I was charged twice for order #9921. Please refund immediately or I will dispute the chargeback with my bank!"* | `refund_payment` (neg, 0.95)<br>`overall`: neg (0.92) | Base: $60 \times 0.92 = 55.2$<br>Urgency: `charged twice` (+20.0), `refund` (+10.0), `immediately` (+20.0), `dispute` (+10.0), `chargeback` (+30.0) $\rightarrow$ cap **30.0**<br>Aspect: $1.0 \times 0.95 \times 10 = +9.5$ | **94.7**<br><span style="color:red">**CRITICAL**</span> | **Đầu hàng đợi (#1)** |
 | **2** | *"My package is 10 days late and the tracking number is completely broken. This is ridiculous!!!"* | `shipping` (neg, 0.90)<br>`overall`: neg (0.88) | Base: $60 \times 0.88 = 52.8$<br>Urgency: "broken" (+10.0)<br>Intensity: "!!!" + neg (+5.0)<br>Aspect: $0.7 \times 0.90 \times 10 = +6.3$ | **74.1**<br><span style="color:red">**CRITICAL**</span> | **Ưu tiên cao (#2)** |
 | **3** | *"The material feels cheap and the zipper broke on first use. Disappointed with the quality."* | `product_quality` (neg, 0.85)<br>`overall`: neg (0.80) | Base: $60 \times 0.80 = 48.0$<br>Urgency: 0.0 (không có từ khóa khẩn cấp)<br>Aspect: $0.8 \times 0.85 \times 10 = +6.8$ | **54.8**<br><span style="color:orange">**MEDIUM**</span> | **Hàng đợi giữa (#3)** |
 | **4** | *"Could you please help me check if this wireless headset is compatible with Windows 11?"* | `general` (neu, 0.80)<br>`overall`: neu (0.85) | Base: 20.0 (Neutral)<br>Urgency: 0.0<br>Aspect: 0.0 | **20.0**<br><span style="color:green">**LOW**</span> | **Hàng đợi thường (#4)** |
