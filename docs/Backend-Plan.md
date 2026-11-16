@@ -32,9 +32,9 @@ graph TD
 | **Cơ sở dữ liệu (`db/*`)** | **100% Production-ready** | Dùng thật được ngay. SQLite bật chế độ WAL + Foreign Keys, Single Atomic Transaction. Sẵn sàng đổi sang PostgreSQL qua chuỗi kết nối. |
 | **Giao diện lập trình (`api/*`)** | **100% Production-ready** | Dùng thật được ngay. FastAPI chuẩn RESTful, Pydantic v2 validation, tự sinh OpenAPI 3.1 specification. |
 | **Mô hình Cảm xúc Mock (`core/sentiment/mock.py`)** | **Demo / Fallback** | Dùng heuristic regex cho môi trường dev nhẹ, test nhanh và fallback khi không có GPU. |
-| **Mô hình Cảm xúc Baseline (`core/sentiment/baseline.py`)** | **Sẵn sàng tích hợp** | Khung mã nguồn Zero-shot NLI hoàn chỉnh, sẵn sàng nạp checkpoint HuggingFace thật. |
+| **Mô hình Cảm xúc Baseline / DeBERTa (`core/sentiment/baseline.py`)** | **Sẵn sàng tích hợp** | Hỗ trợ Zero-shot NLI (`MODEL_NAME=baseline\|deberta`), tự giải quyết nguồn checkpoint (`MODEL_PATH` / `MODEL_ID` / PEFT adapter) và `MODEL_TASK` (`aspect`/`document`). |
 
-> **Kết luận:** **Hơn 90% toàn bộ Backend là PRODUCTION-READY**. Thành phần duy nhất hiện đang ở trạng thái giả lập (Mock) là **bộ suy luận cảm xúc khía cạnh `mock.py`** để giúp hệ thống chạy nhẹ nhàng trên mọi máy tính cá nhân không có GPU.
+> **Kết luận:** **Hơn 90% toàn bộ Backend là PRODUCTION-READY**. Khi chưa cài đặt `requirements-ml.txt` hoặc chưa cấu hình checkpoint (`MODEL_NAME=mock` mặc định, hoặc tự động fallback an toàn khi thiếu dependency/model), hệ thống sử dụng **`mock.py`** để chạy nhẹ nhàng trên mọi máy tính cá nhân không có GPU.
 
 ---
 
@@ -48,7 +48,7 @@ graph TD
 | [requirements-dev.txt](../ticket-triage-be/requirements-dev.txt) | Khai báo các thư viện phục vụ phát triển & kiểm thử: `pytest`, `pytest-cov`, `httpx`, `ruff`. | Phục vụ kiểm thử đơn vị, kiểm thử tích hợp và kiểm tra chất lượng code. | **Dùng thật** |
 | [requirements-ml.txt](../ticket-triage-be/requirements-ml.txt) | Khai báo các thư viện Deep Learning nặng: `torch`, `transformers`, `peft`, `datasets`, `accelerate`. | Dành riêng cho môi trường GPU (Colab/Kaggle/Server) khi huấn luyện và chạy mô hình thật. | **Dùng thật** |
 | [pyproject.toml](../ticket-triage-be/pyproject.toml) | Khai báo metadata gói `ticket-triage`, cấu hình công cụ `ruff` (linter/formatter) và `pytest`. | Quản lý đóng gói dự án theo chuẩn PEP 518/621 của Python hiện đại. | **Dùng thật** |
-| [.env.example](../ticket-triage-be/.env.example) | Định nghĩa các biến môi trường mẫu: `DATABASE_URL`, `MODEL_NAME`, `MODEL_PATH`, `CORS_ORIGINS`. | File mẫu hướng dẫn cấu hình môi trường cho lập trình viên và máy chủ. | **Dùng thật** |
+| [.env.example](../ticket-triage-be/.env.example) | Định nghĩa các biến môi trường mẫu: `DATABASE_URL`, `MODEL_NAME`, `MODEL_PATH`, `MODEL_ID`, `MODEL_TASK`, `MODEL_DEVICE`, `ENABLE_ABTE`, `HF_HUB_OFFLINE`, `CORS_ORIGINS`. | File mẫu hướng dẫn cấu hình môi trường cho lập trình viên và máy chủ. | **Dùng thật** |
 | [Dockerfile](../ticket-triage-be/Dockerfile) | Multi-stage Docker build: cài đặt Python 3.11-slim, cấu hình cờ `INSTALL_ML=false` mặc định để image nhẹ. | Đóng gói Backend container cho Docker Compose và triển khai máy chủ. | **Dùng thật** |
 | [AGENT.md](../ticket-triage-be/AGENT.md) | Tài liệu quy chuẩn kỹ thuật: hợp đồng dataclass, ranh giới tiếng Anh, quy tắc pure function, cấu trúc thư mục. | Kim chỉ nam kỹ thuật cho lập trình viên và AI Agent khi làm việc trong Backend. | **Dùng thật** |
 
@@ -85,15 +85,15 @@ Toàn bộ tham số nghiệp vụ được tách biệt khỏi mã nguồn Pyth
 
 #### B. Phân hệ Tiền xử lý & Kiểm duyệt (`core/preprocessing/`)
 *   [core/preprocessing/normalizer.py](../ticket-triage-be/src/ticket_triage/core/preprocessing/normalizer.py)
-    *   **Logic bên trong:** Chuẩn hóa Unicode NFC, loại bỏ mã HTML độc hại, che ẩn thông tin nhạy cảm PII (email thành `[EMAIL]`, URL thành `[URL]`), rút gọn ký tự kéo dài quá mức (`terribleeee` $\rightarrow$ `terrible`). **Đặc biệt:** Bảo toàn ký tự in hoa (CAPS) và các cụm dấu chấm than `!`, `?` để phục vụ đo cường độ cảm xúc ở bước sau.
+    *   **Logic bên trong:** Chuẩn hóa Unicode NFC, loại bỏ thẻ HTML, thay thế thông tin nhạy cảm PII (email, URL) bằng khoảng trắng để tránh nhiễu phân tích ngôn ngữ/từ khóa, rút gọn ký tự kéo dài quá mức (`terribleeee` $\rightarrow$ `terrible`). **Đặc biệt:** Bảo toàn ký tự in hoa (CAPS) và các cụm dấu chấm than `!`, `?` để phục vụ đo cường độ cảm xúc ở bước sau.
     *   **Vai trò:** Làm sạch văn bản thô từ email/chat của người dùng.
     *   **Trạng thái:** **Dùng thật 100%**.
 *   [core/preprocessing/lang_validator.py](../ticket-triage-be/src/ticket_triage/core/preprocessing/lang_validator.py)
-    *   **Logic bên trong:** Sử dụng thư viện `langdetect`. Nếu độ dài câu $\ge 3$ từ và ngôn ngữ phát hiện không phải tiếng Anh (`en`) $\rightarrow$ trả về `is_valid = False` kèm cờ `needs_manual_review = True`.
-    *   **Vai trò:** "Người gác cổng" (Gatekeeper) bảo vệ ranh giới chuyên biệt tiếng Anh (English-only Boundary). Trả mã HTTP 422 rõ ràng khi ticket không phải tiếng Anh.
+    *   **Logic bên trong:** Sử dụng thư viện `langdetect` (kèm fallback an toàn cho chuỗi ngắn/ASCII). Nếu văn bản không phải tiếng Anh (`en`) hoặc không xác định được $\rightarrow$ trả về `is_valid = False` kèm mã ngôn ngữ phát hiện (`vi`, `fr`, `unknown`...), `needs_manual_review = True`.
+    *   **Vai trò:** "Người gác cổng" (Gatekeeper) bảo vệ ranh giới chuyên biệt tiếng Anh (English-only Boundary). Vẫn tiếp nhận ticket (HTTP `201 Created`) với mức ưu tiên mặc định `50.0` (`MEDIUM`) và gắn cờ chờ kiểm duyệt thủ công thay vì chạy qua mô hình NLI.
     *   **Trạng thái:** **Dùng thật 100%**.
 *   [core/preprocessing/keyword_prefilter.py](../ticket-triage-be/src/ticket_triage/core/preprocessing/keyword_prefilter.py)
-    *   **Logic bên trong:** Quét nhanh sự xuất hiện của từ khóa đặc trưng theo từng khía cạnh bằng Regex boundary `\b...\b` dựa trên danh mục trong `aspects.yaml`.
+    *   **Logic bên trong:** Quét nhanh sự xuất hiện của từ khóa đặc trưng theo từng khía cạnh bằng Regex boundary `\b...\b`; đọc cấu hình trực tiếp từ `configs/aspects.yaml` (`load_aspect_keywords()`) và có fallback sang `DEFAULT_ASPECT_KEYWORDS`.
     *   **Vai trò:** Thu hẹp danh sách khía cạnh cần suy luận (Candidate Aspects), giúp giảm $2\times - 3\times$ thời gian chạy so với việc quét vét cạn trên mô hình AI nặng.
     *   **Trạng thái:** **Dùng thật 100%**.
 *   [core/preprocessing/pipeline.py](../ticket-triage-be/src/ticket_triage/core/preprocessing/pipeline.py)
@@ -111,13 +111,13 @@ Toàn bộ tham số nghiệp vụ được tách biệt khỏi mã nguồn Pyth
     *   **Vai trò:** **Mô hình giả lập (Demo/Mock)** giúp toàn bộ hệ thống (Priority Engine, Database, Frontend UI) chạy và kiểm thử độc lập mà không bị nghẽn tiến độ chờ huấn luyện AI.
     *   **Trạng thái:** **Demo / Development Fallback**.
 *   [core/sentiment/baseline.py](../ticket-triage-be/src/ticket_triage/core/sentiment/baseline.py)
-    *   **Logic bên trong:** Tích hợp HuggingFace `pipeline("zero-shot-classification")` (mô hình `cross-encoder/nli-deberta-v3-small` hoặc checkpoint nội bộ). Tải lazy khi khởi động để máy không có GPU vẫn nạp được module.
-    *   **Vai trò:** Khung suy luận mô hình AI thật (Zero-shot ABSA) sẵn sàng kích hoạt ngay khi có checkpoint.
+    *   **Logic bên trong:** Tích hợp HuggingFace `pipeline("zero-shot-classification")` (`ZeroShotNliModel`), mặc định chọn `distilbart-mnli` cho `MODEL_NAME=baseline` hoặc `deberta-v3-base-zeroshot` cho `MODEL_NAME=deberta`, tự động giải quyết nguồn checkpoint cục bộ / PEFT LoRA / HuggingFace ID qua `_resolve_nli_model_source`, hỗ trợ `MODEL_TASK=aspect|document` và nạp template từ `configs/aspect_hypotheses.yaml`.
+    *   **Vai trò:** Khung suy luận mô hình AI thật (Zero-shot ABSA) sẵn sàng kích hoạt ngay khi có checkpoint và `requirements-ml.txt`.
     *   **Trạng thái:** **Mã nguồn thật (Sẵn sàng nạp checkpoint)**.
 *   [core/sentiment/abte.py](../ticket-triage-be/src/ticket_triage/core/sentiment/abte.py)
-    *   **Logic bên trong:** Khung sườn (stub) cho việc trích xuất vị trí cụm từ khía cạnh cụ thể trong văn bản (Aspect Term Extraction).
-    *   **Vai trò:** Dự trù mở rộng cho tương lai (Could Have) nếu muốn bôi màu từ ngữ lỗi trực tiếp trên giao diện.
-    *   **Trạng thái:** **Stub dự phòng**.
+    *   **Logic bên trong:** Cài đặt `extract_aspect_terms(text, aspect, aspect_keywords)` khớp từ khóa dài trước theo word-boundary regex từ `aspects.yaml`, giữ nguyên chữ hoa/thường và loại bỏ trùng lặp. Được bật qua cờ môi trường `ENABLE_ABTE=true` trong pipeline.
+    *   **Vai trò:** Trích xuất cụm từ chứng cứ theo từng khía cạnh để điền vào trường `terms` của response/DB.
+    *   **Trạng thái:** **Dùng thật (bật qua `ENABLE_ABTE=true`)**.
 
 #### D. Phân hệ Tính điểm Ưu tiên (`core/priority/` - Bài toán 2)
 *   [core/priority/intensity_extractor.py](../ticket-triage-be/src/ticket_triage/core/priority/intensity_extractor.py)
@@ -178,16 +178,16 @@ Toàn bộ tham số nghiệp vụ được tách biệt khỏi mã nguồn Pyth
     *   **Logic bên trong:** Lớp truy cập dữ liệu (DAL CRUD) cài đặt **Repository Pattern**:
         *   `create_ticket`: Lưu toàn bộ ticket + danh sách khía cạnh `ticket_aspects` trong **1 transaction duy nhất** (`db.commit()` một lần duy nhất).
         *   `get_tickets`: Hỗ trợ phân trang, lọc theo status, sentiment, aspect.
-        *   `update_ticket_status`: Cập nhật trạng thái hợp lệ theo FSM StateManager.
+        *   `update_status`: Cập nhật trạng thái hợp lệ theo FSM StateManager.
     *   **Vai trò:** Cách ly toàn bộ logic truy vấn cơ sở dữ liệu ra khỏi tầng API; chống lỗi dữ liệu mồ côi.
     *   **Trạng thái:** **Dùng thật 100%**.
 
 ---
 
-### 2.5. Tầng Giao tiếp API & Điều phối `src/ticket_triage/api/`
+### 2.5. Tầng Giao tiếp API & Điều phối `src/ticket_triage/`
 
-*   [api/settings.py](../ticket-triage-be/src/ticket_triage/api/settings.py)
-    *   **Logic bên trong:** Dùng Pydantic `BaseSettings` nạp cấu hình từ `.env` (`DATABASE_URL`, `MODEL_NAME`, `MODEL_PATH`, `CORS_ORIGINS`, `CONFIGS_DIR`).
+*   [settings.py](../ticket-triage-be/src/ticket_triage/settings.py)
+    *   **Logic bên trong:** Dùng Pydantic `BaseSettings` nạp cấu hình từ `.env` (`DATABASE_URL`, `MODEL_NAME`, `MODEL_PATH`, `MODEL_ID`, `MODEL_TASK`, `MODEL_DEVICE`, `ENABLE_ABTE`, `HF_HUB_OFFLINE`, `CORS_ORIGINS`, `CONFIGS_DIR`).
     *   **Vai trò:** Quản trị cấu hình tập trung theo chuẩn 12-Factor App.
     *   **Trạng thái:** **Dùng thật 100%**.
 *   [api/schemas.py](../ticket-triage-be/src/ticket_triage/api/schemas.py)
@@ -228,14 +228,16 @@ Toàn bộ tham số nghiệp vụ được tách biệt khỏi mã nguồn Pyth
     *   **Trạng thái:** **Dùng cho Demo / Development**.
 *   **Thư mục Kiểm thử Tự động (`tests/`):**
     *   `conftest.py`: Fixtures SQLite in-memory, MockModel, TestClient.
-    *   `test_preprocessing.py`: Kiểm thử chuẩn hóa text, lọc từ khóa, chặn ngoại ngữ không phải tiếng Anh.
-    *   `test_priority_engine.py`: Kiểm thử công thức worst-aspect, từ phủ định, các ngưỡng điểm.
-    *   `test_queue.py`: Kiểm thử Max-Heap và cơ chế FIFO tie-break khi đồng điểm.
+    *   `test_preprocessing.py`: Kiểm thử chuẩn hóa text, lọc từ khóa từ `aspects.yaml`, trích xuất `terms` (ABTE), chặn ngoại ngữ không phải tiếng Anh.
+    *   `test_priority_engine.py`: Kiểm thử công thức worst-aspect, từ phủ định/đã giải quyết, tải `priority_rules.yaml`, các ngưỡng điểm.
+    *   `test_queue.py`: Kiểm thử Max-Heap, thread-safety (`RLock`) và cơ chế FIFO tie-break khi đồng điểm.
     *   `test_sqlite_crud.py`: Kiểm thử giao dịch ghi đồng thời và cascade delete.
     *   `test_state_manager.py`: Kiểm thử chuyển trạng thái hợp lệ và chặn nhảy cóc.
-    *   `test_api_tickets.py`: Kiểm thử tích hợp TestClient cho toàn bộ REST endpoints.
-    *   `test_end_to_end_pipeline.py`: Kiểm thử chu trình toàn trình từ text thô đến CSDL và Heap.
-    *   **Trạng thái:** **Bộ kiểm thử tự động chính thức của dự án (Chạy trên GitHub Actions CI)**.
+    *   `test_model_loading.py`: Kiểm thử luồng nạp `ZeroShotNliModel`, `MODEL_NAME=baseline|deberta`, `MODEL_TASK`, fallback mock và `model_loaded` trên `/api/v1/health`.
+    *   `test_api_tickets.py`: Kiểm thử tích hợp TestClient cho toàn bộ REST endpoints (bao gồm `/tickets/triage`, `/tickets/queue`, `/stats/aspects`).
+    *   `test_end_to_end_pipeline.py`: Kiểm thử chu trình toàn trình từ text thô đến CSDL và Heap (kể cả `ENABLE_ABTE`).
+    *   `test_regression_issues.py`: Kiểm thử hồi quy các vấn đề đã xử lý (YAML single-source-of-truth, logic ngữ cảnh đã giải quyết, cô lập ORM khỏi Heap).
+    *   **Trạng thái:** **Bộ kiểm thử tự động chính thức của dự án (62 tests pass)**.
 
 ---
 
@@ -262,9 +264,9 @@ flowchart LR
     C --> D[Chạy make up: Hệ thống tự động nạp model thật]
 ```
 
-#### Bước 1: Huấn luyện và Đóng gói Checkpoint mô hình
-*   Fine-tune mô hình Zero-shot NLI (`cross-encoder/nli-deberta-v3-small` hoặc `distilbart-mnli`) bằng kỹ thuật LoRA/PEFT trên Google Colab / Kaggle T4 GPU sử dụng các thư viện trong [requirements-ml.txt](../ticket-triage-be/requirements-ml.txt).
-*   Lưu thư mục checkpoint mô hình đã đạt chỉ tiêu $F_1 \ge 0.78$ vào thư mục dự án:
+#### Bước 1: Huấn luyện hoặc chọn Checkpoint mô hình
+*   Fine-tune mô hình Zero-shot NLI (`MoritzLaurer/deberta-v3-base-zeroshot-v2.0` hoặc `valhalla/distilbart-mnli-12-1`) bằng kỹ thuật LoRA/PEFT trên Google Colab / Kaggle T4 GPU sử dụng các thư viện trong [requirements-ml.txt](../ticket-triage-be/requirements-ml.txt), hoặc dùng trực tiếp HuggingFace model ID qua `MODEL_ID`.
+*   Nếu dùng checkpoint cục bộ (đạt chỉ tiêu $F_1 \ge 0.78$), lưu vào thư mục dự án:
     ```text
     ticket-triage-be/models/absa_nli_checkpoint/
     ```
@@ -277,16 +279,28 @@ pip install -r requirements-ml.txt
 ```
 
 #### Bước 3: Cấu hình biến môi trường trong `.env`
-Mở file `ticket-triage-be/.env` (hoặc truyền qua biến môi trường Docker):
+Mở file `ticket-triage-be/.env` (hoặc truyền qua biến môi trường trong `docker.yaml`):
 ```ini
-# Đổi từ "mock" sang "baseline"
-MODEL_NAME=baseline
+# Đổi từ "mock" sang "baseline" (DistilBART) hoặc "deberta" (DeBERTa-v3)
+MODEL_NAME=deberta
 
-# Đường dẫn đến checkpoint mô hình cục bộ hoặc HuggingFace Model ID
+# Đường dẫn đến checkpoint cục bộ (nếu bỏ trống sẽ tự fallback sang MODEL_ID / mặc định)
 MODEL_PATH=./models/absa_nli_checkpoint
 
-# Tùy chọn thiết bị: "cuda" (nếu có GPU NVIDIA) hoặc "cpu"
-MODEL_DEVICE=cuda
+# HuggingFace Model ID ghi đè tùy chọn (mặc định tự chọn theo MODEL_NAME)
+MODEL_ID=MoritzLaurer/deberta-v3-base-zeroshot-v2.0
+
+# Kiểu suy luận NLI: "aspect" (theo từng khía cạnh) hoặc "document"
+MODEL_TASK=aspect
+
+# Bật trích xuất cụm từ khía cạnh (ABTE)
+ENABLE_ABTE=true
+
+# Đặt 0 nếu cho phép tải model từ HuggingFace Hub, 1 để chạy offline
+HF_HUB_OFFLINE=1
+
+# Tùy chọn thiết bị: "cuda" (nếu có GPU NVIDIA), "cpu" hoặc "auto"
+MODEL_DEVICE=auto
 
 # Bật cài đặt ML trong Docker nếu build container
 INSTALL_ML=true
@@ -300,10 +314,10 @@ make up
 ```
 
 Khi máy chủ khởi động:
-1. Hàm `lifespan` trong [main.py](../ticket-triage-be/src/ticket_triage/api/main.py#L22-L46) tự động phát hiện `settings.model_name == "baseline"`.
-2. Khởi tạo đối tượng `ZeroShotNliModel` từ [baseline.py](../ticket-triage-be/src/ticket_triage/core/sentiment/baseline.py).
-3. Nạp trọng số mô hình lên GPU/RAM một lần duy nhất lúc khởi động (warm-up).
-4. Mọi yêu cầu gửi đến API `/api/v1/tickets` từ thời điểm này sẽ được suy luận trực tiếp bằng mô hình Deep Learning thật mà hệ thống không gặp bất kỳ xung đột nào.
+1. Hàm `lifespan` trong [main.py](../ticket-triage-be/src/ticket_triage/api/main.py) kiểm tra `settings.model_name` thuộc `("baseline", "deberta")`, chuẩn hóa `model_task` và truyền `model_id`, `model_path` vào `_build_sentiment_model(...)`.
+2. Khởi tạo đối tượng `ZeroShotNliModel` từ [baseline.py](../ticket-triage-be/src/ticket_triage/core/sentiment/baseline.py) (tự hỗ trợ local HuggingFace checkpoint, LoRA/PEFT adapter, hoặc fallback an toàn về `MockSentimentModel` nếu thiếu thư viện/checkpoint).
+3. Nạp bảng từ khóa từ `configs/aspects.yaml` vào `app.state.aspect_keywords` và cấu hình `app.state.enable_abte`.
+4. Mọi yêu cầu gửi đến API `/api/v1/tickets` và `/api/v1/tickets/triage` sẽ chạy qua mô hình đã nạp; trạng thái thực tế được phản ánh minh bạch qua `model_loaded` và `is_mock` trên `/api/v1/health`.
 
 ---
 

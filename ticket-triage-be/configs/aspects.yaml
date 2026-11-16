@@ -4,27 +4,129 @@ aspects:
     description: Thái độ, tốc độ phản hồi, năng lực giải quyết của bộ phận hỗ trợ
     department: CS Team
     weight: 1.0
+    keywords:
+      - agent
+      - representative
+      - support
+      - service
+      - rep
+      - staff
+      - attitude
+      - rude
+      - unhelpful
+      - reply
+      - response
+      - ticket
+      - chat
+      - call
+      - contact
+      - email
+      - manager
+      - assistance
 
   - id: refund_payment
     name_vi: Hoàn tiền & Thanh toán
     description: Yêu cầu hoàn tiền, trừ tiền trùng, tranh chấp thanh toán, chargeback
     department: Finance
     weight: 1.0
+    keywords:
+      - refund
+      - charge
+      - charged
+      - overcharged
+      - double charged
+      - charged twice
+      - payment
+      - pay
+      - bill
+      - billing
+      - invoice
+      - fee
+      - money back
+      - dispute
+      - chargeback
+      - credit card
+      - bank
+      - transaction
+      - reimburse
 
   - id: product_quality
     name_vi: Chất lượng sản phẩm
     description: Lỗi sản phẩm, mô tả không khớp, độ bền, hàng hỏng hoặc lỗi kỹ thuật
     department: QC Team
     weight: 0.8
+    keywords:
+      - broken
+      - damaged
+      - defect
+      - defective
+      - cheap
+      - poor quality
+      - quality
+      - fake
+      - counterfeit
+      - faulty
+      - flaw
+      - torn
+      - rip
+      - stopped working
+      - not working
+      - durability
+      - material
+      - smell
+      - zipper
+      - button
+      - size
+      - fit
+      - color
 
   - id: shipping
     name_vi: Vận chuyển & Giao hàng
     description: Tốc độ giao hàng, tình trạng kiện hàng, thất lạc, trễ hạn
     department: Logistics
     weight: 0.7
+    keywords:
+      - ship
+      - shipping
+      - deliver
+      - delivery
+      - delivered
+      - package
+      - parcel
+      - box
+      - tracking
+      - track
+      - transit
+      - carrier
+      - courier
+      - usps
+      - fedex
+      - ups
+      - late
+      - delay
+      - delayed
+      - never arrived
+      - never received
+      - lost package
+      - wrong address
+      - customs
 
   - id: general
     name_vi: Thắc mắc chung
     description: Phản hồi, câu hỏi thông thường không thuộc các nhóm cụ thể trên
     department: General Support
     weight: 0.5
+    keywords:
+      - account
+      - login
+      - password
+      - website
+      - app
+      - policy
+      - faq
+      - question
+      - inquiry
+      - how to
+      - terms
+      - subscribe
+      - cancel account

@@ -43,6 +43,13 @@ make down
 ```
 *(Hoặc: `docker compose -f docker.yaml down`)*
 
+#### 4. Cấu hình biến môi trường AI (`.env` / `docker.yaml`)
+- `MODEL_NAME`: `mock` (mặc định, nhẹ), `baseline` (DistilBART MNLI) hoặc `deberta` (DeBERTa-v3 Zero-shot).
+- `MODEL_ID`: HuggingFace model ID ghi đè tùy chọn (nếu không dùng `MODEL_PATH` cục bộ).
+- `MODEL_TASK`: `aspect` (mặc định, suy luận từng khía cạnh) hoặc `document`.
+- `ENABLE_ABTE`: `false` (mặc định) hoặc `true` để trích xuất từ khóa `terms` cho từng khía cạnh.
+- `HF_HUB_OFFLINE`: `1` (chạy offline) hoặc `0` (cho phép tải model từ HuggingFace Hub).
+
 ---
 
 ### CÁCH 2: Chạy trực tiếp trên máy cục bộ (Local không cần Docker)

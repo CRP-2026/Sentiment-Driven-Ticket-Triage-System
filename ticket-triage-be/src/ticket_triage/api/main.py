@@ -6,6 +6,7 @@ from pathlib import Path
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from ..core.preprocessing.keyword_prefilter import load_aspect_keywords
 from ..core.priority.priority_engine import load_priority_rules
 from ..core.queue.priority_queue import TicketPriorityQueue
 from ..core.sentiment.baseline import (
@@ -65,10 +66,16 @@ async def lifespan(app: FastAPI):
     else:
         logger.info("Running in test mode: Skipping disk SQLite initialization in lifespan.")
 
-    # 2. Nạp Taxonomy từ configs/aspects.yaml
+    # 2. Nạp Taxonomy và danh mục từ khóa lọc từ configs/aspects.yaml
     aspects_yaml_path = Path(settings.configs_dir) / "aspects.yaml"
     taxonomy = Taxonomy.load_from_yaml(aspects_yaml_path) if aspects_yaml_path.is_file() else Taxonomy([])
     app.state.taxonomy = taxonomy
+    load_aspect_keywords.cache_clear()
+    app.state.aspect_keywords = (
+        load_aspect_keywords(aspects_yaml_path)
+        if aspects_yaml_path.is_file()
+        else load_aspect_keywords()
+    )
 
     # 3. Nạp configs/aspect_hypotheses.yaml
     hypotheses_yaml_path = Path(settings.configs_dir) / "aspect_hypotheses.yaml"
@@ -97,6 +104,7 @@ async def lifespan(app: FastAPI):
 
     app.state.model_name = model_name
     app.state.model_task = model_task
+    app.state.enable_abte = bool(settings.enable_abte)
     if model_name == "mock":
         app.state.sentiment_model = MockSentimentModel()
     else:
@@ -124,6 +132,7 @@ async def lifespan(app: FastAPI):
 
     logger.info("Model Name: %s", model_name)
     logger.info("Model Task: %s", model_task)
+    logger.info("ENABLE_ABTE: %s", app.state.enable_abte)
     logger.info("aspects.yaml loaded: %s", aspects_loaded)
     logger.info("aspect_hypotheses.yaml loaded: %s", hypotheses_loaded)
 
