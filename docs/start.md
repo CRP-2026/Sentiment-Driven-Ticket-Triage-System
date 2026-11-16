@@ -260,8 +260,8 @@ flowchart TD
 1. **Xây dựng Bộ tính điểm ưu tiên Rule-based (Worst-Aspect-Wins):**
    - File [priority_engine.py](file:///d:/Learning/Sentiment-Driven-Ticket-Triage-System/ticket-triage-be/src/ticket_triage/core/priority/priority_engine.py): Cài đặt hàm thuần `calculate_priority(result: AbsaResult, text: str)`:
      - $\text{base}$: Negative $\rightarrow 60.0 \times \text{confidence}$; Neutral $\rightarrow 20.0$; Positive $\rightarrow 5.0$.
-     - $\text{urgency}$: Từ khóa rủi ro (`lawsuit`, `fraud`, `chargeback`...). Câu kết thúc $+20$, câu trước $+10$ (trần 30.0). Xử lý phủ định (`not urgent` $\rightarrow 0$).
-     - $\text{intensity}$: $+5.0$ nếu có `!!!` hoặc CAPS LOCK và cảm xúc là negative.
+     - $\text{urgency}$: Từ khóa rủi ro từ `configs/priority_rules.yaml` (`critical`: câu kết $+30.0$, câu trước $+20.0$; `high`: câu kết $+15.0$, câu trước $+10.0$; trần $30.0$). Xử lý phủ định gần từ khóa (`not urgent` $\rightarrow 0$), giữ từ khiếu nại quyền lợi (`no refund`, `could not cancel`), bỏ qua mệnh đề đã giải quyết (`refund received`, `issue resolved`) nhưng tách mệnh đề tương phản (`but`, `however`, `although`, `though`).
+     - $\text{intensity}$: $+5.0$ (theo `intensity_bonus`) nếu có `!!!`, `???` hoặc CAPS LOCK ($\ge 6$ ký tự) và cảm xúc tổng thể là `negative`.
      - $\text{aspect\_bonus}$: Khía cạnh tiêu cực nghiêm trọng nhất cộng đủ 100%, các khía cạnh tiêu cực còn lại cộng $25\%$ (trần 20.0).
      - $\text{score} = \min(100.0, \text{base} + \text{urgency} + \text{intensity} + \text{aspect})$; sinh danh sách giải trình `reasons` chi tiết.
    - Phân cấp chuẩn: $\ge 70.0$ **CRITICAL (Đỏ)**, $30.0 - 69.9$ **MEDIUM (Vàng)**, $< 30.0$ **LOW (Xanh)**.

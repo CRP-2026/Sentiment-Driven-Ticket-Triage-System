@@ -11,12 +11,15 @@ def get_health(request: Request) -> HealthResponse:
     sentiment_model = getattr(app_state, "sentiment_model", None)
 
     is_mock = False
-    model_loaded = True
+    model_loaded = sentiment_model is not None
     if sentiment_model is not None:
         if hasattr(sentiment_model, "is_mock"):
             is_mock = bool(sentiment_model.is_mock)
         else:
-            is_mock = (model_name == "mock")
+            is_mock = model_name == "mock"
+
+        if model_name != "mock" and is_mock:
+            model_loaded = False
 
     queue = getattr(app_state, "priority_queue", None)
     queue_size = queue.size() if queue else 0
