@@ -1,13 +1,27 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
+import {
+  ChevronLeft,
+  ChevronRight,
+  Circle,
+  Filter,
+  Inbox,
+  Layers,
+  RefreshCw,
+  ShieldAlert,
+  TriangleAlert,
+} from "lucide-react";
 import { useTickets, useAspects, useStatsOverview } from "../api/hooks";
 import { TicketTable } from "../components/tickets/TicketTable";
 import { STATUSES, SENTIMENT_CONFIG } from "../lib/constants";
-import { Circle, Filter, Inbox, Layers, RefreshCw, ShieldAlert, TriangleAlert } from "lucide-react";
+import { getAspectDisplayName } from "../lib/ticketHelpers";
+
+const PAGE_LIMIT = 50;
 
 export const InboxPage: React.FC = () => {
   const [selectedStatus, setSelectedStatus] = useState<string>("");
   const [selectedAspect, setSelectedAspect] = useState<string>("");
   const [selectedSentiment, setSelectedSentiment] = useState<string>("");
+  const [pageOffset, setPageOffset] = useState<number>(0);
 
   const { data: aspects } = useAspects();
   const { data: stats } = useStatsOverview();
@@ -15,24 +29,53 @@ export const InboxPage: React.FC = () => {
     status: selectedStatus || undefined,
     aspect: selectedAspect || undefined,
     sentiment: selectedSentiment || undefined,
-    limit: 50,
+    limit: PAGE_LIMIT,
+    offset: pageOffset,
   });
+
+  useEffect(() => {
+    if (!data) return;
+    if (data.total === 0 && pageOffset > 0) {
+      setPageOffset(0);
+    } else if (data.total > 0 && pageOffset >= data.total) {
+      setPageOffset(Math.max(0, Math.floor((data.total - 1) / PAGE_LIMIT) * PAGE_LIMIT));
+    }
+  }, [data, pageOffset]);
+
+  const handleStatusChange = (value: string) => {
+    setSelectedStatus(value);
+    setPageOffset(0);
+  };
+
+  const handleAspectChange = (value: string) => {
+    setSelectedAspect(value);
+    setPageOffset(0);
+  };
+
+  const handleSentimentChange = (value: string) => {
+    setSelectedSentiment(value);
+    setPageOffset(0);
+  };
 
   const clearFilters = () => {
     setSelectedStatus("");
     setSelectedAspect("");
     setSelectedSentiment("");
+    setPageOffset(0);
   };
 
   const hasActiveFilters = Boolean(selectedStatus || selectedAspect || selectedSentiment);
-  const aspectTally = (data?.items ?? []).reduce<Record<string, number>>((counts, ticket) => {
-    ticket.aspects.forEach(({ aspect }) => {
-      counts[aspect] = (counts[aspect] ?? 0) + 1;
-    });
-    return counts;
-  }, {});
-  const aspectDistribution = Object.entries(aspectTally).sort((a, b) => b[1] - a[1]);
+  const aspectDistribution = Object.entries(stats?.aspect_counts ?? {})
+    .filter(([, count]) => count > 0)
+    .sort((a, b) => b[1] - a[1]);
   const maxAspectCount = Math.max(1, ...aspectDistribution.map(([, count]) => count));
+
+  const totalTickets = data?.total ?? 0;
+  const loadedCount = data?.items.length ?? 0;
+  const rangeStart = loadedCount > 0 ? pageOffset + 1 : 0;
+  const rangeEnd = loadedCount > 0 ? pageOffset + loadedCount : 0;
+  const currentPage = Math.floor(pageOffset / PAGE_LIMIT) + 1;
+  const totalPages = Math.max(1, Math.ceil(totalTickets / PAGE_LIMIT));
 
   return (
     <div className="inbox-page space-y-6 p-4 pb-8 sm:p-5 sm:pb-8 lg:p-6 lg:pb-8">
@@ -108,100 +151,149 @@ export const InboxPage: React.FC = () => {
       </div>
 
       <div className="queue-control-band">
-      <section className="queue-aspect-panel" aria-label="Phân bố khía cạnh của các ticket hiện được tải">
-        <div className="queue-aspect-heading">
-          <div>
-            <h2>Phân bố khía cạnh</h2>
-            <p className="queue-aspect-caption">Trong {data?.items.length ?? 0} yêu cầu hiện được tải</p>
+        <section className="queue-aspect-panel" aria-label="Phân bố khía cạnh toàn hệ thống">
+          <div className="queue-aspect-heading">
+            <div>
+              <h2>Phân bố khía cạnh</h2>
+              <p className="queue-aspect-caption">
+                Trên toàn bộ {stats?.total_tickets ?? 0} yêu cầu trong hệ thống
+              </p>
+            </div>
+            <Layers className="h-5 w-5" aria-hidden="true" />
           </div>
-          <Layers className="h-5 w-5" aria-hidden="true" />
-        </div>
-        {aspectDistribution.length > 0 ? (
-          <div className="queue-aspect-list">
-            {aspectDistribution.map(([aspect, count]) => (
-              <div className="queue-aspect-item" key={aspect}>
-                <div className="queue-aspect-meta">
-                  <span>{aspects?.find((item) => item.id === aspect)?.name_vi ?? aspect.replace(/_/g, " ")}</span>
-                  <strong>{count}</strong>
+          {aspectDistribution.length > 0 ? (
+            <div className="queue-aspect-list">
+              {aspectDistribution.map(([aspect, count]) => (
+                <div className="queue-aspect-item" key={aspect}>
+                  <div className="queue-aspect-meta">
+                    <span>{getAspectDisplayName(aspect, aspects)}</span>
+                    <strong>{count}</strong>
+                  </div>
+                  <div className="queue-aspect-track" aria-hidden="true">
+                    <span style={{ width: `${(count / maxAspectCount) * 100}%` }} />
+                  </div>
                 </div>
-                <div className="queue-aspect-track" aria-hidden="true">
-                  <span style={{ width: `${(count / maxAspectCount) * 100}%` }} />
-                </div>
-              </div>
-            ))}
+              ))}
+            </div>
+          ) : (
+            <p className="queue-aspect-empty">Chưa có dữ liệu khía cạnh trong hệ thống.</p>
+          )}
+        </section>
+
+        {/* Filters Bar */}
+        <div className="queue-filter-surface queue-filter-panel">
+          <div className="queue-filter-header">
+            <div className="queue-filter-label flex items-center gap-2 text-sm font-semibold text-slate-700">
+              <Filter className="h-4 w-4 text-slate-500" />
+              <span>Bộ lọc:</span>
+            </div>
+
+            <button
+              type="button"
+              onClick={clearFilters}
+              disabled={!hasActiveFilters}
+              aria-hidden={!hasActiveFilters}
+              tabIndex={hasActiveFilters ? 0 : -1}
+              className={`inline-flex h-8 shrink-0 items-center rounded-lg px-2.5 text-xs font-semibold text-[#126B67] transition-opacity hover:bg-[#e7f2f1] hover:text-[#0d514e] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#126B67] ${
+                hasActiveFilters ? "opacity-100" : "pointer-events-none opacity-0"
+              }`}
+            >
+              Xóa bộ lọc
+            </button>
           </div>
-        ) : (
-          <p className="queue-aspect-empty">Chưa có dữ liệu khía cạnh trong danh sách ticket hiện tại.</p>
-        )}
-      </section>
 
-      {/* Filters Bar */}
-      <div className="queue-filter-surface queue-filter-panel flex flex-wrap items-center gap-2 px-3 py-3 sm:px-4">
-        <div className="queue-filter-label mr-2 flex items-center gap-2 text-sm font-semibold text-slate-700">
-          <Filter className="h-4 w-4 text-slate-500" />
-          <span>Bộ lọc:</span>
+          {/* Bộ lọc */}
+          <div className="queue-filter-controls">
+            {/* Trạng thái */}
+            <select
+              value={selectedStatus}
+              onChange={(e) => handleStatusChange(e.target.value)}
+              aria-label="Lọc theo trạng thái"
+              className="queue-filter-select queue-filter-status min-h-9 rounded-lg border border-slate-300 bg-white px-3 text-sm text-slate-700 shadow-[inset_0_1px_2px_rgba(20,38,45,0.04)] transition-colors focus:border-[#126B67] focus:outline-none focus:ring-2 focus:ring-[#126B67]/20"
+            >
+              <option value="">Tất cả trạng thái</option>
+              {STATUSES.map((s) => (
+                <option key={s.value} value={s.value}>
+                  {s.label}
+                </option>
+              ))}
+            </select>
+
+            {/* Cảm xúc */}
+            <select
+              value={selectedSentiment}
+              onChange={(e) => handleSentimentChange(e.target.value)}
+              aria-label="Lọc theo cảm xúc"
+              className="queue-filter-select queue-filter-sentiment min-h-9 rounded-lg border border-slate-300 bg-white px-3 text-sm text-slate-700 shadow-[inset_0_1px_2px_rgba(20,38,45,0.04)] transition-colors focus:border-[#126B67] focus:outline-none focus:ring-2 focus:ring-[#126B67]/20"
+            >
+              <option value="">Tất cả cảm xúc</option>
+              {Object.entries(SENTIMENT_CONFIG).map(([key, cfg]) => (
+                <option key={key} value={key}>
+                  {cfg.label}
+                </option>
+              ))}
+            </select>
+
+            {/* Khía cạnh */}
+            <select
+              value={selectedAspect}
+              onChange={(e) => handleAspectChange(e.target.value)}
+              aria-label="Lọc theo khía cạnh"
+              className="queue-filter-select queue-filter-aspect min-h-9 max-w-full rounded-lg border border-slate-300 bg-white px-3 text-sm text-slate-700 shadow-[inset_0_1px_2px_rgba(20,38,45,0.04)] transition-colors focus:border-[#126B67] focus:outline-none focus:ring-2 focus:ring-[#126B67]/20"
+            >
+              <option value="">Tất cả khía cạnh</option>
+              {aspects?.map((a) => (
+                <option key={a.id} value={a.id}>
+                  {a.name_vi}
+                </option>
+              ))}
+            </select>
+          </div>
         </div>
-
-        {/* Trạng thái */}
-        <div className="queue-filter-controls">
-        <select
-          value={selectedStatus}
-          onChange={(e) => setSelectedStatus(e.target.value)}
-          aria-label="Lọc theo trạng thái"
-          className="queue-filter-select queue-filter-status min-h-9 rounded-lg border border-slate-300 bg-white px-3 text-sm text-slate-700 shadow-[inset_0_1px_2px_rgba(20,38,45,0.04)] transition-colors focus:border-[#126B67] focus:outline-none focus:ring-2 focus:ring-[#126B67]/20"
-        >
-          <option value="">Tất cả trạng thái</option>
-          {STATUSES.map((s) => (
-            <option key={s.value} value={s.value}>
-              {s.label}
-            </option>
-          ))}
-        </select>
-
-        {/* Khía cạnh */}
-        <select
-          value={selectedAspect}
-          onChange={(e) => setSelectedAspect(e.target.value)}
-          aria-label="Lọc theo khía cạnh"
-          className="queue-filter-select queue-filter-aspect min-h-9 max-w-full rounded-lg border border-slate-300 bg-white px-3 text-sm text-slate-700 shadow-[inset_0_1px_2px_rgba(20,38,45,0.04)] transition-colors focus:border-[#126B67] focus:outline-none focus:ring-2 focus:ring-[#126B67]/20"
-        >
-          <option value="">Tất cả khía cạnh</option>
-          {aspects?.map((a) => (
-            <option key={a.id} value={a.id}>
-              {a.name_vi} ({a.id})
-            </option>
-          ))}
-        </select>
-
-        {/* Cảm xúc */}
-        <select
-          value={selectedSentiment}
-          onChange={(e) => setSelectedSentiment(e.target.value)}
-          aria-label="Lọc theo cảm xúc"
-          className="queue-filter-select queue-filter-sentiment min-h-9 rounded-lg border border-slate-300 bg-white px-3 text-sm text-slate-700 shadow-[inset_0_1px_2px_rgba(20,38,45,0.04)] transition-colors focus:border-[#126B67] focus:outline-none focus:ring-2 focus:ring-[#126B67]/20"
-        >
-          <option value="">Tất cả cảm xúc</option>
-          {Object.entries(SENTIMENT_CONFIG).map(([key, cfg]) => (
-            <option key={key} value={key}>
-              {cfg.label}
-            </option>
-          ))}
-        </select>
-        </div>
-
-        {hasActiveFilters && (
-          <button
-            onClick={clearFilters}
-            className="ml-auto min-h-9 rounded-lg px-3 text-sm font-semibold text-[#126B67] transition-colors hover:bg-[#e7f2f1] hover:text-[#0d514e] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#126B67]"
-          >
-            Xóa bộ lọc
-          </button>
-        )}
-      </div>
       </div>
 
       {/* Ticket List Table */}
       <TicketTable tickets={data?.items ?? []} isLoading={isLoading} isFetching={isFetching} />
+
+      {totalTickets > 0 && (
+        <div className="queue-pagination-bar flex flex-wrap items-center justify-between gap-3 px-4 py-3 text-xs text-slate-600">
+          <span>
+            Hiển thị{" "}
+            <strong className="font-mono text-slate-900">
+              {rangeStart}–{rangeEnd}
+            </strong>{" "}
+            trên tổng <strong className="font-mono text-slate-900">{totalTickets}</strong> yêu cầu
+          </span>
+
+          {totalTickets > PAGE_LIMIT && (
+            <div className="flex items-center gap-2">
+              <span className="font-mono text-slate-500">
+                Trang {currentPage} / {totalPages}
+              </span>
+              <button
+                type="button"
+                onClick={() => setPageOffset((prev) => Math.max(0, prev - PAGE_LIMIT))}
+                disabled={pageOffset === 0 || isFetching}
+                aria-label="Trang trước"
+                className="queue-action-button inline-flex min-h-8 items-center gap-1 rounded-lg border border-slate-300 bg-white px-2.5 py-1 text-xs font-semibold text-slate-700 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                <ChevronLeft className="h-3.5 w-3.5" aria-hidden="true" />
+                <span>Trước</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setPageOffset((prev) => prev + PAGE_LIMIT)}
+                disabled={pageOffset + PAGE_LIMIT >= totalTickets || isFetching}
+                aria-label="Trang sau"
+                className="queue-action-button inline-flex min-h-8 items-center gap-1 rounded-lg border border-slate-300 bg-white px-2.5 py-1 text-xs font-semibold text-slate-700 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                <span>Sau</span>
+                <ChevronRight className="h-3.5 w-3.5" aria-hidden="true" />
+              </button>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 };

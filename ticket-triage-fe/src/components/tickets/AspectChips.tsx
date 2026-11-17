@@ -1,21 +1,37 @@
 import React from "react";
-import { AspectOut } from "../../api/schema";
+import { useAspects } from "../../api/hooks";
+import { AspectMetaItem, AspectOut, Sentiment } from "../../api/schema";
 import { SENTIMENT_CONFIG } from "../../lib/constants";
+import { getAspectDisplayName } from "../../lib/ticketHelpers";
 
 interface AspectChipsProps {
   aspects: AspectOut[];
   maxDisplay?: number;
+  aspectsMeta?: readonly AspectMetaItem[];
 }
 
-export const AspectChips: React.FC<AspectChipsProps> = ({ aspects, maxDisplay = 3 }) => {
+const SENTIMENT_SORT_ORDER: Record<Sentiment, number> = {
+  negative: 0,
+  neutral: 1,
+  positive: 2,
+};
+
+export const AspectChips: React.FC<AspectChipsProps> = ({
+  aspects,
+  maxDisplay = 3,
+  aspectsMeta,
+}) => {
+  const { data: fetchedAspects } = useAspects();
+  const resolvedMeta = aspectsMeta ?? fetchedAspects;
+
   if (!aspects || aspects.length === 0) {
-    return <span className="text-xs text-slate-400 italic">Chưa phân tích khía cạnh</span>;
+    return <span className="whitespace-nowrap text-xs italic text-slate-400">Chưa phân tích khía cạnh</span>;
   }
 
   // Sắp xếp: Tiêu cực đứng trước, sau đó trung tính, rồi tích cực
   const sorted = [...aspects].sort((a, b) => {
-    const priorityMap = { negative: 0, neutral: 1, positive: 2 };
-    return priorityMap[a.sentiment] - priorityMap[b.sentiment];
+    const orderDiff = (SENTIMENT_SORT_ORDER[a.sentiment] ?? 3) - (SENTIMENT_SORT_ORDER[b.sentiment] ?? 3);
+    return orderDiff !== 0 ? orderDiff : b.confidence - a.confidence;
   });
 
   const displayed = sorted.slice(0, maxDisplay);
@@ -25,22 +41,22 @@ export const AspectChips: React.FC<AspectChipsProps> = ({ aspects, maxDisplay = 
     <div className="flex flex-wrap items-center gap-1.5">
       {displayed.map((item, index) => {
         const config = SENTIMENT_CONFIG[item.sentiment] || SENTIMENT_CONFIG.neutral;
-        const aspectName = item.aspect.replace("_", " ");
+        const aspectName = getAspectDisplayName(item.aspect, resolvedMeta);
 
         return (
           <span
             key={`${item.aspect}-${index}`}
-            className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs border ${config.bgClass}`}
+            className={`inline-flex shrink-0 whitespace-nowrap items-center gap-1 rounded border px-2 py-0.5 text-[11px] font-medium ${config.bgClass}`}
             title={`Độ tin cậy: ${(item.confidence * 100).toFixed(0)}%`}
           >
-            <span className="capitalize">{aspectName}</span>
+            <span>{aspectName}</span>
             <span className="opacity-75 text-[10px]">({config.label})</span>
           </span>
         );
       })}
 
       {remainingCount > 0 && (
-        <span className="px-1.5 py-0.5 text-xs text-slate-500 bg-slate-100 rounded border border-slate-200">
+        <span className="whitespace-nowrap rounded border border-slate-200 bg-slate-100 px-1.5 py-0.5 text-xs text-slate-500">
           +{remainingCount}
         </span>
       )}

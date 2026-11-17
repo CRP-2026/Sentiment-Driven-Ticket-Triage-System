@@ -11,7 +11,7 @@ export const AppShell: React.FC = () => {
           <Outlet />
         </main>
         <footer className="app-footer px-5 py-4 text-xs">
-        Đồ án Quản trị dự án phần mềm — Nhóm DogTowFaces (Học phần 2026) | Phiên bản 3.1
+          Sentiment Driven Ticket Triage - Version 1.0
         </footer>
       </div>
     </div>
