@@ -3,7 +3,7 @@
 > **Dự án:** Hệ thống phân loại & định tuyến phản hồi khách hàng theo cảm xúc (*Sentiment-Driven Ticket Triage System*)  
 > **Mã dự án:** `TICKET-TRIAGE-01` | **Ngày rà soát:** 2026-11-12  
 > **Tiếp nối từ:** [Issue.md](./Issue.md) (Đợt 1 đã xử lý 8 lỗi baseline `#1`–`#8`)  
-> **Trạng thái kiểm tra hiện tại (16/11/2026):** `ruff check .` PASSED, **62/62** backend tests PASSED, `contracts/openapi.json` == `app.openapi()`, `pnpm run check` & `vitest` (**3/3**) & `pnpm run build` PASSED; các vấn đề Backend/Contract/Docs (**`#9`–`#13`** và phần BE của **`#10`, `#11`**) đã xử lý xong (riêng suy luận AI thật cần `requirements-ml.txt` + checkpoint trong `models/`, còn phần Frontend của `#11`/`#14` giữ nguyên theo scope BE).
+> **Trạng thái kiểm tra hiện tại (16/11/2026):** `ruff check ticket-triage-be` PASSED, **63/63** backend tests PASSED, `contracts/openapi.json` == `app.openapi()`, `pnpm run check` & `vitest` (**23/23** trên 5 file test) & `pnpm run build` PASSED; toàn bộ các vấn đề **`#9`–`#14`** (Backend, Contract `openapi.json`/`generated.ts`, Frontend và Tài liệu) đã xử lý xong (lưu ý: suy luận AI thật cần `requirements-ml.txt` + checkpoint trong `models/`, còn test component/page FE sử dụng static SSR markup `renderToStaticMarkup` để không thêm dependency ngoài quy tắc `AGENT.md`).
 
 ---
 
@@ -45,16 +45,8 @@
 
 ---
 
-### 11. `contracts/openapi.json` lệch với API thực tế & Frontend chưa dùng type sinh tự động
-* **Mức độ:** Nghiêm trọng (Lệch hợp đồng giao tiếp BE–FE)
-* **Hiện tượng:**
-  * Kiểm tra đối chiếu `app.openapi()` với [contracts/openapi.json](../contracts/openapi.json) trả về không khớp (`Equal: False`).
-  * Chạy `make gen-api` sinh ra `src/api/generated.ts`, nhưng toàn bộ Frontend vẫn phụ thuộc vào file viết tay `src/api/schema.d.ts` vốn đã lạc hậu.
-* **Root Cause:**
-  * [tickets.py](../ticket-triage-be/src/ticket_triage/api/routers/tickets.py#L12-L13) khai báo thêm route `POST /api/v1/tickets/triage`, nhưng route này **chưa có** trong `contracts/openapi.json`.
-  * [package.json](../ticket-triage-fe/package.json#L12) cấu hình `"gen-api": "pnpm dlx openapi-typescript ../contracts/openapi.json -o src/api/generated.ts"`, nhưng file `src/api/generated.ts` chưa tồn tại và [hooks.ts](../ticket-triage-fe/src/api/hooks.ts#L4-L11) vẫn import từ [schema.d.ts](../ticket-triage-fe/src/api/schema.d.ts).
-  * `HealthResponse` trong `schema.d.ts` (dòng 61–66) đang thiếu 2 trường `is_mock: boolean` và `model_loaded: boolean` so với `HealthResponse` ở [schemas.py](../ticket-triage-be/src/ticket_triage/api/schemas.py#L107-L115).
-* **Tác động:** Vi phạm quy tắc contract-first tại [AGENT.md](../AGENT.md#L24-L25); nếu backend đổi schema, TypeScript compiler trên Frontend sẽ không phát hiện được sai lệch.
+### 11. ~~`contracts/openapi.json` lệch với API thực tế & Frontend chưa dùng type sinh tự động~~ ✅ ĐÃ XỬ LÝ
+* **Trạng thái hiện tại:** Đã đồng bộ [contracts/openapi.json](../contracts/openapi.json) trực tiếp từ `app.openapi()`, chạy `pnpm run gen-api` sinh [generated.ts](../ticket-triage-fe/src/api/generated.ts) và cấu trúc lại [schema.d.ts](../ticket-triage-fe/src/api/schema.d.ts) để re-export toàn bộ schema chuẩn từ `generated.ts` (gồm `is_mock`, `model_loaded` trên `HealthResponse`, `PriorityBreakdownOut`, `AspectStatsItem`). [TesterPage.tsx](../ticket-triage-fe/src/pages/TesterPage.tsx) và [Navigation.tsx](../ticket-triage-fe/src/components/layout/Navigation.tsx) đã kết nối `useHealth()` hiển thị trạng thái model và hàng đợi thực tế.
 
 ---
 
@@ -91,18 +83,12 @@
 
 ---
 
-### 14. Frontend lãng phí API `/stats/aspects`, chưa chặn chuyển trạng thái sai ở UI và thiếu test component
-* **Mức độ:** Trung bình (Trải nghiệm người dùng & độ phủ kiểm thử)
-* **Hiện tượng:**
-  * Trang Analytics gọi API `/api/v1/stats/aspects` nhưng không hiển thị dữ liệu ma trận khía cạnh × cảm xúc.
-  * Dropdown trạng thái trên bảng Inbox cho phép chọn bước chuyển bị backend cấm (ví dụ `new` → `resolved`), gây lỗi HTTP 400 rồi mới báo đỏ trên UI.
-  * Độ phủ test Frontend còn rất mỏng.
-* **Root Cause:**
-  * [AnalyticsPage.tsx](../ticket-triage-fe/src/pages/AnalyticsPage.tsx#L22) gọi `useAspectsStats()` nhưng chỉ lấy `isLoading: isAspectsLoading`, còn biểu đồ cột (dòng 48–53) vẫn dùng `stats.aspect_counts` từ `/stats/overview`.
-  * [StatusSelect.tsx](../ticket-triage-fe/src/components/tickets/StatusSelect.tsx#L40-L44) render toàn bộ `STATUSES` mà không lọc theo luật chuyển trạng thái của `StateManager`.
-  * [TicketTable.tsx](../ticket-triage-fe/src/components/tickets/TicketTable.tsx#L10-L11) và [PriorityBreakdown.tsx](../ticket-triage-fe/src/components/tickets/PriorityBreakdown.tsx#L19-L20) đang hardcode danh sách từ khóa highlight (`criticalPhrases`, `highPhrases`) ở FE thay vì đồng bộ từ backend.
-  * Thư mục `ticket-triage-fe` hiện mới có 1 file test ([format.test.ts](../ticket-triage-fe/src/lib/format.test.ts), 3 tests), chưa có test cho `InboxPage`, `TesterPage`, `TicketTable`, `StatusSelect`, `PriorityBreakdown` hay hooks.
-* **Tác động:** Bỏ phí endpoint `/stats/aspects` đã xây ở backend; UX xử lý ticket dễ phát sinh thao tác lỗi 400; rủi ro regression UI khi sửa component.
+### 14. ~~Frontend lãng phí API `/stats/aspects`, chưa chặn chuyển trạng thái sai ở UI và thiếu test component~~ ✅ ĐÃ XỬ LÝ
+* **Trạng thái hiện tại:** Đã hoàn tất 3 đợt nâng cấp Frontend:
+  * [AnalyticsPage.tsx](../ticket-triage-fe/src/pages/AnalyticsPage.tsx): bổ sung Stacked Bar Chart **Ma trận Khía cạnh × Cảm xúc** từ `useAspectsStats()` + `buildAspectSentimentMatrix()`, thêm 4 thẻ KPI tổng quan, sửa lỗi lệch màu `PieChart` (gắn `color` trước `.filter((d) => d.value > 0)`) và map nhãn khía cạnh sang `name_vi`.
+  * [StatusSelect.tsx](../ticket-triage-fe/src/components/tickets/StatusSelect.tsx): khóa (`disabled`) `<option>` cấm qua `ALLOWED_STATUS_TRANSITIONS` / `canTransitionStatus()` khớp `StateManager` BE, đồng thời chặn gọi mutation sai và ổn định layout nút lọc trên [InboxPage.tsx](../ticket-triage-fe/src/pages/InboxPage.tsx).
+  * [ticketHelpers.ts](../ticket-triage-fe/src/lib/ticketHelpers.ts): gom `resolvePriorityLevel()` (ưu tiên `priority_level` từ API), đồng bộ `"charged twice"` sang `critical` khớp `priority_rules.yaml`, chuẩn hóa highlight evidence và mapping tên khía cạnh; [MOCK_TICKETS](../ticket-triage-fe/src/mocks/tickets.ts) `#103` đã chỉnh `confidence: 0.80` khớp `base = 48.0`.
+  * Vitest suite mở rộng từ 3 tests lên **23/23 tests PASSED (5 file)**: [format.test.ts](../ticket-triage-fe/src/lib/format.test.ts) (3), [ticketHelpers.test.ts](../ticket-triage-fe/src/lib/ticketHelpers.test.ts) (8), [apiAndMocks.test.ts](../ticket-triage-fe/src/api/apiAndMocks.test.ts) (3), [ticketComponents.test.tsx](../ticket-triage-fe/src/components/tickets/ticketComponents.test.tsx) (5) và [pages.test.tsx](../ticket-triage-fe/src/pages/pages.test.tsx) (4) qua `renderToStaticMarkup` + `StaticRouter` (không thêm dependency ngoài `AGENT.md`).
 
 ---
 
@@ -112,20 +98,20 @@
 |:---:|:---|:---|:---|:---|
 | **#9** | `priority_engine.py` & `priority_rules.yaml` | ✅ **Đã xử lý:** Nạp động `load_priority_rules()` & `load_aspect_weights()`, đồng bộ từ khóa/caps/ngưỡng + `_is_resolved_clause`. | Nạp động qua `load_priority_rules()` (`lru_cache`), thống nhất 1 nguồn sự thật YAML. | ✅ Đã xử lý |
 | **#10** | `main.py`, `baseline.py`, `abte.py`, `docker.yaml` | ✅ **Đã xử lý (Code):** Hỗ trợ `baseline \| deberta`, `MODEL_ID`, `MODEL_TASK`, `ENABLE_ABTE`, trích xuất `terms` từ `aspects.yaml`, cập nhật `docker.yaml` & `/health` `model_loaded`. (Suy luận thật cần `requirements-ml.txt` + checkpoint trong `models/`). | Hỗ trợ `mock \| baseline \| deberta`, fallback `MODEL_TASK=document`, tùy chọn `ENABLE_ABTE`. | ✅ Đã xử lý (chờ env ML) |
-| **#11** | `contracts/openapi.json` & `schema.d.ts` | ✅ **Đã sync `contracts/openapi.json`** khớp 100% `app.openapi()`; phía FE (`schema.d.ts` / `generated.ts`) giữ nguyên baseline ngoài scope BE. | `contracts/openapi.json` khớp 100% `app.openapi()`; FE dùng type từ `generated.ts`. | 🟡 Xong BE Contract |
+| **#11** | `contracts/openapi.json` & `schema.d.ts` | ✅ **Đã xử lý:** Sync `contracts/openapi.json` == `app.openapi()`; sinh `generated.ts` (`pnpm run gen-api`) và re-export tại `schema.d.ts`. | `contracts/openapi.json` khớp 100% `app.openapi()`; FE dùng type từ `generated.ts`. | ✅ Đã xử lý |
 | **#12** | `baseline.py`, `config_utils.py` | ✅ **Đã xử lý:** Guard `target_path is not None`, đọc `overall_sentiment_template` từ YAML, trích xuất helper dùng chung `config_utils.find_config_file()`. | Trả về `{}` an toàn khi thiếu file và ưu tiên `settings.configs_dir`. | ✅ Đã xử lý |
 | **#13** | `priority_queue.py` & `tickets.py` | ✅ **Đã xử lý phần an toàn luồng & ORM:** Thêm `RLock`, dedup `ticket_id`, chuẩn hóa UTC và lưu `ticket_queue_metadata`; SQLite phục vụ phân trang/lọc. | An toàn luồng, chỉ lưu dữ liệu thuần hoặc chuyển hẳn sang DB-backed queue. | ✅ Đã xử lý |
-| **#14** | `AnalyticsPage.tsx`, `StatusSelect.tsx`, Vitest | Giữ nguyên Frontend baseline (ngoài scope BE). Backend đã có sẵn `/stats/aspects`, FSM `StateManager` và bổ sung tests BE (`62/62` pass). | Hiển thị ma trận Aspect × Sentiment, khóa bước chuyển sai, bổ sung component tests. | ⏳ Ngoài scope BE |
+| **#14** | `AnalyticsPage.tsx`, `StatusSelect.tsx`, Vitest | ✅ **Đã xử lý:** Vẽ Stacked Bar Chart từ `/stats/aspects`, khóa option FSM trên `StatusSelect.tsx`, gom `ticketHelpers.ts` + bổ sung Vitest (**23/23** static SSR & unit tests). | Hiển thị ma trận Aspect × Sentiment, khóa bước chuyển sai, bổ sung component tests. | ✅ Đã xử lý |
 
 ---
 
 ## 💡 III. Tóm Tắt Thực Thi Theo Từng Nhóm (`#9`–`#14`)
 
 1. **Backend Core & AI (`#9`, `#10`, `#12` — ✅ Đã xử lý):**
-   * Hoàn thiện `load_priority_rules()`, `load_aspect_weights()`, `load_aspect_keywords()` (`aspects.yaml` SSOT), `config_utils.find_config_file()`, `extract_aspect_terms()` (`ENABLE_ABTE`), guard `target_path is not None` & `overall_sentiment_template` trong `baseline.py`, nhánh `baseline | deberta` + `MODEL_ID` + `MODEL_TASK` trong `main.py`, sửa `model_loaded` trong `health.py`, và bổ sung env AI trong `docker.yaml`.
-2. **Backend API, Queue & Hợp đồng (`#11` Contract BE, `#13` — ✅ Đã xử lý):**
-   * Xuất lại `contracts/openapi.json` (`== app.openapi()`), dùng `RLock` + `ticket_queue_metadata` trong Heap.
-3. **Frontend & Tài liệu BE (`#14` giữ nguyên FE; Docs BE — ✅ Đã xử lý):**
-   * Mã nguồn `ticket-triage-fe/` giữ nguyên theo baseline (ngoài scope BE). Đã đồng bộ `Backend-Plan.md`, `System-Ticket-Report.md` và `README.md`.
-   * **Nghiệm thu cuối:** `pytest -v` (**62/62**), `ruff check .` (PASSED), `contracts/openapi.json` == `app.openapi()`, `pnpm run check` (PASSED), `pnpm run test` (**3/3** `format.test.ts`), `pnpm run build` (PASSED). Lưu ý chạy model ML thật vẫn yêu cầu cài `requirements-ml.txt` (`torch`/`transformers`/`peft`) và có checkpoint thật hoặc internet.
+   * Hoàn thiện `load_priority_rules()`, `load_aspect_weights()`, `load_aspect_keywords()` (nạp bắt buộc fail-fast từ `aspects.yaml`, bỏ bộ từ khóa fallback cứng trong `keyword_prefilter.py`), `config_utils.find_config_file()`, `extract_aspect_terms()` (`ENABLE_ABTE`), guard `target_path is not None` & `overall_sentiment_template` trong `baseline.py`, nhánh `baseline | deberta` + `MODEL_ID` + `MODEL_TASK` trong `main.py`, sửa `model_loaded` trong `health.py`, và bổ sung env AI trong `docker.yaml`.
+2. **Backend API, Queue & Hợp đồng (`#11`, `#13` — ✅ Đã xử lý):**
+   * Xuất lại `contracts/openapi.json` (`== app.openapi()`), sinh `ticket-triage-fe/src/api/generated.ts` qua `pnpm run gen-api`, cấu trúc `schema.d.ts` re-export, và dùng `RLock` + `ticket_queue_metadata` trong Heap.
+3. **Frontend & Tài liệu (`#14` — ✅ Đã xử lý):**
+   * Hoàn thiện `ticketHelpers.ts` (ưu tiên `priority_level` API, `"charged twice"` critical, FSM transitions), `AnalyticsPage.tsx` (4 KPI + Pie color fix + Stacked Bar Chart), `TesterPage.tsx` & `Navigation.tsx` (`useHealth()`), `InboxPage.tsx` (phân trang 50/trang + `aspect_counts` server + bộ lọc cố định), `MOCK_TICKETS` `#103`, đồng bộ `Backend-Plan.md`, `Frontend-Plan.md`, `System-Ticket-Report.md`, `README.md` và các tài liệu audit.
+   * **Nghiệm thu cuối:** `pytest -v` (**63/63**), `ruff check ticket-triage-be` (PASSED), `contracts/openapi.json` == `app.openapi()`, `pnpm run check` (PASSED), `pnpm run test` (**23/23** trên 5 file qua `renderToStaticMarkup` + `StaticRouter`), `pnpm run build` (PASSED). Lưu ý chạy model ML thật vẫn yêu cầu cài `requirements-ml.txt` (`torch`/`transformers`/`peft`) + checkpoint thật, và FE chưa chạy test tương tác `jsdom` / browser E2E live.
 

@@ -1,74 +1,36 @@
-export interface AspectOut {
-  aspect: string;
-  sentiment: "negative" | "neutral" | "positive";
-  confidence: number;
-  terms?: string[];
-}
+import type { components } from "./generated";
 
-export interface PriorityBreakdownOut {
-  score: number;
-  base: number;
-  urgency_bonus: number;
-  intensity_bonus: number;
-  aspect_bonus: number;
-  reasons: string[];
-}
+type Schemas = components["schemas"];
 
-export interface TicketOut {
-  id: number;
-  content: string;
-  processed_content?: string | null;
-  language_flag: string;
-  needs_manual_review: boolean;
-  sentiment_label?: "negative" | "neutral" | "positive" | null;
-  confidence?: number | null;
-  low_confidence: boolean;
-  priority_score: number;
-  priority_level: "CRITICAL" | "MEDIUM" | "LOW";
-  dominant_aspect?: string | null;
-  priority_breakdown?: PriorityBreakdownOut | null;
-  status: "new" | "assigned" | "in_progress" | "resolved";
-  assigned_to?: string | null;
+export type Sentiment = "negative" | "neutral" | "positive";
+export type PriorityLevel = "CRITICAL" | "MEDIUM" | "LOW";
+export type TicketStatus = Schemas["StatusEnum"];
+
+export type AspectOut = Omit<Schemas["AspectOut"], "sentiment"> & {
+  sentiment: Sentiment;
+};
+
+export type PriorityBreakdownOut = Schemas["PriorityBreakdownOut"];
+
+export type TicketOut = Omit<
+  Schemas["TicketOut"],
+  "sentiment_label" | "priority_level" | "aspects"
+> & {
+  sentiment_label?: Sentiment | null;
+  priority_level: PriorityLevel;
   aspects: AspectOut[];
-  created_at: string;
-  updated_at: string;
-}
+};
 
-export interface TicketListResponse {
+export type TicketListResponse = Omit<Schemas["TicketListResponse"], "items"> & {
   items: TicketOut[];
-  total: number;
-  limit: number;
-  offset: number;
-}
+};
 
-export interface TicketCreateIn {
-  content: string;
-}
+export type TicketCreateIn = Schemas["TicketCreateIn"];
+export type StatusUpdateIn = Schemas["StatusUpdateIn"];
+export type AspectMetaItem = Schemas["AspectMetaItem"];
+export type HealthResponse = Required<Schemas["HealthResponse"]>;
+export type StatsOverview = Schemas["StatsOverviewResponse"];
 
-export interface StatusUpdateIn {
-  status: "new" | "assigned" | "in_progress" | "resolved";
-  assigned_to?: string | null;
-}
-
-export interface AspectMetaItem {
-  id: string;
-  name_vi: string;
-  description: string;
-  department: string;
-  weight: number;
-}
-
-export interface HealthResponse {
-  status: string;
-  version: string;
-  model_name: string;
-  queue_size: number;
-}
-
-export interface StatsOverview {
-  total_tickets: number;
-  sentiment_counts: Record<string, number>;
-  priority_counts: Record<string, number>;
-  status_counts: Record<string, number>;
-  aspect_counts: Record<string, number>;
-}
+export type AspectStatItem = Omit<Schemas["AspectStatItem"], "sentiment"> & {
+  sentiment: Sentiment;
+};

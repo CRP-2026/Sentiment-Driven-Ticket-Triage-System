@@ -78,7 +78,7 @@ export const MOCK_TICKETS: TicketOut[] = [
     language_flag: "en",
     needs_manual_review: false,
     sentiment_label: "negative",
-    confidence: 0.82,
+    confidence: 0.80,
     low_confidence: false,
     priority_score: 54.8,
     priority_level: "MEDIUM",
