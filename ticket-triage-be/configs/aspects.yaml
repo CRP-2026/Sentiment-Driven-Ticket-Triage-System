@@ -23,6 +23,12 @@ aspects:
       - email
       - manager
       - assistance
+      - hung up
+      - hang up
+      - ignored
+      - supervisor
+      - disrespect
+      - disrespectful
 
   - id: refund_payment
     name_vi: Hoàn tiền & Thanh toán
@@ -38,7 +44,9 @@ aspects:
       - charged twice
       - payment
       - pay
+      - paid
       - bill
+      - billed
       - billing
       - invoice
       - fee
@@ -49,6 +57,8 @@ aspects:
       - bank
       - transaction
       - reimburse
+      - unauthorized charge
+      - extra charge
 
   - id: product_quality
     name_vi: Chất lượng sản phẩm
