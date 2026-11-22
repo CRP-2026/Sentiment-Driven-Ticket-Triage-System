@@ -246,3 +246,46 @@ def test_health_reports_model_loaded_false_on_nli_fallback(client: TestClient, m
             client.app.state.sentiment_model = orig_model
         if orig_name is not None:
             client.app.state.model_name = orig_name
+
+
+def test_single_aspect_factual_complaint_aligns_with_negative_overall(monkeypatch):
+    def fake_classifier(text: str, candidate_labels: list[str], hypothesis_template: str):
+        if "Regarding" in hypothesis_template:
+            # Giả lập câu trần thuật ngắn bị NLI chấm neutral sát nút (0.52 vs 0.48)
+            return {
+                "labels": ["neutral", "negative", "positive"],
+                "scores": [0.52, 0.48, 0.0],
+            }
+        return {
+            "labels": ["negative", "neutral", "positive"],
+            "scores": [0.88, 0.10, 0.02],
+        }
+
+    fake_transformers = types.ModuleType("transformers")
+    fake_transformers.pipeline = lambda task, model, device=-1: fake_classifier
+    monkeypatch.setitem(sys.modules, "transformers", fake_transformers)
+
+    model = ZeroShotNliModel(
+        model_name_or_path="org/custom-deberta",
+        hypotheses={
+            "overall_sentiment_template": "This customer ticket is {}.",
+            "aspect_sentiment_template": "Regarding {aspect}, this customer ticket is {sentiment}.",
+            "aspect_names": {"refund_payment": "refunds, charges, billing or payment dispute"},
+            "sentiments": {"positive": "positive", "neutral": "neutral", "negative": "negative"},
+        },
+    )
+    res = model.predict("I was charged 5 times.", candidates=["refund_payment"])
+    assert res.overall.label == "negative"
+    assert res.overall.confidence == 0.88
+    assert len(res.aspects) == 1
+    assert res.aspects[0].aspect == "refund_payment"
+    assert res.aspects[0].sentiment == "negative"
+    assert res.aspects[0].confidence == 0.88
+
+
+def test_repo_aspect_hypotheses_uses_problem_report_verbalizer():
+    repo_hypotheses = Path(__file__).resolve().parents[1] / "configs" / "aspect_hypotheses.yaml"
+    cfg = load_aspect_hypotheses(repo_hypotheses)
+    assert "problem" in cfg["sentiments"]["negative"].lower()
+    assert "informational" not in cfg["sentiments"]["neutral"].lower()
+    assert "feeling" not in cfg["aspect_sentiment_template"].lower()
