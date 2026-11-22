@@ -13,3 +13,9 @@ sentiments:
   positive: "positive and satisfied"
   neutral: "neutral or informational"
   negative: "negative, frustrated or dissatisfied"
+
+urgency_hypothesis_template: "This customer ticket represents {}."
+urgency_levels:
+  critical: "an urgent crisis, severe financial loss, multiple billing error, or complete service failure requiring immediate escalation"
+  high: "a serious complaint, long delivery delay, rude staff incident, or unresolved problem needing priority attention"
+  normal: "a routine inquiry, minor inconvenience, or standard feedback"
