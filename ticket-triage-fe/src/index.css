@@ -1168,3 +1168,1471 @@ body {
   .tester-result-ledger:not(.tester-skeleton-ledger) .tester-aspects-box > div > div > span:nth-child(5) { animation-delay: 510ms; }
   .tester-result-ledger:not(.tester-skeleton-ledger) .tester-aspects-box > div > div > span:nth-child(6) { animation-delay: 555ms; }
 }
+
+/* Analytics extends the Inbox canvas and Live Tester header language. */
+.analytics-page {
+  --analytics-ease: cubic-bezier(0.22, 1, 0.36, 1);
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+.analytics-header-icon,
+.analytics-aspect-heading-icon {
+  color: var(--app-teal);
+}
+
+.queue-metric.analytics-metric {
+  height: auto;
+  min-height: 164px;
+  justify-content: flex-start;
+  border-color: rgba(255, 255, 255, 0.92);
+  background: rgba(255, 255, 255, 0.78);
+  backdrop-filter: blur(12px);
+}
+
+.analytics-metric .queue-stat-icon {
+  top: 14px;
+  right: auto;
+  left: 14px;
+}
+
+.analytics-metric .queue-metric-label {
+  margin-top: 38px;
+}
+
+.analytics-kpi-share {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  padding: 4px 8px;
+  border-radius: 999px;
+  background: var(--app-teal-wash);
+  color: var(--app-teal-deep);
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1.2;
+  font-variant-numeric: tabular-nums;
+}
+
+.analytics-kpi-share-critical {
+  background: rgba(167, 39, 41, 0.08);
+  color: var(--app-critical);
+}
+
+.analytics-kpi-share-medium {
+  background: rgba(150, 95, 0, 0.09);
+  color: var(--app-medium);
+}
+
+.analytics-kpi-share-low {
+  background: rgba(8, 116, 67, 0.08);
+  color: var(--app-low);
+}
+
+.analytics-metric-track {
+  display: block;
+  width: 100%;
+  height: 5px;
+  flex: none;
+  overflow: hidden;
+  margin-top: auto;
+  border-radius: 999px;
+  background: var(--app-line);
+}
+
+.analytics-metric-fill {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--app-teal);
+}
+
+.analytics-metric-fill-critical { background: var(--app-critical); }
+.analytics-metric-fill-medium { background: var(--app-medium); }
+.analytics-metric-fill-low { background: var(--app-low); }
+
+.analytics-metric > span:last-of-type {
+  font-size: 38px;
+}
+
+.analytics-kpi-grid .analytics-metric:nth-child(4)::before,
+.analytics-kpi-grid .analytics-metric:nth-child(4)::after {
+  display: none;
+}
+
+.queue-stat-icon-critical {
+  color: var(--app-critical);
+  border-color: #d88479;
+  background: linear-gradient(145deg, #fff3f1, #f7cec5);
+}
+
+.queue-metric-critical-value {
+  color: var(--app-critical);
+  font-size: 46px;
+}
+
+.app-main .analytics-page .analytics-chart-card {
+  min-width: 0;
+  border-color: #d4e1df;
+  background: linear-gradient(152deg, #ffffff 10%, #f6faf9 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.98),
+    0 2px 6px rgba(22, 37, 47, 0.05),
+    0 18px 36px -22px rgba(18, 48, 51, 0.32);
+}
+
+.app-main .analytics-page .analytics-donut-card {
+  border-color: rgba(255, 255, 255, 0.2);
+  background:
+    linear-gradient(145deg, rgba(255, 255, 255, 0.045), transparent 62%),
+    linear-gradient(135deg, color-mix(in srgb, var(--app-muted) 28%, var(--app-ink)), var(--app-ink) 72%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.075),
+    0 16px 34px rgba(24, 37, 47, 0.24);
+  color: var(--app-surface);
+}
+
+.app-main .analytics-page .analytics-donut-card h3 {
+  color: var(--app-surface);
+}
+
+.analytics-chart-card h3 {
+  color: var(--app-ink);
+  font-size: 15px;
+  letter-spacing: -0.01em;
+}
+
+.analytics-pie-grid h3 svg,
+.analytics-aspect-heading h3 svg {
+  box-sizing: content-box;
+  flex: none;
+  width: 16px;
+  height: 16px;
+  padding: 8px;
+  border: 1px solid var(--app-line);
+  border-radius: 10px;
+  background: var(--app-teal-wash);
+}
+
+.analytics-sentiment-heading-icon,
+.analytics-chart-neutral {
+  color: var(--app-muted);
+}
+
+.analytics-priority-heading-icon {
+  color: var(--app-medium);
+}
+
+.analytics-sentiment-negative {
+  color: var(--app-critical);
+  fill: var(--app-critical);
+}
+
+.analytics-chart-card .analytics-sentiment-negative .recharts-rectangle {
+  fill: var(--app-critical) !important;
+}
+
+.analytics-sentiment-neutral {
+  color: var(--app-muted);
+  fill: var(--app-muted);
+}
+
+.analytics-sentiment-positive,
+.analytics-aspect-bars {
+  color: var(--app-teal);
+  fill: var(--app-teal);
+}
+
+.analytics-chart-card .analytics-sentiment-neutral .recharts-rectangle {
+  fill: var(--app-muted) !important;
+}
+
+.analytics-chart-card .analytics-sentiment-positive .recharts-rectangle,
+.analytics-chart-card .analytics-aspect-bars .recharts-rectangle {
+  fill: var(--app-teal) !important;
+}
+
+.analytics-aspect-frequency-stage .analytics-aspect-bars .recharts-rectangle {
+  fill: url(#analytics-aspect-bar-gradient) !important;
+}
+
+.analytics-chart-grid {
+  stroke: var(--app-line);
+}
+
+.analytics-chart-grid line {
+  stroke: var(--app-line);
+  stroke-opacity: 0.62;
+}
+
+.analytics-chart-card .recharts-cartesian-axis-tick text,
+.analytics-chart-card .recharts-label,
+.analytics-chart-card .recharts-pie-label-text {
+  fill: var(--app-muted);
+}
+
+.analytics-chart-card .recharts-legend-item-text {
+  color: var(--app-muted) !important;
+  font-size: 11px;
+}
+
+.analytics-legend-label {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 8px;
+  border: 1px solid var(--app-line);
+  border-radius: 999px;
+  background: var(--app-teal-wash);
+  line-height: 1.25;
+}
+
+.analytics-gradient-critical-soft,
+.analytics-gradient-critical {
+  stop-color: var(--app-critical);
+}
+
+.analytics-gradient-critical-soft {
+  stop-opacity: 0.76;
+}
+
+.analytics-gradient-neutral-soft,
+.analytics-gradient-neutral {
+  stop-color: var(--app-muted);
+}
+
+.analytics-gradient-neutral-soft {
+  stop-opacity: 0.76;
+}
+
+.analytics-gradient-teal-soft,
+.analytics-gradient-teal {
+  stop-color: var(--app-teal);
+}
+
+.analytics-gradient-teal-soft {
+  stop-opacity: 0.76;
+}
+
+.analytics-gradient-medium-soft,
+.analytics-gradient-medium {
+  stop-color: var(--app-medium);
+}
+
+.analytics-gradient-medium-soft {
+  stop-opacity: 0.76;
+}
+
+.analytics-gradient-low-soft,
+.analytics-gradient-low {
+  stop-color: var(--app-low);
+}
+
+.analytics-gradient-low-soft {
+  stop-opacity: 0.76;
+}
+
+.analytics-pie-stage {
+  position: relative;
+  display: flex;
+  height: 320px;
+  min-width: 0;
+  flex-direction: column;
+  gap: 8px;
+  isolation: isolate;
+}
+
+.analytics-pie-stage::before,
+.analytics-pie-stage::after {
+  position: absolute;
+  z-index: 0;
+  top: 50%;
+  left: 50%;
+  border-radius: 50%;
+  content: "";
+  pointer-events: none;
+  transform: translate(-50%, -50%);
+}
+
+.analytics-donut-content {
+  display: flex;
+  min-height: 0;
+  min-width: 0;
+  flex: 1 1 auto;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  border-radius: 18px;
+  background:
+    linear-gradient(145deg, rgba(255, 255, 255, 0.035), transparent 54%),
+    color-mix(in srgb, var(--app-ink) 72%, black);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.045),
+    inset 0 -18px 30px rgba(0, 0, 0, 0.13),
+    0 5px 14px rgba(0, 0, 0, 0.12);
+}
+
+.analytics-donut-plot {
+  position: relative;
+  isolation: isolate;
+  height: 100%;
+  min-width: 0;
+  flex: 0 0 72%;
+}
+
+.analytics-donut-plot::before,
+.analytics-donut-plot::after {
+  position: absolute;
+  z-index: 0;
+  top: 50%;
+  left: 50%;
+  border-radius: 50%;
+  content: "";
+  pointer-events: none;
+  transform: translate(-50%, -50%);
+}
+
+.analytics-donut-plot::before {
+  width: 164px;
+  height: 164px;
+  background: radial-gradient(
+    circle,
+    color-mix(in srgb, var(--app-muted) 18%, transparent) 0%,
+    color-mix(in srgb, var(--app-muted) 10%, transparent) 48%,
+    transparent 74%
+  );
+  filter: blur(8px);
+  opacity: 0.72;
+}
+
+.analytics-donut-plot::after {
+  width: 76px;
+  height: 76px;
+  border: 1px solid rgba(255, 255, 255, 0.075);
+  background: rgba(0, 0, 0, 0.28);
+  box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.22), 0 1px 3px rgba(255, 255, 255, 0.035);
+}
+
+.analytics-donut-plot:not(:has(.recharts-sector))::before,
+.analytics-donut-plot:not(:has(.recharts-sector))::after {
+  display: none;
+}
+
+.analytics-donut-plot > .recharts-responsive-container {
+  position: relative;
+  z-index: 1;
+}
+
+.analytics-donut-plot .recharts-sector {
+  stroke: transparent;
+  filter: drop-shadow(0 3px 5px rgba(0, 0, 0, 0.32));
+}
+
+.analytics-donut-card .recharts-pie-sector path[data-analytics-category="Tiêu cực"],
+.analytics-donut-card .recharts-pie-sector path[data-analytics-category="Nghiêm trọng"] {
+  filter:
+    drop-shadow(0 2px 4px rgba(0, 0, 0, 0.26))
+    drop-shadow(0 0 8px color-mix(in srgb, var(--app-critical) 30%, transparent));
+}
+
+.analytics-donut-card .recharts-pie-sector path[data-analytics-category="Trung tính"] {
+  filter:
+    drop-shadow(0 2px 4px rgba(0, 0, 0, 0.26))
+    drop-shadow(0 0 7px color-mix(in srgb, var(--app-muted) 27%, transparent));
+}
+
+.analytics-donut-card .recharts-pie-sector path[data-analytics-category="Tích cực"] {
+  filter:
+    drop-shadow(0 2px 4px rgba(0, 0, 0, 0.26))
+    drop-shadow(0 0 8px color-mix(in srgb, var(--app-teal-bright) 32%, transparent));
+}
+
+.analytics-donut-card .recharts-pie-sector path[data-analytics-category="Trung bình"] {
+  filter:
+    drop-shadow(0 2px 4px rgba(0, 0, 0, 0.26))
+    drop-shadow(0 0 8px color-mix(in srgb, var(--app-medium) 30%, transparent));
+}
+
+.analytics-donut-card .recharts-pie-sector path[data-analytics-category="Thấp"] {
+  filter:
+    drop-shadow(0 2px 4px rgba(0, 0, 0, 0.26))
+    drop-shadow(0 0 8px color-mix(in srgb, var(--app-low) 32%, transparent));
+}
+
+.analytics-pie-center {
+  position: absolute;
+  z-index: 2;
+  top: 50%;
+  left: 50%;
+  display: grid;
+  width: 74px;
+  height: 74px;
+  place-items: center;
+  border-radius: 50%;
+  color: var(--app-surface);
+  font-size: 22px;
+  font-weight: 700;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  pointer-events: none;
+  transform: translate(-50%, -50%);
+}
+
+.analytics-donut-legend {
+  display: flex;
+  min-height: 20px;
+  flex: none;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 8px 20px;
+  color: rgba(255, 255, 255, 0.76);
+  font-size: 10px;
+  line-height: 1.2;
+}
+
+.analytics-donut-legend > span {
+  display: inline-flex;
+  min-width: 0;
+  align-items: center;
+  gap: 7px;
+}
+
+.analytics-donut-legend > span::before {
+  width: 9px;
+  height: 9px;
+  flex: none;
+  border-radius: 3px;
+  background: var(--app-muted);
+  content: "";
+}
+
+.analytics-donut-legend [data-analytics-category="Tiêu cực"]::before,
+.analytics-donut-legend [data-analytics-category="Nghiêm trọng"]::before { background: var(--app-critical); }
+.analytics-donut-legend [data-analytics-category="Trung tính"]::before { background: var(--app-muted); }
+.analytics-donut-legend [data-analytics-category="Tích cực"]::before { background: var(--app-teal-bright); }
+.analytics-donut-legend [data-analytics-category="Trung bình"]::before { background: var(--app-medium); }
+.analytics-donut-legend [data-analytics-category="Thấp"]::before { background: var(--app-low); }
+
+.analytics-donut-summary {
+  display: grid;
+  min-width: 0;
+  flex: 1 1 auto;
+  gap: 12px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.analytics-donut-summary-item {
+  display: grid;
+  min-width: 0;
+  grid-template-columns: 8px minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 5px;
+  color: rgba(255, 255, 255, 0.82);
+  font-size: 9px;
+}
+
+.analytics-donut-summary-swatch {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--app-muted);
+}
+
+.analytics-donut-summary-item[data-analytics-category="Tiêu cực"] .analytics-donut-summary-swatch,
+.analytics-donut-summary-item[data-analytics-category="Nghiêm trọng"] .analytics-donut-summary-swatch { background: var(--app-critical); }
+.analytics-donut-summary-item[data-analytics-category="Trung tính"] .analytics-donut-summary-swatch { background: var(--app-muted); }
+.analytics-donut-summary-item[data-analytics-category="Tích cực"] .analytics-donut-summary-swatch { background: var(--app-teal-bright); }
+.analytics-donut-summary-item[data-analytics-category="Trung bình"] .analytics-donut-summary-swatch { background: var(--app-medium); }
+.analytics-donut-summary-item[data-analytics-category="Thấp"] .analytics-donut-summary-swatch { background: var(--app-low); }
+
+.analytics-donut-summary-name {
+  overflow: hidden;
+  color: var(--app-surface);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.analytics-donut-summary-count {
+  color: var(--app-surface);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.analytics-donut-summary-percent {
+  color: rgba(255, 255, 255, 0.66);
+  font-size: 9px;
+  font-variant-numeric: tabular-nums;
+}
+
+.analytics-donut-card .analytics-pie-callout-card {
+  display: grid;
+  width: 76px;
+  height: 40px;
+  align-content: center;
+  gap: 2px;
+  padding: 4px 6px;
+  border-color: rgba(255, 255, 255, 0.12);
+  border-radius: 11px;
+  background: rgba(58, 64, 75, 0.86);
+  backdrop-filter: blur(4px);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.045),
+    0 5px 14px rgba(0, 0, 0, 0.24);
+  color: var(--app-surface);
+  white-space: nowrap;
+}
+
+.analytics-donut-card .analytics-pie-callout-value {
+  flex: none;
+  color: var(--app-surface);
+  font-size: 13px;
+}
+
+.analytics-donut-card .analytics-pie-callout-category {
+  min-width: 0;
+  overflow: hidden;
+  color: rgba(255, 255, 255, 0.72);
+  font-size: 9px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.analytics-donut-card .analytics-legend-label {
+  border-color: rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--app-surface) !important;
+}
+
+.analytics-donut-card .analytics-legend-label[data-analytics-category] {
+  color: var(--app-surface) !important;
+}
+
+.analytics-donut-card .analytics-legend-label::before {
+  margin-right: 6px;
+}
+
+.analytics-donut-card .analytics-pie-stage .recharts-legend-item-text {
+  color: var(--app-surface) !important;
+}
+
+.analytics-donut-card h3 svg {
+  box-sizing: content-box;
+  width: 16px;
+  height: 16px;
+  padding: 7px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.analytics-aspect-card {
+  border-color: rgba(255, 255, 255, 0.92) !important;
+  background: rgba(255, 255, 255, 0.82) !important;
+  backdrop-filter: blur(14px);
+}
+
+.analytics-aspect-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 18px;
+}
+
+.analytics-aspect-heading h3 {
+  display: flex;
+  align-items: center;
+  margin: 0;
+  color: var(--app-ink);
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.analytics-aspect-heading h3 svg {
+  box-sizing: content-box;
+  flex: none;
+  width: 18px;
+  height: 18px;
+  padding: 7px;
+  border: 1px solid var(--app-line);
+  border-radius: 11px;
+  background: var(--app-teal-wash);
+}
+
+.analytics-aspect-description {
+  margin: 5px 0 0 40px;
+  color: var(--app-muted);
+  font-size: 11px;
+}
+
+.analytics-aspect-count {
+  flex: none;
+  padding: 6px 10px;
+  border: 1px solid var(--app-line);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.74);
+  color: var(--app-muted);
+  font-size: 10px;
+  font-variant-numeric: tabular-nums;
+}
+
+.analytics-aspect-overview {
+  display: grid;
+  min-width: 0;
+  grid-template-columns: minmax(240px, 0.78fr) minmax(0, 1.55fr);
+  gap: 20px;
+}
+
+.analytics-aspect-highlight {
+  display: grid;
+  min-width: 0;
+  grid-template-columns: auto 1fr auto;
+  align-content: start;
+  align-items: center;
+  column-gap: 10px;
+  padding: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.95);
+  border-radius: 18px;
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.86), rgba(228, 241, 239, 0.64));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9), 0 8px 20px rgba(24, 37, 47, 0.055);
+}
+
+.analytics-aspect-highlight-icon {
+  display: grid;
+  width: 30px;
+  height: 30px;
+  grid-row: span 2;
+  place-items: center;
+  border: 1px solid var(--app-line);
+  border-radius: 10px;
+  background: var(--app-teal-wash);
+  color: var(--app-teal);
+}
+
+.analytics-aspect-eyebrow {
+  color: var(--app-muted);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+}
+
+.analytics-aspect-highlight-count {
+  margin-top: 12px;
+  color: var(--app-ink);
+  font-size: 38px;
+  font-weight: 700;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+.analytics-aspect-highlight-unit {
+  align-self: end;
+  padding-bottom: 4px;
+  color: var(--app-muted);
+  font-size: 10px;
+}
+
+.analytics-aspect-highlight-name {
+  grid-column: 1 / -1;
+  overflow: hidden;
+  margin-top: 12px;
+  color: var(--app-ink);
+  font-size: 13px;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.analytics-aspect-highlight-ratio {
+  grid-column: 1 / -1;
+  margin-top: 5px;
+  color: var(--app-muted);
+  font-size: 10px;
+  font-variant-numeric: tabular-nums;
+}
+
+.analytics-aspect-negative-track,
+.analytics-aspect-segment-track {
+  display: flex;
+  min-width: 0;
+  overflow: hidden;
+  border-radius: 999px;
+  background: var(--app-line);
+}
+
+.analytics-aspect-negative-track {
+  grid-column: 1 / -1;
+  height: 5px;
+  margin-top: 14px;
+}
+
+.analytics-aspect-negative-track > span,
+.analytics-aspect-segment {
+  display: block;
+  height: 100%;
+  flex: none;
+  border-radius: inherit;
+  background: var(--app-critical);
+}
+
+.analytics-aspect-negative-label {
+  grid-column: 1 / -1;
+  margin-top: 7px;
+  color: var(--app-muted);
+  font-size: 9px;
+}
+
+.analytics-aspect-table-wrap {
+  min-width: 0;
+  overflow: hidden;
+}
+
+.analytics-aspect-table-header,
+.analytics-aspect-row {
+  display: grid;
+  min-width: 0;
+  grid-template-columns: 30px minmax(80px, 1fr) 74px minmax(70px, 1.5fr) 34px;
+  align-items: center;
+  gap: 8px;
+}
+
+.analytics-aspect-table-header {
+  min-height: 32px;
+  border-bottom: 1px solid var(--app-line);
+  color: var(--app-muted);
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.analytics-aspect-table-header span:nth-child(1) { grid-column: 1 / 3; }
+.analytics-aspect-table-header span:nth-child(2) { grid-column: 4; }
+.analytics-aspect-table-header span:nth-child(3) { grid-column: 5; text-align: right; }
+
+.analytics-aspect-rows {
+  max-height: 320px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  scrollbar-color: var(--app-teal-soft) transparent;
+  scrollbar-width: thin;
+}
+
+.analytics-aspect-row {
+  min-height: 46px;
+  border-bottom: 1px solid rgba(217, 226, 225, 0.76);
+}
+
+.analytics-aspect-rank {
+  display: grid;
+  width: 24px;
+  height: 24px;
+  place-items: center;
+  border: 1px solid var(--app-line);
+  border-radius: 8px;
+  color: var(--app-muted);
+  font-size: 8px;
+  font-variant-numeric: tabular-nums;
+}
+
+.analytics-aspect-row-name {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--app-ink);
+  font-size: 10px;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.analytics-aspect-row-percent,
+.analytics-aspect-row-total {
+  color: var(--app-muted);
+  font-size: 9px;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.analytics-aspect-segment-track {
+  height: 7px;
+  background: rgba(217, 226, 225, 0.55);
+}
+
+.analytics-aspect-segment-negative { background: var(--app-critical); }
+.analytics-aspect-segment-neutral { background: var(--app-muted); }
+.analytics-aspect-segment-positive { background: var(--app-teal); }
+
+.analytics-aspect-row-total {
+  color: var(--app-ink);
+  text-align: right;
+  font-weight: 700;
+}
+
+.analytics-aspect-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 16px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(217, 226, 225, 0.7);
+}
+
+.analytics-aspect-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  color: var(--app-muted);
+  font-size: 9px;
+}
+
+.analytics-aspect-legend span::before {
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  margin-right: 6px;
+  border-radius: 50%;
+  background: var(--app-muted);
+  content: "";
+}
+
+.analytics-aspect-legend [data-analytics-category="Tiêu cực"]::before { background: var(--app-critical); }
+.analytics-aspect-legend [data-analytics-category="Trung tính"]::before { background: var(--app-muted); }
+.analytics-aspect-legend [data-analytics-category="Tích cực"]::before { background: var(--app-teal); }
+
+.analytics-aspect-note {
+  color: var(--app-muted);
+  font-size: 9px;
+  text-align: right;
+}
+
+.analytics-aspect-empty {
+  display: grid;
+  min-height: 180px;
+  place-items: center;
+  border: 1px dashed var(--app-line);
+  border-radius: 16px;
+  color: var(--app-muted);
+  font-size: 12px;
+}
+
+.analytics-aspect-frequency-stage {
+  width: 100%;
+  max-width: 960px;
+  height: 260px;
+  margin-inline: auto;
+}
+
+.analytics-frequency-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--app-ink);
+  font-size: 16px !important;
+  font-weight: 700;
+  letter-spacing: -0.025em;
+  line-height: 1.25;
+}
+
+.analytics-frequency-icon {
+  display: grid;
+  width: 34px;
+  height: 34px;
+  flex: none;
+  place-items: center;
+  border: 1px solid var(--app-line);
+  border-radius: 11px;
+  background: var(--app-teal-wash);
+  color: var(--app-teal);
+}
+
+.analytics-aspect-frequency-stage .recharts-cartesian-axis-tick text {
+  fill: var(--app-muted);
+  font-family: inherit;
+  font-weight: 500;
+  letter-spacing: 0.005em;
+  text-rendering: geometricPrecision;
+}
+
+.analytics-frequency-tick {
+  overflow: visible;
+  pointer-events: none;
+  transform: translateX(-50%);
+}
+
+.analytics-frequency-tick-label {
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow-wrap: anywhere;
+  color: var(--app-muted);
+  font-family: inherit;
+  font-size: 10px;
+  font-weight: 500;
+  line-height: 1.3;
+  text-align: center;
+  text-rendering: geometricPrecision;
+}
+
+.analytics-pie-callout-card {
+  display: grid;
+  width: 88px;
+  height: 48px;
+  box-sizing: border-box;
+  align-content: center;
+  gap: 2px;
+  overflow: hidden;
+  padding: 5px 8px;
+  border: 1px solid var(--app-line);
+  border-radius: 12px;
+  background: var(--app-surface);
+  box-shadow: 0 5px 14px rgba(24, 37, 47, 0.12);
+  color: var(--app-ink);
+  text-align: left;
+}
+
+.analytics-pie-callout {
+  pointer-events: none;
+}
+
+.analytics-pie-callout-value {
+  overflow: hidden;
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.05;
+  text-overflow: ellipsis;
+  font-variant-numeric: tabular-nums;
+}
+
+.analytics-pie-callout-category {
+  display: -webkit-box;
+  overflow: hidden;
+  color: var(--app-muted);
+  font-size: 9px;
+  line-height: 1.2;
+  overflow-wrap: anywhere;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.analytics-pie-stage .recharts-legend-wrapper {
+  left: 0 !important;
+  width: 100% !important;
+  transform: none !important;
+}
+
+.analytics-pie-stage .recharts-default-legend {
+  display: flex !important;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 5px 8px;
+  margin: 0;
+  padding: 0;
+}
+
+.analytics-pie-stage .recharts-legend-item {
+  display: inline-flex;
+  align-items: center;
+  margin: 0 !important;
+}
+
+.analytics-chart-card .recharts-legend-item svg.recharts-surface {
+  display: none !important;
+}
+
+.analytics-legend-label {
+  max-width: 180px;
+  overflow-wrap: anywhere;
+  white-space: normal;
+}
+
+.analytics-legend-label::before {
+  display: inline-block;
+  width: 9px;
+  height: 9px;
+  flex: none;
+  margin-right: 6px;
+  border-radius: 3px;
+  background: var(--app-muted);
+  content: "";
+}
+
+.analytics-legend-label[data-analytics-category="Tiêu cực"]::before,
+.analytics-legend-label[data-analytics-category="Nghiêm trọng"]::before {
+  background: var(--app-critical);
+}
+
+.analytics-legend-label[data-analytics-category="Trung tính"]::before {
+  background: var(--app-muted);
+}
+
+.analytics-legend-label[data-analytics-category="Tích cực"]::before {
+  background: var(--app-teal);
+}
+
+.analytics-legend-label[data-analytics-category="Trung bình"]::before {
+  background: var(--app-medium);
+}
+
+.analytics-legend-label[data-analytics-category="Thấp"]::before {
+  background: var(--app-low);
+}
+
+.analytics-pie-tooltip {
+  display: grid;
+  gap: 2px;
+  min-width: 102px;
+  padding: 9px 12px;
+  border: 1px solid var(--app-line);
+  border-radius: 13px;
+  background: rgba(255, 255, 255, 0.97);
+  box-shadow: 0 8px 22px rgba(22, 37, 47, 0.14);
+  color: var(--app-ink);
+}
+
+.analytics-pie-tooltip-value {
+  font-size: 17px;
+  font-weight: 700;
+  line-height: 1.1;
+  font-variant-numeric: tabular-nums;
+}
+
+.analytics-pie-tooltip-category {
+  max-width: 180px;
+  overflow-wrap: anywhere;
+  color: var(--app-muted);
+  font-size: 11px;
+  line-height: 1.3;
+}
+
+.analytics-chart-card .recharts-pie-sector path {
+  fill: var(--app-muted);
+}
+
+.analytics-chart-card .recharts-pie-sector path[data-analytics-category="Tiêu cực"],
+.analytics-chart-card .recharts-pie-sector path[data-analytics-category="Nghiêm trọng"] {
+  fill: url(#analytics-sentiment-critical-gradient);
+}
+
+.analytics-chart-card .recharts-pie-sector path[data-analytics-category="Nghiêm trọng"] {
+  fill: url(#analytics-priority-critical-gradient);
+}
+
+.analytics-chart-card .recharts-pie-sector path[data-analytics-category="Trung tính"] {
+  fill: var(--app-muted);
+}
+
+.analytics-chart-card .recharts-pie-sector path[data-analytics-category="Tích cực"] {
+  fill: url(#analytics-sentiment-positive-gradient);
+}
+
+.analytics-chart-card .recharts-pie-sector path[data-analytics-category="Trung bình"] {
+  fill: url(#analytics-priority-medium-gradient);
+}
+
+.analytics-chart-card .recharts-pie-sector path[data-analytics-category="Thấp"] {
+  fill: url(#analytics-priority-low-gradient);
+}
+
+.analytics-chart-card [data-analytics-category="Tiêu cực"] {
+  color: var(--app-critical);
+  fill: var(--app-critical);
+}
+
+.analytics-chart-card [data-analytics-category="Trung tính"] {
+  color: var(--app-muted);
+  fill: var(--app-muted);
+}
+
+.analytics-chart-card [data-analytics-category="Tích cực"] {
+  color: var(--app-teal);
+  fill: var(--app-teal);
+}
+
+.analytics-chart-card [data-analytics-category="Nghiêm trọng"] {
+  color: var(--app-critical);
+  fill: var(--app-critical);
+}
+
+.analytics-chart-card [data-analytics-category="Trung bình"] {
+  color: var(--app-medium);
+  fill: var(--app-medium);
+}
+
+.analytics-chart-card [data-analytics-category="Thấp"] {
+  color: var(--app-low);
+  fill: var(--app-low);
+}
+
+.analytics-chart-card .analytics-donut-legend > [data-analytics-category] {
+  color: rgba(255, 255, 255, 0.82) !important;
+}
+
+.analytics-chart-card .recharts-legend-item:has([data-analytics-category="Tiêu cực"]) .recharts-symbols,
+.analytics-chart-card .recharts-legend-item:has([data-analytics-category="Nghiêm trọng"]) .recharts-symbols {
+  fill: var(--app-critical) !important;
+  stroke: var(--app-critical) !important;
+}
+
+.analytics-chart-card .recharts-legend-item:has([data-analytics-category="Trung tính"]) .recharts-symbols {
+  fill: var(--app-muted) !important;
+  stroke: var(--app-muted) !important;
+}
+
+.analytics-chart-card .recharts-legend-item:has([data-analytics-category="Tích cực"]) .recharts-symbols {
+  fill: var(--app-teal) !important;
+  stroke: var(--app-teal) !important;
+}
+
+.analytics-chart-card .recharts-legend-item:has([data-analytics-category="Trung bình"]) .recharts-symbols {
+  fill: var(--app-medium) !important;
+  stroke: var(--app-medium) !important;
+}
+
+.analytics-chart-card .recharts-legend-item:has([data-analytics-category="Thấp"]) .recharts-symbols {
+  fill: var(--app-low) !important;
+  stroke: var(--app-low) !important;
+}
+
+.analytics-chart-tooltip .recharts-default-tooltip {
+  border: 1px solid var(--app-line) !important;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.97) !important;
+  box-shadow: 0 8px 22px rgba(22, 37, 47, 0.12);
+}
+
+.analytics-chart-tooltip .recharts-tooltip-label,
+.analytics-chart-tooltip .recharts-tooltip-item {
+  color: var(--app-ink) !important;
+}
+
+@media (min-width: 768px) and (max-width: 1099px) {
+  .app-main .analytics-pie-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .app-main .analytics-pie-grid .analytics-chart-card > .analytics-pie-stage {
+    height: 320px;
+  }
+
+  .analytics-donut-plot { flex-basis: 72%; }
+}
+
+@media (max-width: 1199px) {
+  .analytics-aspect-overview {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 767px) {
+  .analytics-page {
+    max-width: calc(100vw - 2rem);
+    overflow-x: clip;
+  }
+
+  .app-main > .analytics-page > * {
+    max-width: 100%;
+    box-sizing: border-box;
+  }
+
+  .app-main .analytics-kpi-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .app-main .analytics-kpi-grid > * {
+    width: auto;
+  }
+
+  .app-main .analytics-page .analytics-chart-card {
+    padding: 16px;
+  }
+
+  .analytics-header h1 {
+    flex-wrap: wrap;
+    align-items: flex-start;
+    font-size: 23px;
+  }
+
+  .analytics-header h1 span {
+    flex: 1 1 calc(100% - 1.75rem);
+    overflow-wrap: anywhere;
+  }
+
+  .app-main .analytics-pie-grid .analytics-chart-card > .analytics-pie-stage {
+    height: auto;
+    min-height: 240px;
+  }
+
+  .analytics-donut-content {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 6px;
+  }
+
+  .analytics-donut-plot {
+    width: 100%;
+    height: 220px;
+  }
+
+  .analytics-donut-summary {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px 12px;
+    padding: 0 8px 8px;
+  }
+
+  .analytics-aspect-heading {
+    align-items: flex-start;
+  }
+
+  .analytics-aspect-overview {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .analytics-aspect-highlight {
+    min-height: 230px;
+  }
+
+  .analytics-aspect-table-header,
+  .analytics-aspect-row {
+    grid-template-columns: 26px minmax(64px, 1fr) 58px minmax(48px, 1fr) 28px;
+    gap: 5px;
+  }
+
+  .analytics-aspect-footer {
+    align-items: flex-start;
+  }
+
+  .analytics-aspect-note {
+    max-width: 48%;
+  }
+
+  .analytics-aspect-frequency-stage {
+    width: 100%;
+    max-width: none;
+    height: 260px;
+  }
+
+  .analytics-frequency-tick {
+    width: 64px;
+  }
+
+  .analytics-aspect-frequency-stage .recharts-cartesian-axis-tick text {
+    font-size: 9px;
+  }
+}
+
+@media (min-width: 640px) and (max-width: 767px) {
+  .analytics-donut-plot {
+    height: 280px;
+  }
+
+  .analytics-frequency-tick {
+    width: 84px;
+  }
+}
+
+@media (min-width: 768px) and (max-width: 1099px) {
+  .analytics-frequency-tick {
+    width: 96px;
+  }
+}
+
+@media (max-width: 639px) {
+  .analytics-pie-stage .analytics-chart-tooltip {
+    display: none !important;
+  }
+
+  .analytics-pie-callout {
+    display: none;
+  }
+
+  .analytics-donut-summary {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .analytics-frequency-tick-label {
+    font-size: 8px;
+    line-height: 1.2;
+  }
+
+  .analytics-aspect-card,
+  .analytics-frequency-card {
+    padding: 16px;
+  }
+
+  .analytics-aspect-heading {
+    gap: 8px;
+  }
+
+  .analytics-aspect-description {
+    margin-left: 0;
+  }
+
+  .analytics-aspect-count {
+    padding: 5px 7px;
+  }
+
+  .analytics-aspect-highlight {
+    min-height: 210px;
+    padding: 16px;
+  }
+
+  .analytics-aspect-table-header,
+  .analytics-aspect-row {
+    grid-template-columns: 24px minmax(54px, 1fr) 52px minmax(36px, 0.9fr) 25px;
+    gap: 4px;
+  }
+
+  .analytics-aspect-row-name,
+  .analytics-aspect-row-percent,
+  .analytics-aspect-row-total {
+    font-size: 8px;
+  }
+
+  .analytics-aspect-rank {
+    width: 20px;
+    height: 20px;
+  }
+
+  .analytics-aspect-footer {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .analytics-aspect-note {
+    max-width: none;
+    text-align: left;
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  @keyframes analytics-enter {
+    from {
+      opacity: 0;
+      transform: translateY(8px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .analytics-header {
+    animation: analytics-enter 340ms var(--analytics-ease) 0ms both;
+  }
+
+  .analytics-kpi-grid {
+    animation: analytics-enter 360ms var(--analytics-ease) 50ms both;
+  }
+
+  .analytics-pie-grid {
+    animation: analytics-enter 380ms var(--analytics-ease) 100ms both;
+  }
+
+  .analytics-page > .analytics-chart-card,
+  .analytics-page > .analytics-aspect-card {
+    animation: analytics-enter 380ms var(--analytics-ease) 150ms both;
+  }
+
+  .analytics-page > .analytics-frequency-card {
+    animation-delay: 210ms;
+  }
+
+  .analytics-chart-card {
+    transition: transform 200ms var(--analytics-ease);
+  }
+
+  .analytics-chart-card:hover {
+    transform: translateY(-2px);
+  }
+
+  .analytics-chart-card .recharts-sector,
+  .analytics-chart-card .recharts-rectangle {
+    transition: opacity 180ms var(--analytics-ease);
+  }
+
+  .analytics-chart-card .recharts-rectangle:hover {
+    opacity: 0.82;
+  }
+
+  @keyframes analytics-ring-enter {
+    from {
+      opacity: 0;
+      transform: scale(0.94) rotate(-7deg);
+    }
+    to {
+      opacity: 1;
+      transform: scale(1) rotate(0deg);
+    }
+  }
+
+  .analytics-pie-stage .recharts-pie {
+    transform-box: fill-box;
+    transform-origin: center;
+    animation: analytics-ring-enter 400ms var(--analytics-ease) 120ms both;
+  }
+
+  .analytics-donut-card .analytics-pie-callout {
+    transform-box: fill-box;
+    transform-origin: center;
+    transition: transform 220ms var(--analytics-ease);
+  }
+
+  .analytics-pie-stage .recharts-sector {
+    transition: opacity 180ms var(--analytics-ease), filter 180ms var(--analytics-ease);
+  }
+
+  .analytics-pie-stage:has(.recharts-sector:hover) .recharts-sector:not(:hover) {
+    opacity: 0.48;
+  }
+
+  .analytics-donut-card .analytics-pie-stage .recharts-sector:hover {
+    opacity: 1;
+    filter: brightness(1.24) saturate(1.12)
+      drop-shadow(0 2px 4px rgba(0, 0, 0, 0.24))
+      drop-shadow(0 0 10px color-mix(in srgb, currentColor 52%, transparent));
+  }
+
+  .analytics-donut-content:has(.recharts-sector[data-analytics-category="Tiêu cực"]:hover)
+    .analytics-pie-callout[data-analytics-category="Tiêu cực"],
+  .analytics-donut-content:has(.recharts-sector[data-analytics-category="Nghiêm trọng"]:hover)
+    .analytics-pie-callout[data-analytics-category="Nghiêm trọng"] {
+    z-index: 3;
+    transform: translate(var(--analytics-callout-hover-x), var(--analytics-callout-hover-y)) scale(1.04);
+  }
+
+  .analytics-donut-content:has(.recharts-sector[data-analytics-category="Trung tính"]:hover)
+    .analytics-pie-callout[data-analytics-category="Trung tính"],
+  .analytics-donut-content:has(.recharts-sector[data-analytics-category="Trung bình"]:hover)
+    .analytics-pie-callout[data-analytics-category="Trung bình"] {
+    z-index: 3;
+    transform: translate(var(--analytics-callout-hover-x), var(--analytics-callout-hover-y)) scale(1.04);
+  }
+
+  .analytics-donut-content:has(.recharts-sector[data-analytics-category="Tích cực"]:hover)
+    .analytics-pie-callout[data-analytics-category="Tích cực"],
+  .analytics-donut-content:has(.recharts-sector[data-analytics-category="Thấp"]:hover)
+    .analytics-pie-callout[data-analytics-category="Thấp"] {
+    z-index: 3;
+    transform: translate(var(--analytics-callout-hover-x), var(--analytics-callout-hover-y)) scale(1.04);
+  }
+
+  .analytics-aspect-frequency-stage:has(.analytics-aspect-bars .recharts-rectangle:hover)
+    .analytics-aspect-bars .recharts-rectangle:not(:hover) {
+    opacity: 0.48;
+  }
+
+  .analytics-aspect-frequency-stage .analytics-aspect-bars .recharts-rectangle {
+    transition: opacity 180ms var(--analytics-ease), filter 180ms var(--analytics-ease);
+  }
+
+  .analytics-aspect-frequency-stage .analytics-aspect-bars .recharts-rectangle:hover {
+    filter: brightness(1.08) drop-shadow(0 3px 5px rgba(24, 37, 47, 0.18));
+  }
+}
