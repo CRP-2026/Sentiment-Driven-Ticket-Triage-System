@@ -11,16 +11,26 @@ urgency_keywords:
     - chargeback
     - stolen
     - charged twice
+    - double charged
+    - billed twice
+    - unauthorized charge
+    - "regex:\\b(?:charged|billed|paid|deducted)\\s+(?:twice|thrice|\\d+\\s+times|(?:two|three|four|five|six|seven|eight|nine|ten|multiple|several|many)\\s+times)\\b"
   high:
     - broken
     - refund
     - cancel
     - not working
     - never received
+    - never arrived
+    - lost package
+    - stuck in transit
+    - hung up
     - dispute
     - missing
     - damaged
     - overcharged
+    - "regex:\\b(?:stuck|delayed|late|waiting)\\s+(?:in\\s+transit\\s+)?for\\s+(?:over\\s+|more\\s+than\\s+)?(?:a\\s+|an\\s+|\\d+\\s+|two\\s+|three\\s+|four\\s+|several\\s+|many\\s+)?(?:week|weeks|month|months)\\b"
+    - "regex:\\bhung\\s+up\\s+on\\s+me\\b"
 
 urgency_points:
   critical_last_sentence: 30.0
