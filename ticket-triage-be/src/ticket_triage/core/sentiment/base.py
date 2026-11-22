@@ -22,6 +22,8 @@ class AbsaResult:
     """Hợp đồng dữ liệu đầu ra chuẩn hóa của Bài toán 1 bàn giao cho Bài toán 2."""
     overall: SentimentResult
     aspects: list[AspectSentiment] = field(default_factory=list)
+    semantic_urgency_level: Literal["critical", "high", "normal"] | None = None
+    semantic_urgency_confidence: float = 0.0
 
 class BaseSentimentModel:
     """Interface trừu tượng chung cho các mô hình ABSA (Mock / Baseline / NLI Fine-tuned)."""
