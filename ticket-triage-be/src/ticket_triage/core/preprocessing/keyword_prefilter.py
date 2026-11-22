@@ -12,11 +12,13 @@ DEFAULT_ASPECT_KEYWORDS: dict[str, list[str]] = {
         "agent", "representative", "support", "service", "rep", "staff",
         "attitude", "rude", "unhelpful", "reply", "response", "ticket",
         "chat", "call", "contact", "email", "manager", "assistance",
+        "hung up", "hang up", "ignored", "supervisor", "disrespect", "disrespectful",
     ],
     "refund_payment": [
         "refund", "charge", "charged", "overcharged", "double charged", "charged twice",
-        "payment", "pay", "bill", "billing", "invoice", "fee", "money back",
+        "payment", "pay", "paid", "bill", "billed", "billing", "invoice", "fee", "money back",
         "dispute", "chargeback", "credit card", "bank", "transaction", "reimburse",
+        "unauthorized charge", "extra charge",
     ],
     "product_quality": [
         "broken", "damaged", "defect", "defective", "cheap", "poor quality",
@@ -89,6 +91,20 @@ def load_aspect_keywords(yaml_path: Path | str | None = None) -> dict[str, list[
     return loaded if has_yaml_keywords else fallback
 
 
+def _build_aspect_keyword_pattern(kw: str) -> str:
+    """Xây dựng biểu thức chính quy khớp từ khóa khía cạnh:
+    - Hỗ trợ tiền tố 'regex:' nếu khai báo mẫu động trong YAML.
+    - Tự động cho phép các biến thể hậu tố tiếng Anh phổ biến (-s, -es, -d, -ed, -ing)
+      ở từ cuối để không bỏ sót biến thể từ vựng (vd: 'bill' -> 'billed', 'bills', 'billing').
+    """
+    if kw.startswith("regex:"):
+        return kw[6:].strip()
+    escaped = re.escape(kw)
+    if re.search(r"[a-z]{3,}$", kw):
+        return rf"\b{escaped}(?:s|es|d|ed|ing)?\b"
+    return rf"\b{escaped}\b"
+
+
 def filter_candidate_aspects(
     text: str,
     aspect_keywords: dict[str, list[str]] | None = None,
@@ -111,7 +127,7 @@ def filter_candidate_aspects(
             continue
 
         for kw in keywords:
-            pattern = r"\b" + re.escape(kw) + r"\b"
+            pattern = _build_aspect_keyword_pattern(kw)
             if re.search(pattern, text_lower):
                 matched_aspects.append(aspect_id)
                 break

@@ -52,11 +52,16 @@ def _normalize_keywords(raw_keywords: Any, fallback: list[str]) -> list[str]:
 class PriorityRules:
     critical_keywords: list[str] = field(default_factory=lambda: [
         "urgent", "immediately", "asap", "lawsuit", "sue", "lawyer",
-        "fraud", "scam", "chargeback", "stolen", "charged twice"
+        "fraud", "scam", "chargeback", "stolen", "charged twice",
+        "double charged", "billed twice", "unauthorized charge",
+        r"regex:\b(?:charged|billed|paid|deducted)\s+(?:twice|thrice|\d+\s+times|(?:two|three|four|five|six|seven|eight|nine|ten|multiple|several|many)\s+times)\b",
     ])
     high_keywords: list[str] = field(default_factory=lambda: [
         "broken", "refund", "cancel", "not working", "never received",
-        "dispute", "missing", "damaged", "overcharged"
+        "never arrived", "lost package", "stuck in transit", "hung up",
+        "dispute", "missing", "damaged", "overcharged",
+        r"regex:\b(?:stuck|delayed|late|waiting)\s+(?:in\s+transit\s+)?for\s+(?:over\s+|more\s+than\s+)?(?:a\s+|an\s+|\d+\s+|two\s+|three\s+|four\s+|several\s+|many\s+)?(?:week|weeks|month|months)\b",
+        r"regex:\bhung\s+up\s+on\s+me\b",
     ])
     urgency_cap: float = 30.0
     aspect_cap: float = 20.0
@@ -225,13 +230,25 @@ def classify_priority_level(score: float, rules: PriorityRules | None = None) ->
     return "LOW"
 
 
+def _build_urgency_pattern(kw_clean: str) -> str:
+    """Hỗ trợ cả từ khóa cố định và mẫu biểu thức chính quy động (bắt đầu bằng 'regex:')."""
+    if kw_clean.lower().startswith("regex:"):
+        return kw_clean[6:].strip()
+    return r"\b" + re.escape(kw_clean) + r"\b"
+
+
 def _calculate_urgency_bonus(
     text: str,
     active_rules: PriorityRules,
     urgency_cap: float,
     reasons: list[str],
+    result: AbsaResult | None = None,
 ) -> float:
-    """Tính điểm thưởng từ khóa khẩn cấp theo vị trí câu và lọc bỏ phủ định/đã giải quyết."""
+    """Tính điểm thưởng khẩn cấp kết hợp 2 tầng (Giải pháp A + Giải pháp B):
+    - Tầng 1 (Giải pháp A): Quét từ khóa & mẫu câu động (Regex pattern) từ priority_rules.yaml theo vị trí câu.
+    - Tầng 2 (Giải pháp B - AI Semantic & Multi-Aspect Fallback): Nếu không khớp từ khóa cố định hoặc chỉ mới khớp mức thấp,
+      sử dụng đánh giá ngữ nghĩa khẩn cấp từ model NLI (semantic_urgency_level) và leo thang đa khía cạnh tiêu cực.
+    """
     sentences = _split_sentences(text)
     total_sentences = len(sentences)
     urgency_bonus = 0.0
@@ -268,15 +285,54 @@ def _calculate_urgency_bonus(
                     if not kw_lower or kw_lower in detected_keywords:
                         continue
 
-                    pattern = r"\b" + re.escape(kw_clean) + r"\b"
-                    matched = any(
-                        not _is_negated(clause, m.start(), keyword=kw_lower)
-                        for m in re.finditer(pattern, clause, re.IGNORECASE)
-                    )
-                    if matched:
+                    pattern = _build_urgency_pattern(kw_clean)
+                    matched_phrase: str | None = None
+                    for m in re.finditer(pattern, clause, re.IGNORECASE):
+                        phrase = m.group(0).strip()
+                        if not _is_negated(clause, m.start(), keyword=phrase.lower()):
+                            matched_phrase = phrase
+                            break
+
+                    if matched_phrase is not None:
+                        phrase_key = matched_phrase.lower()
+                        if phrase_key in detected_keywords:
+                            continue
                         detected_keywords.add(kw_lower)
+                        detected_keywords.add(phrase_key)
                         urgency_bonus += points
-                        reasons.append(f"Từ khóa {tier_label} '{kw_clean}' ở {loc_str}: +{points}")
+                        display_kw = matched_phrase if kw_lower.startswith("regex:") else kw_clean
+                        reasons.append(f"Từ khóa {tier_label} '{display_kw}' ở {loc_str}: +{points}")
+
+    # Tầng 2 (Giải pháp B): AI Semantic Urgency Fallback & Multi-Aspect Negative Escalation
+    if result is not None and result.overall.label == "negative":
+        # B1: Nếu chưa đạt trần điểm khẩn cấp và model AI đánh giá ngữ cảnh có độ khẩn cấp cao
+        if urgency_bonus == 0.0 and result.semantic_urgency_level in ("critical", "high"):
+            sem_conf = max(0.0, min(1.0, float(result.semantic_urgency_confidence)))
+            if result.semantic_urgency_level == "critical" and sem_conf >= 0.55:
+                sem_pts = round(active_rules.critical_other_sentence * sem_conf, 2)
+                urgency_bonus += sem_pts
+                reasons.append(
+                    f"AI phát hiện ngữ cảnh khẩn cấp CRITICAL (conf {sem_conf:.2f}): +{sem_pts}"
+                )
+            elif result.semantic_urgency_level == "high" and sem_conf >= 0.60:
+                sem_pts = round(active_rules.high_other_sentence * sem_conf, 2)
+                urgency_bonus += sem_pts
+                reasons.append(
+                    f"AI phát hiện ngữ cảnh khẩn cấp HIGH (conf {sem_conf:.2f}): +{sem_pts}"
+                )
+
+        # B2: Leo thang đa khía cạnh tiêu cực (Multi-aspect negative escalation)
+        # Khi khách hàng bức xúc trên >= 2 khía cạnh độc lập cùng lúc với độ tự tin cao
+        high_conf_neg_aspects = [
+            asp for asp in result.aspects
+            if asp.sentiment == "negative" and float(asp.confidence) >= 0.85
+        ]
+        if len(high_conf_neg_aspects) >= 3 and urgency_bonus < urgency_cap:
+            multi_pts = active_rules.high_last_sentence
+            urgency_bonus += multi_pts
+            reasons.append(
+                f"Khủng hoảng đa khía cạnh ({len(high_conf_neg_aspects)} khía cạnh tiêu cực đồng thời): +{multi_pts}"
+            )
 
     return min(max(0.0, float(urgency_cap)), round(urgency_bonus, 2))
 
@@ -316,8 +372,10 @@ def calculate_priority(
         base = 5.0
         reasons.append("Cảm xúc tổng thể tích cực: base = 5.0")
 
-    # 2. Điểm từ khóa khẩn cấp (Urgency Bonus)
-    urgency_bonus = _calculate_urgency_bonus(text, active_rules, eff_urgency_cap, reasons)
+    # 2. Điểm từ khóa & ngữ nghĩa khẩn cấp (Urgency Bonus - Giải pháp A + B)
+    urgency_bonus = _calculate_urgency_bonus(
+        text, active_rules, eff_urgency_cap, reasons, result=result
+    )
 
     # 3. Điểm cường độ câu (Intensity Bonus)
     intensity_res = extract_intensity_bonus(

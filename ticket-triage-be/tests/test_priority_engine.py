@@ -282,3 +282,60 @@ def test_intensity_extractor_question_marks_triple():
     absa = AbsaResult(overall=SentimentResult(label="negative", confidence=0.8), aspects=[])
     bd = calculate_priority(absa, "Why has nothing shipped yet???")
     assert bd.intensity_bonus == 5.0
+
+
+def test_hybrid_solution_a_and_b_regex_patterns_and_semantic_fallback():
+    from ticket_triage.core.preprocessing.keyword_prefilter import filter_candidate_aspects
+    from ticket_triage.core.priority.priority_engine import calculate_priority, load_priority_rules
+    from ticket_triage.core.sentiment.base import AbsaResult, AspectSentiment, SentimentResult
+    from ticket_triage.core.sentiment.baseline import normalize_caps_for_nli
+
+    load_priority_rules.cache_clear()
+
+    # 1. Mục 1: Chuẩn hóa ALL CAPS cho NLI nhưng giữ chữ hoa đầu câu
+    assert normalize_caps_for_nli("I WAS CHARGED FIVE TIMES!") == "I was charged five times!"
+
+    # 2. Giải pháp A: Khớp mẫu động 'charged five times', 'billed three times', 'stuck in transit for a month', 'hung up on me'
+    text_multi = 'My parcel has been stuck in transit for a month", "Your staff hung up on me", "I was billed three times'
+    candidates = filter_candidate_aspects(text_multi)
+    assert "customer_service" in candidates
+    assert "refund_payment" in candidates
+    assert "shipping" in candidates
+
+    absa_multi = AbsaResult(
+        overall=SentimentResult(label="negative", confidence=1.0),
+        aspects=[
+            AspectSentiment(aspect="customer_service", sentiment="negative", confidence=0.98),
+            AspectSentiment(aspect="refund_payment", sentiment="negative", confidence=0.97),
+            AspectSentiment(aspect="shipping", sentiment="negative", confidence=0.99),
+        ],
+    )
+    bd_multi = calculate_priority(absa_multi, text_multi)
+    assert bd_multi.urgency_bonus == 30.0
+    assert bd_multi.score >= 95.0
+    assert bd_multi.level == "CRITICAL"
+
+    # 3. Giải pháp A + Mục 1: "I WAS CHARGED FIVE TIMES!"
+    absa_caps = AbsaResult(
+        overall=SentimentResult(label="negative", confidence=0.99),
+        aspects=[AspectSentiment(aspect="refund_payment", sentiment="negative", confidence=0.97)],
+    )
+    bd_caps = calculate_priority(absa_caps, "I WAS CHARGED FIVE TIMES!")
+    assert bd_caps.urgency_bonus == 30.0
+    assert bd_caps.intensity_bonus == 5.0
+    assert bd_caps.score >= 95.0
+    assert bd_caps.level == "CRITICAL"
+
+    # 4. Giải pháp B: AI Semantic Urgency Fallback khi câu không khớp từ khóa nào trong YAML
+    absa_semantic = AbsaResult(
+        overall=SentimentResult(label="negative", confidence=0.95),
+        aspects=[AspectSentiment(aspect="refund_payment", sentiment="negative", confidence=0.92)],
+        semantic_urgency_level="critical",
+        semantic_urgency_confidence=0.90,
+    )
+    bd_semantic = calculate_priority(
+        absa_semantic,
+        "You emptied my checking balance without permission.",
+    )
+    assert bd_semantic.urgency_bonus == 18.0
+    assert any("AI phát hiện ngữ cảnh khẩn cấp CRITICAL" in r for r in bd_semantic.reasons)
