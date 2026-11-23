@@ -1,0 +1,21 @@
+overall_sentiment_template: "This customer ticket is {}."
+aspect_detection_template: "This customer feedback is related to {aspect}."
+aspect_sentiment_template: "Regarding {aspect}, this customer ticket is {sentiment}."
+
+aspect_names:
+  customer_service: "customer support and agent responsiveness"
+  refund_payment: "refunds, charges, billing or payment dispute"
+  product_quality: "product quality, material, durability or defect"
+  shipping: "delivery time, shipping status or package condition"
+  general: "general questions or account inquiries"
+
+sentiments:
+  positive: "positive feedback expressing satisfaction or gratitude"
+  neutral: "a neutral question or general inquiry without any problem"
+  negative: "a negative complaint, frustration, or problem report"
+
+urgency_hypothesis_template: "This customer ticket represents {}."
+urgency_levels:
+  critical: "an urgent crisis, severe financial loss, multiple billing error, or complete service failure requiring immediate escalation"
+  high: "a serious complaint, long delivery delay, rude staff incident, or unresolved problem needing priority attention"
+  normal: "a routine inquiry, minor inconvenience, or standard feedback"
