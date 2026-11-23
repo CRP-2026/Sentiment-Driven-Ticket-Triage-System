@@ -180,6 +180,24 @@ class ZeroShotNliModel(BaseSentimentModel):
             asp_label = verbalizer_to_sentiment.get(asp_verbalizer, asp_verbalizer)
             asp_conf = round(float(asp_res["scores"][0]), 2)
 
+            # Nếu ticket chỉ có 1 khía cạnh cụ thể và cảm xúc tổng thể là negative,
+            # không để khía cạnh duy nhất đó bị rơi về 'neutral' ở các câu trần thuật sự cố ngắn (vd: "I was charged 5 times.").
+            if (
+                len(aspect_candidates) == 1
+                and asp != "general"
+                and top_label == "negative"
+                and asp_label == "neutral"
+            ):
+                neg_scores = [
+                    float(sc)
+                    for lbl, sc in zip(asp_res.get("labels", []), asp_res.get("scores", []))
+                    if verbalizer_to_sentiment.get(str(lbl), str(lbl)) == "negative"
+                ]
+                neg_score = neg_scores[0] if neg_scores else 0.0
+                if neg_score >= 0.25 or top_conf >= 0.65:
+                    asp_label = "negative"
+                    asp_conf = round(max(neg_score, top_conf), 2)
+
             aspect_items.append(
                 AspectSentiment(
                     aspect=asp,
