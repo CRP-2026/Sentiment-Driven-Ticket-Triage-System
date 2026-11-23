@@ -31,9 +31,50 @@ def get_git_diff(base_ref: str) -> str:
             capture_output=True,
             text=True,
         )
-        cmd = ["git", "diff", f"origin/{base_ref}...HEAD"]
+        diff_range = f"origin/{base_ref}...HEAD"
+        base_excludes = [
+            ":(exclude)ticket-triage-be/models",
+            ":(exclude)ticket-triage-fe/src/api/generated.ts",
+        ]
+        stat_res = subprocess.run(
+            ["git", "diff", "--stat", diff_range, "--", ".", *base_excludes],
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+        stat_out = stat_res.stdout.strip()
+
+        # Prioritize contract & schema files first so truncation never hides schema sync
+        priority_paths = [
+            "contracts/openapi.json",
+            "ticket-triage-fe/src/api/schema.d.ts",
+        ]
+        prio_res = subprocess.run(
+            ["git", "diff", diff_range, "--", *priority_paths],
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+        prio_out = prio_res.stdout.strip()
+
+        exclude_specs = [
+            *base_excludes,
+            ":(exclude)contracts/openapi.json",
+            ":(exclude)ticket-triage-fe/src/api/schema.d.ts",
+        ]
+        cmd = ["git", "diff", diff_range, "--", ".", *exclude_specs]
         res = subprocess.run(cmd, capture_output=True, text=True, check=False)
-        diff = res.stdout.strip()
+        body_out = res.stdout.strip()
+
+        parts = []
+        if stat_out:
+            parts.append(f"### TỔNG QUAN CÁC FILE THAY ĐỔI (GIT DIFF --STAT):\n{stat_out}")
+        if prio_out:
+            parts.append(prio_out)
+        if body_out:
+            parts.append(body_out)
+        diff = "\n\n".join(parts).strip()
+
         if not diff:
             # Fallback to diff against origin/main or HEAD~1
             fallback = subprocess.run(
@@ -175,7 +216,7 @@ def main():
         sys.exit(0)
 
     # Truncate diff if excessively long to avoid token limits
-    max_diff_chars = 45000
+    max_diff_chars = 800000
     if len(diff) > max_diff_chars:
         diff_snippet = diff[:max_diff_chars] + "\n\n... [Diff quá dài, đã được cắt bớt] ..."
     else:

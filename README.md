@@ -48,7 +48,7 @@ make down
 - `MODEL_ID`: HuggingFace model ID ghi đè tùy chọn (nếu không dùng `MODEL_PATH` cục bộ).
 - `MODEL_TASK`: `aspect` (mặc định, suy luận từng khía cạnh) hoặc `document`.
 - `ENABLE_ABTE`: `false` (mặc định) hoặc `true` để trích xuất từ khóa `terms` cho từng khía cạnh.
-- `HF_HUB_OFFLINE`: `1` (chạy offline) hoặc `0` (cho phép tải model từ HuggingFace Hub).
+- `HF_HUB_OFFLINE`: `1` (chạy offline từ `./ticket-triage-be/models`; nếu chưa có weights cục bộ khi dùng `MODEL_NAME=mock` hệ thống vẫn chạy bình thường, hoặc gán `model_loaded=false` an toàn mà không làm sập API) hoặc `0` (cho phép tải model từ HuggingFace Hub).
 
 ---
 
@@ -127,9 +127,9 @@ Mở **Terminal 2** tại thư mục gốc:
    - Thử nghiệm các nút kịch bản mẫu ("Bị trừ tiền 2 lần", "Hàng hỏng + trễ", "Hỏi đáp", "Ngoại ngữ tiếng Việt").
    - Nhập nội dung bất kỳ và nhấn **Phân tích & Triage ngay** để theo dõi kết quả ABSA và công thức điểm ưu tiên; thanh điều hướng và trang Tester đồng thời hiển thị trạng thái model thực tế từ `/api/v1/health` (`model_name`, `Mock` / `AI thật`, cảnh báo khi `model_loaded=false` và kích thước hàng đợi).
 3. **Phân tích thống kê (`/analytics`):**
-   - 4 thẻ KPI tổng quan: Tổng số ticket, Ưu tiên Nghiêm trọng, Chưa đóng, Đã giải quyết.
+   - 4 thẻ KPI tổng quan: Tổng số ticket, Ưu tiên Nghiêm trọng, Ưu tiên Trung bình, Ưu tiên Thấp.
    - Biểu đồ phân bố tỷ lệ cảm xúc (Tiêu cực / Trung tính / Tích cực) và phân cấp ưu tiên (giữ nguyên bảng màu cố định theo từng hạng mục).
-   - Biểu đồ cột xếp chồng **Ma trận Khía cạnh × Cảm xúc** từ `/api/v1/stats/aspects` cùng biểu đồ tần suất các khía cạnh (`name_vi`).
+   - Bảng tổng quan & thanh phân đoạn **Ma trận Khía cạnh × Cảm xúc** từ `/api/v1/stats/aspects` cùng biểu đồ tần suất các khía cạnh (`name_vi`).
 
 ---
 
@@ -141,7 +141,7 @@ Mở **Terminal 2** tại thư mục gốc:
 | `make seed` | Nạp dữ liệu mẫu vào CSDL SQLite |
 | `make test` | Chạy kiểm thử tự động (pytest + vitest) |
 | `make lint` | Kiểm tra cú pháp và định dạng mã nguồn (ruff + eslint) |
-| `make gen-api` | Tự động đồng bộ hợp đồng OpenAPI sang TypeScript schema (`src/api/generated.ts`) |
+| `make gen-api` | Tự động đồng bộ hợp đồng OpenAPI (`contracts/openapi.json`) sang TypeScript schema (`ticket-triage-fe/src/api/schema.d.ts`) |
 | `make reset-db` | Xóa và tạo mới lại cơ sở dữ liệu SQLite sạch |
 | `make demo` | Khởi chạy bản đóng gói phục vụ thuyết trình bảo vệ đồ án |
 
@@ -161,7 +161,7 @@ Mở **Terminal 2** tại thư mục gốc:
 │   └── scripts/             # Script seed dữ liệu mẫu
 ├── ticket-triage-fe/         # Frontend: React, Vite, TypeScript, pnpm, TailwindCSS
 │   ├── src/
-│   │   ├── api/             # Fetch client, TanStack Query hooks, generated.ts & schema types
+│   │   ├── api/             # Fetch client, TanStack Query hooks & schema.d.ts
 │   │   ├── components/      # PriorityBadge, AspectChips, TicketTable, StatusSelect, PriorityBreakdown
 │   │   ├── lib/             # format, ticketHelpers (FSM, evidence highlight, matrix), unit tests
 │   │   └── pages/           # InboxPage, TesterPage, AnalyticsPage (+ Vitest static SSR specs)
