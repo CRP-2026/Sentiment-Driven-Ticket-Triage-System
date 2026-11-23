@@ -13,7 +13,7 @@ import {
 } from "../api/schema";
 import { Navigation } from "../components/layout/Navigation";
 import { MOCK_ASPECTS, MOCK_STATS, MOCK_TICKETS } from "../mocks/tickets";
-import { AnalyticsPage } from "./AnalyticsPage";
+import { AnalyticsPage, percentageFromCounts } from "./AnalyticsPage";
 import { InboxPage } from "./InboxPage";
 import { TesterPage } from "./TesterPage";
 
@@ -32,33 +32,37 @@ vi.mock("recharts", () => ({
     <div data-testid="recharts-responsive">{children}</div>
   ),
   PieChart: ({ children }: { children?: React.ReactNode }) => (
-    <div data-testid="recharts-piechart">{children}</div>
+    <svg data-testid="recharts-piechart">{children}</svg>
   ),
   Pie: ({
     data,
     children,
   }: {
-    data?: Array<{ name: string; value: number; color: string }>;
+    data?: Array<{ name: string; value: number }>;
     children?: React.ReactNode;
   }) => (
-    <div data-testid="recharts-pie" data-slices={JSON.stringify(data ?? [])}>
+    <g data-testid="recharts-pie" data-slices={JSON.stringify(data ?? [])}>
       {children}
-    </div>
+    </g>
   ),
-  Cell: ({ fill }: { fill?: string }) => <span data-testid="recharts-cell" data-fill={fill} />,
+  Cell: ({ "data-analytics-category": category }: { "data-analytics-category"?: string }) => (
+    <path data-testid="recharts-cell" data-category={category} />
+  ),
   BarChart: ({
     data,
     children,
+    layout,
   }: {
     data?: unknown[];
     children?: React.ReactNode;
+    layout?: string;
   }) => (
-    <div data-testid="recharts-barchart" data-rows={JSON.stringify(data ?? [])}>
+    <svg data-testid="recharts-barchart" data-rows={JSON.stringify(data ?? [])} data-layout={layout}>
       {children}
-    </div>
+    </svg>
   ),
-  Bar: ({ dataKey, name, fill }: { dataKey?: string; name?: string; fill?: string }) => (
-    <span data-testid="recharts-bar" data-key={dataKey} data-name={name} data-fill={fill} />
+  Bar: ({ dataKey, name, className }: { dataKey?: string; name?: string; className?: string }) => (
+    <g data-testid="recharts-bar" data-key={dataKey} data-name={name} data-class={className} />
   ),
   CartesianGrid: () => null,
   Legend: () => null,
@@ -135,7 +139,15 @@ describe("FE pages and layout (renderToStaticMarkup)", () => {
     } as unknown as ReturnType<typeof hooks.useUpdateStatus>);
   });
 
-  it("AnalyticsPage renders 4 KPIs, Stacked Bar matrix with name_vi, and preserves Pie colors when zero entries exist", () => {
+  it("percentageFromCounts handles empty totals, consistent rounding, and Recharts ratios", () => {
+    expect(percentageFromCounts(1, [0])).toBe(0);
+    expect(percentageFromCounts(0, [0, 0, 0])).toBe(0);
+    expect(percentageFromCounts(2, [6])).toBe(33);
+    expect(percentageFromCounts(1, [1, 1, 1], 1 / 3)).toBe(33);
+    expect([1, 1, 1].reduce((sum, count) => sum + percentageFromCounts(count, [1, 1, 1]), 0)).toBe(99);
+  });
+
+  it("AnalyticsPage renders existing KPI counts, donut summaries, and API-sourced aspect rows", () => {
     mockedHooks.useStatsOverview.mockReturnValue(
       makeQuery<StatsOverview>({
         total_tickets: 6,
@@ -150,24 +162,66 @@ describe("FE pages and layout (renderToStaticMarkup)", () => {
 
     expect(html).toContain("Tổng số ticket");
     expect(html).toContain("Ưu tiên Nghiêm trọng");
-    expect(html).toContain("Chưa đóng");
-    expect(html).toContain("Mới: 2 · Đã giao: 1 · Xử lý: 1");
-    expect(html).toContain("Tỷ lệ hoàn tất: 33%");
-    expect(html).toContain("Ma trận Khía cạnh × Cảm xúc");
+    expect(html).toContain("Ưu tiên Trung bình");
+    expect(html).toContain("Ưu tiên Thấp");
+    expect(html).not.toContain("Chưa đóng");
+    expect(html).not.toContain("Tỷ lệ hoàn tất");
+    expect(html).toContain("Khía cạnh khách hàng quan tâm");
+    expect(html).toContain("2 chủ đề");
     expect(html).toContain("Hoàn tiền &amp; Thanh toán");
+    expect(html).toContain("analytics-donut-summary-percent");
+    expect(html).toContain("analytics-pie-center");
+    expect(html).toContain("83% tiêu cực");
 
-    // Neutral (#7c8c91) and Positive (#168a73) must keep their own colors instead of shifting to Negative (#b94342)
-    expect(html).toContain('data-fill="#7c8c91"');
-    expect(html).toContain('data-fill="#168a73"');
-    expect(html).not.toContain('<span data-testid="recharts-cell" data-fill="#b94342"');
+    // CSS token selectors keep the remaining pie categories tied to their labels after zero slices are filtered.
+    expect(html).toContain('<path data-testid="recharts-cell" data-category="Trung tính"');
+    expect(html).toContain('<path data-testid="recharts-cell" data-category="Tích cực"');
+    expect(html).not.toContain('<path data-testid="recharts-cell" data-category="Tiêu cực"');
 
-    // Priority Pie without CRITICAL must keep MEDIUM (#a66a08) and LOW (#087443)
-    expect(html).toContain('data-fill="#a66a08"');
-    expect(html).toContain('data-fill="#087443"');
-    expect(html).not.toContain('<span data-testid="recharts-cell" data-fill="#a72729"');
+    // Priority CSS token selectors remain keyed to labels when CRITICAL is absent.
+    expect(html).toContain('<path data-testid="recharts-cell" data-category="Trung bình"');
+    expect(html).toContain('<path data-testid="recharts-cell" data-category="Thấp"');
+    expect(html).not.toContain('<path data-testid="recharts-cell" data-category="Nghiêm trọng"');
+    expect(html).toContain("analytics-aspect-segment-negative");
 
     mockedHooks.useStatsOverview.mockReturnValue(makeQuery<StatsOverview>(MOCK_STATS, { isLoading: true }));
     expect(renderInApp(<AnalyticsPage />, "/analytics")).toContain("Đang nạp dữ liệu phân tích thống kê...");
+  });
+
+  it("AnalyticsPage keeps empty states for zero tickets and zero aspects", () => {
+    mockedHooks.useStatsOverview.mockReturnValue(makeQuery<StatsOverview>({
+      ...MOCK_STATS,
+      total_tickets: 0,
+      sentiment_counts: { negative: 0, neutral: 0, positive: 0 },
+      priority_counts: { CRITICAL: 0, MEDIUM: 0, LOW: 0 },
+      aspect_counts: {},
+    }));
+    mockedHooks.useAspectsStats.mockReturnValue(makeQuery<AspectStatItem[]>([]));
+
+    const html = renderInApp(<AnalyticsPage />, "/analytics");
+
+    expect(html).toContain("analytics-aspect-count\">0 ");
+    expect(html).toContain("analytics-aspect-empty");
+    expect(html).toContain("analytics-frequency-card");
+    expect(html).not.toContain('data-testid="recharts-piechart"');
+  });
+
+  it("AnalyticsPage renders one nonzero category and one API-sourced aspect", () => {
+    const oneAspectCount = Object.fromEntries(Object.entries(MOCK_STATS.aspect_counts).slice(0, 1));
+    mockedHooks.useStatsOverview.mockReturnValue(makeQuery<StatsOverview>({
+      ...MOCK_STATS,
+      total_tickets: 1,
+      sentiment_counts: { negative: 1, neutral: 0, positive: 0 },
+      priority_counts: { CRITICAL: 1, MEDIUM: 0, LOW: 0 },
+      aspect_counts: oneAspectCount,
+    }));
+    mockedHooks.useAspectsStats.mockReturnValue(makeQuery<AspectStatItem[]>([]));
+
+    const html = renderInApp(<AnalyticsPage />, "/analytics");
+
+    expect(html).toContain("analytics-aspect-count\">1 ");
+    expect(html.match(/data-testid="recharts-piechart"/g)).toHaveLength(2);
+    expect(html.match(/data-testid="recharts-cell"/g)).toHaveLength(2);
   });
 
   it("TesterPage reflects /health model status badges accurately", () => {

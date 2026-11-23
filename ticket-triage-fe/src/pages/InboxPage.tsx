@@ -80,9 +80,9 @@ export const InboxPage: React.FC = () => {
   return (
     <div className="inbox-page space-y-6 p-4 pb-8 sm:p-5 sm:pb-8 lg:p-6 lg:pb-8">
       {/* Header and Quick Stats */}
-      <div className="flex flex-col gap-4 border-b border-slate-300 pb-5 sm:flex-row sm:items-end sm:justify-between">
+      <div className="inbox-header flex flex-col gap-4 border-b border-slate-200 pb-5 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <h1 className="text-[26px] font-semibold tracking-tight text-slate-900">Hộp thư ưu tiên</h1>
+          <h1 className="text-3xl font-bold tracking-tight text-slate-800">Hộp thư ưu tiên</h1>
           <p className="mt-1 max-w-2xl text-sm text-slate-600">
             Hàng đợi trực tiếp, sắp xếp theo mức độ khẩn cấp
           </p>
