@@ -121,7 +121,8 @@ describe("ticket components (renderToStaticMarkup)", () => {
           aspect_bonus: 7.7,
           reasons: [
             "Cảm xúc tổng thể tiêu cực (0.95): base = 57.0",
-            "Từ khóa CRITICAL 'charged twice' ở câu #1: +20.0",
+            "Từ khóa CRITICAL 'charged 5 times' ở câu #1: +20.0",
+            "Từ khóa HIGH 'delayed for 3 weeks' ở câu #2: +10.0",
             "Cú pháp câu chứa '!!!' (+5.0)",
             "Khía cạnh nghiêm trọng nhất 'refund_payment': +7.7",
           ],
@@ -136,7 +137,8 @@ describe("ticket components (renderToStaticMarkup)", () => {
     expect(html).toContain("audit-evidence-row audit-evidence-urgency");
     expect(html).toContain("audit-evidence-row audit-evidence-intensity");
     expect(html).toContain("audit-evidence-row audit-evidence-aspect");
-    expect(html).toContain('<mark class="audit-evidence-highlight audit-evidence-level-critical">&#x27;charged twice&#x27;</mark>');
+    expect(html).toContain('<mark class="audit-evidence-highlight audit-evidence-level-critical">&#x27;charged 5 times&#x27;</mark>');
+    expect(html).toContain('<mark class="audit-evidence-highlight audit-evidence-level-high">&#x27;delayed for 3 weeks&#x27;</mark>');
   });
 
   it("TicketTable renders loading, empty, and row badges cleanly", () => {

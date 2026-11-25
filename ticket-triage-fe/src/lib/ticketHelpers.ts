@@ -25,6 +25,9 @@ export const CRITICAL_EVIDENCE_TERMS = [
   "chargeback",
   "stolen",
   "charged twice",
+  "double charged",
+  "billed twice",
+  "unauthorized charge",
 ] as const;
 
 export const HIGH_EVIDENCE_TERMS = [
@@ -33,11 +36,21 @@ export const HIGH_EVIDENCE_TERMS = [
   "cancel",
   "not working",
   "never received",
+  "never arrived",
+  "lost package",
+  "stuck in transit",
+  "hung up",
   "dispute",
   "missing",
   "damaged",
   "overcharged",
 ] as const;
+
+const EVIDENCE_LEVEL_PRIORITY: Record<EvidenceLevel, number> = {
+  critical: 3,
+  high: 2,
+  aspect: 1,
+};
 
 export type EvidenceLevel = "critical" | "high" | "aspect";
 export type EvidenceTone = "urgency" | "intensity" | "aspect" | "sentiment";
@@ -85,7 +98,16 @@ export function canTransitionStatus(currentStatus: string, nextStatus: string): 
   return allowed.includes(nextStatus as TicketStatus);
 }
 
-export function getEvidenceLevel(phrase: string): EvidenceLevel {
+export function getEvidenceLevel(phrase: string, reason?: string): EvidenceLevel {
+  if (reason) {
+    if (/(?:từ khóa|keyword)\s+CRITICAL\b/i.test(reason)) {
+      return "critical";
+    }
+    if (/(?:từ khóa|keyword)\s+HIGH\b/i.test(reason)) {
+      return "high";
+    }
+  }
+
   const normalized = phrase.trim().toLowerCase();
   if ((CRITICAL_EVIDENCE_TERMS as readonly string[]).includes(normalized)) {
     return "critical";
@@ -108,7 +130,7 @@ export function getEvidenceTone(reason: string): EvidenceTone {
     return "intensity";
   }
   if (
-    /từ khóa|keyword|urgent|immediately|asap|lawsuit|fraud|scam|chargeback|stolen|dispute|charged twice|broken|refund|cancel|never received|not working|missing|damaged|overcharged/i.test(
+    /từ khóa|keyword|khẩn cấp|khủng hoảng|urgent|immediately|asap|lawsuit|fraud|scam|chargeback|stolen|dispute|charged twice|double charged|billed twice|unauthorized charge|broken|refund|cancel|never received|never arrived|lost package|stuck in transit|hung up|not working|missing|damaged|overcharged/i.test(
       normalized,
     )
   ) {
@@ -127,17 +149,23 @@ export function findEvidenceRanges(
 ): HighlightRange[] {
   if (!content || reasons.length === 0) return [];
 
-  const uniquePhrases = Array.from(
-    new Set(
-      reasons
-        .flatMap((reason) => Array.from(reason.matchAll(/'([^']+)'/g), (match) => match[1].trim()))
-        .filter((phrase) => phrase.length > 0),
-    ),
-  );
+  const phraseEntries = new Map<string, { phrase: string; level: EvidenceLevel }>();
+  for (const reason of reasons) {
+    for (const match of reason.matchAll(/'([^']+)'/g)) {
+      const phrase = match[1].trim();
+      if (!phrase) continue;
+
+      const key = phrase.toLowerCase();
+      const level = getEvidenceLevel(phrase, reason);
+      const existing = phraseEntries.get(key);
+      if (!existing || EVIDENCE_LEVEL_PRIORITY[level] > EVIDENCE_LEVEL_PRIORITY[existing.level]) {
+        phraseEntries.set(key, { phrase, level });
+      }
+    }
+  }
 
   const ranges: HighlightRange[] = [];
-  for (const phrase of uniquePhrases) {
-    const level = getEvidenceLevel(phrase);
+  for (const { phrase, level } of phraseEntries.values()) {
     const escaped = escapeRegExp(phrase);
     const startsWord = /^\w/.test(phrase);
     const endsWord = /\w$/.test(phrase);

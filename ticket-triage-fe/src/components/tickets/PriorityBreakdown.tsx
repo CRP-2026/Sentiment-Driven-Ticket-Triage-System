@@ -20,7 +20,7 @@ const renderEvidenceText = (reason: string) =>
   reason.split(/('[^']+')/g).map((part, index) => {
     if (part.startsWith("'") && part.endsWith("'") && part.length >= 2) {
       const phrase = part.slice(1, -1);
-      const level = getEvidenceLevel(phrase);
+      const level = getEvidenceLevel(phrase, reason);
       return (
         <mark className={`audit-evidence-highlight audit-evidence-level-${level}`} key={index}>
           {part}

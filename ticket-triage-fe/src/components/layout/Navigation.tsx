@@ -38,7 +38,7 @@ export const Navigation: React.FC = () => {
         <div className="app-brand-mark"><ShieldCheck className="w-5 h-5" /></div>
         <div className="min-w-0">
           <div className="text-[15px] font-bold tracking-tight text-slate-900">Phân loại ticket</div>
-          <div className="text-[10px] font-medium text-slate-500">DogTowFaces v3.1</div>
+          <div className="text-[10px] font-medium text-slate-500">DogTwoFaces v3.1</div>
         </div>
       </div>
       <nav className="app-nav-groups">

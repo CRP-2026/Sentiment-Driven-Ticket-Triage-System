@@ -84,14 +84,40 @@ describe("ticketHelpers", () => {
   });
 
   describe("evidence classification & highlighting", () => {
-    it("keeps 'charged twice' in critical terms synced with backend rules", () => {
+    it("keeps critical and high terms synced with backend rules and infers dynamic regex tiers from reason", () => {
       expect(CRITICAL_EVIDENCE_TERMS).toContain("charged twice");
+      expect(CRITICAL_EVIDENCE_TERMS).toContain("double charged");
+      expect(CRITICAL_EVIDENCE_TERMS).toContain("billed twice");
+      expect(CRITICAL_EVIDENCE_TERMS).toContain("unauthorized charge");
       expect(HIGH_EVIDENCE_TERMS).toContain("refund");
+      expect(HIGH_EVIDENCE_TERMS).toContain("hung up");
+      expect(HIGH_EVIDENCE_TERMS).toContain("never arrived");
+      expect(HIGH_EVIDENCE_TERMS).toContain("lost package");
+      expect(HIGH_EVIDENCE_TERMS).toContain("stuck in transit");
+
       expect(getEvidenceLevel("  Charged Twice  ")).toBe("critical");
+      expect(getEvidenceLevel("double charged")).toBe("critical");
       expect(getEvidenceLevel("chargeback")).toBe("critical");
       expect(getEvidenceLevel("never received")).toBe("high");
+      expect(getEvidenceLevel("stuck in transit")).toBe("high");
       expect(getEvidenceLevel("refund")).toBe("high");
       expect(getEvidenceLevel("refund_payment")).toBe("aspect");
+
+      expect(
+        getEvidenceLevel("charged 5 times", "Từ khóa CRITICAL 'charged 5 times' ở câu kết: +30.0"),
+      ).toBe("critical");
+      expect(
+        getEvidenceLevel("delayed for 3 weeks", "Từ khóa HIGH 'delayed for 3 weeks' ở câu #1: +10.0"),
+      ).toBe("high");
+      expect(
+        getEvidenceLevel("hung up on me", "Từ khóa HIGH 'hung up on me' ở câu kết: +15.0"),
+      ).toBe("high");
+      expect(
+        getEvidenceLevel(
+          "refund_payment",
+          "Khía cạnh nghiêm trọng nhất 'refund_payment' (trọng số 1.0, conf 0.95): +9.50",
+        ),
+      ).toBe("aspect");
     });
 
     it("detects Vietnamese backend reasons accurately without misclassifying aspect IDs", () => {
@@ -101,15 +127,18 @@ describe("ticketHelpers", () => {
       expect(getEvidenceTone("Cường độ câu cao (CAPS LOCK): +5.0")).toBe("intensity");
       expect(getEvidenceTone("Cú pháp câu chứa '!!!' (+5.0)")).toBe("intensity");
       expect(getEvidenceTone("Từ khóa CRITICAL 'charged twice' ở câu #1: +20.0")).toBe("urgency");
+      expect(getEvidenceTone("AI phát hiện ngữ cảnh khẩn cấp CRITICAL (conf 0.85): +17.0")).toBe("urgency");
+      expect(getEvidenceTone("Khủng hoảng đa khía cạnh (3 khía cạnh tiêu cực đồng thời): +15.0")).toBe("urgency");
       expect(getEvidenceTone("Cảm xúc tổng thể tiêu cực (0.95): base = 57.0")).toBe("sentiment");
     });
 
-    it("highlights non-overlapping word-boundary evidence ranges", () => {
+    it("highlights non-overlapping word-boundary evidence ranges including dynamic regex matches", () => {
       const content =
-        "I had an issue, then I was charged twice! Please refund immediately before lawsuit.";
+        "I had an issue, my parcel was delayed for 3 weeks, then I was charged 5 times! Please refund immediately before lawsuit.";
       const reasons = [
         "Từ khóa HIGH 'sue' ở câu #1: +10.0",
-        "Từ khóa CRITICAL 'charged twice' ở câu #1: +20.0",
+        "Từ khóa HIGH 'delayed for 3 weeks' ở câu #1: +10.0",
+        "Từ khóa CRITICAL 'charged 5 times' ở câu #1: +20.0",
         "Từ khóa CRITICAL 'charged' ở câu #1: +20.0",
         "Từ khóa HIGH 'refund' ở câu kết: +15.0",
         "Từ khóa CRITICAL 'immediately' ở câu kết: +30.0",
@@ -117,7 +146,8 @@ describe("ticketHelpers", () => {
 
       const ranges = findEvidenceRanges(content, reasons);
       expect(ranges.map((r) => [r.phrase, r.level])).toEqual([
-        ["charged twice", "critical"],
+        ["delayed for 3 weeks", "high"],
+        ["charged 5 times", "critical"],
         ["refund", "high"],
         ["immediately", "critical"],
       ]);
