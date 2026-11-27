@@ -4,6 +4,7 @@ from ..schemas import HealthResponse
 
 router = APIRouter(tags=["Health"])
 
+
 @router.get("/health", response_model=HealthResponse)
 def get_health(request: Request) -> HealthResponse:
     app_state = request.app.state
@@ -23,6 +24,8 @@ def get_health(request: Request) -> HealthResponse:
 
     queue = getattr(app_state, "priority_queue", None)
     queue_size = queue.size() if queue else 0
+    container = getattr(app_state, "container", None)
+    gateway_mode = getattr(container, "triage_gateway_mode", "local")
 
     return HealthResponse(
         status="ok",
@@ -31,4 +34,5 @@ def get_health(request: Request) -> HealthResponse:
         is_mock=is_mock,
         model_loaded=model_loaded,
         queue_size=queue_size,
+        triage_gateway_mode=gateway_mode,
     )
