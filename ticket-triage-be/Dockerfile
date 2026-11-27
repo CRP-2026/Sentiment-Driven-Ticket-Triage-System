@@ -22,6 +22,7 @@ RUN if [ "$INSTALL_ML" = "true" ]; then \
 
 COPY src ./src
 COPY configs ./configs
+COPY seeds ./seeds
 COPY scripts ./scripts
 COPY pyproject.toml ./
 RUN pip install -e . --no-deps

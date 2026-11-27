@@ -1,8 +1,8 @@
 {
   "openapi": "3.1.0",
   "info": {
-    "title": "Sentiment-Driven Ticket Triage API",
-    "description": "Hệ thống phân loại và định tuyến vé hỗ trợ khách hàng theo cảm xúc",
+    "title": "Sentiment-Driven Ticket Triage & Storefront API",
+    "description": "Hệ thống thương mại điện tử tích hợp phân tích cảm xúc theo khía cạnh (ABSA) và phân loại ưu tiên vé hỗ trợ khách hàng",
     "version": "0.1.0"
   },
   "paths": {
@@ -52,13 +52,426 @@
         }
       }
     },
+    "/api/v1/auth/register": {
+      "post": {
+        "tags": [
+          "Auth"
+        ],
+        "summary": "Register",
+        "description": "Đăng ký tài khoản khách hàng mới và cấp phát JWT access token.",
+        "operationId": "register_api_v1_auth_register_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RegisterIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/auth/login": {
+      "post": {
+        "tags": [
+          "Auth"
+        ],
+        "summary": "Login",
+        "description": "Đăng nhập bằng email và mật khẩu (hỗ trợ cả customer và admin).",
+        "operationId": "login_api_v1_auth_login_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LoginIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/auth/me": {
+      "get": {
+        "tags": [
+          "Auth"
+        ],
+        "summary": "Get Me",
+        "description": "Trả về thông tin tài khoản hiện đang đăng nhập.",
+        "operationId": "get_me_api_v1_auth_me_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserOut"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/store/categories": {
+      "get": {
+        "tags": [
+          "Storefront"
+        ],
+        "summary": "List Categories",
+        "description": "Lấy danh sách danh mục sản phẩm kèm tổng số sản phẩm mỗi danh mục.",
+        "operationId": "list_categories_api_v1_store_categories_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/CategoryOut"
+                  },
+                  "type": "array",
+                  "title": "Response List Categories Api V1 Store Categories Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/store/products": {
+      "get": {
+        "tags": [
+          "Storefront"
+        ],
+        "summary": "List Products",
+        "description": "Lấy danh sách sản phẩm kèm chỉ số hài lòng AI và Top khía cạnh được đánh giá cao.",
+        "operationId": "list_products_api_v1_store_products_get",
+        "parameters": [
+          {
+            "name": "category",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Category"
+            }
+          },
+          {
+            "name": "q",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Q"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1,
+              "default": 24,
+              "title": "Limit"
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 0,
+              "title": "Offset"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProductListResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/store/products/{slug}": {
+      "get": {
+        "tags": [
+          "Storefront"
+        ],
+        "summary": "Get Product Detail",
+        "description": "Lấy chi tiết sản phẩm, bảng xếp hạng Top 1-2-3 khía cạnh ABSA và danh sách bình luận.",
+        "operationId": "get_product_detail_api_v1_store_products__slug__get",
+        "parameters": [
+          {
+            "name": "slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Slug"
+            }
+          },
+          {
+            "name": "aspect",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Aspect"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1,
+              "default": 50,
+              "title": "Limit"
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 0,
+              "title": "Offset"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProductDetailResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/store/products/{slug}/reviews": {
+      "post": {
+        "tags": [
+          "Storefront"
+        ],
+        "summary": "Submit Product Review",
+        "description": "Gửi bình luận sản phẩm -> phân tích ABSA qua TriageGatewayPort -> tạo Admin Ticket.",
+        "operationId": "submit_product_review_api_v1_store_products__slug__reviews_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Slug"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReviewCreateIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReviewCreateResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/store/uploads/image": {
+      "post": {
+        "tags": [
+          "Storefront"
+        ],
+        "summary": "Upload Product Image",
+        "description": "Admin tải ảnh sản phẩm lên ImageStoragePort (Cloudinary hoặc Local fallback).",
+        "operationId": "upload_product_image_api_v1_store_uploads_image_post",
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_upload_product_image_api_v1_store_uploads_image_post"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImageUploadResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
     "/api/v1/tickets/triage": {
       "post": {
         "tags": [
           "Tickets"
         ],
         "summary": "Triage Ticket",
-        "description": "Tiếp nhận ticket tiếng Anh thô, chạy toàn trình (ABSA -> Priority Engine),\nlưu CSDL SQLite và cập nhật hàng đợi Max-Heap.",
+        "description": "Tiếp nhận ticket tiếng Anh thô, chạy toàn trình (ABSA -> Priority Engine),\nlưu CSDL và cập nhật hàng đợi Max-Heap.",
         "operationId": "triage_ticket_api_v1_tickets_triage_post",
         "requestBody": {
           "content": {
@@ -91,7 +504,12 @@
               }
             }
           }
-        }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
       }
     },
     "/api/v1/tickets": {
@@ -100,8 +518,13 @@
           "Tickets"
         ],
         "summary": "Triage Ticket",
-        "description": "Tiếp nhận ticket tiếng Anh thô, chạy toàn trình (ABSA -> Priority Engine),\nlưu CSDL SQLite và cập nhật hàng đợi Max-Heap.",
+        "description": "Tiếp nhận ticket tiếng Anh thô, chạy toàn trình (ABSA -> Priority Engine),\nlưu CSDL và cập nhật hàng đợi Max-Heap.",
         "operationId": "triage_ticket_api_v1_tickets_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
         "requestBody": {
           "required": true,
           "content": {
@@ -140,8 +563,13 @@
           "Tickets"
         ],
         "summary": "Get Tickets",
-        "description": "Lấy danh sách ticket từ CSDL SQLite sắp xếp theo priority_score giảm dần.",
+        "description": "Lấy danh sách ticket sắp xếp theo priority_score giảm dần.",
         "operationId": "get_tickets_api_v1_tickets_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
         "parameters": [
           {
             "name": "limit",
@@ -245,8 +673,13 @@
           "Tickets"
         ],
         "summary": "Get Tickets",
-        "description": "Lấy danh sách ticket từ CSDL SQLite sắp xếp theo priority_score giảm dần.",
+        "description": "Lấy danh sách ticket sắp xếp theo priority_score giảm dần.",
         "operationId": "get_tickets_api_v1_tickets_queue_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
         "parameters": [
           {
             "name": "limit",
@@ -352,6 +785,11 @@
         "summary": "Get Ticket Detail",
         "description": "Lấy thông tin chi tiết của một ticket kèm danh sách aspects và priority breakdown.",
         "operationId": "get_ticket_detail_api_v1_tickets__ticket_id__get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
         "parameters": [
           {
             "name": "ticket_id",
@@ -395,6 +833,11 @@
         "summary": "Update Ticket Status",
         "description": "Cập nhật trạng thái vòng đời ticket (new -> assigned -> in_progress -> resolved).",
         "operationId": "update_ticket_status_api_v1_tickets__ticket_id__status_patch",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
         "parameters": [
           {
             "name": "ticket_id",
@@ -459,7 +902,12 @@
               }
             }
           }
-        }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
       }
     },
     "/api/v1/stats/aspects": {
@@ -485,12 +933,99 @@
               }
             }
           }
-        }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
       }
     }
   },
   "components": {
     "schemas": {
+      "AspectInsightOut": {
+        "properties": {
+          "aspect_id": {
+            "type": "string",
+            "title": "Aspect Id"
+          },
+          "name_vi": {
+            "type": "string",
+            "title": "Name Vi"
+          },
+          "description": {
+            "type": "string",
+            "title": "Description"
+          },
+          "rank": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rank"
+          },
+          "total_mentions": {
+            "type": "integer",
+            "title": "Total Mentions"
+          },
+          "positive_count": {
+            "type": "integer",
+            "title": "Positive Count"
+          },
+          "neutral_count": {
+            "type": "integer",
+            "title": "Neutral Count"
+          },
+          "negative_count": {
+            "type": "integer",
+            "title": "Negative Count"
+          },
+          "positive_ratio": {
+            "type": "number",
+            "title": "Positive Ratio"
+          },
+          "ranking_score": {
+            "type": "number",
+            "title": "Ranking Score"
+          },
+          "sentiment_summary": {
+            "type": "string",
+            "title": "Sentiment Summary"
+          },
+          "is_highly_rated": {
+            "type": "boolean",
+            "title": "Is Highly Rated"
+          },
+          "top_terms": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Top Terms",
+            "default": []
+          }
+        },
+        "type": "object",
+        "required": [
+          "aspect_id",
+          "name_vi",
+          "description",
+          "total_mentions",
+          "positive_count",
+          "neutral_count",
+          "negative_count",
+          "positive_ratio",
+          "ranking_score",
+          "sentiment_summary",
+          "is_highly_rated"
+        ],
+        "title": "AspectInsightOut"
+      },
       "AspectMetaItem": {
         "properties": {
           "id": {
@@ -578,6 +1113,80 @@
         ],
         "title": "AspectStatItem"
       },
+      "AuthResponse": {
+        "properties": {
+          "access_token": {
+            "type": "string",
+            "title": "Access Token"
+          },
+          "token_type": {
+            "type": "string",
+            "title": "Token Type",
+            "default": "bearer"
+          },
+          "user": {
+            "$ref": "#/components/schemas/UserOut"
+          }
+        },
+        "type": "object",
+        "required": [
+          "access_token",
+          "user"
+        ],
+        "title": "AuthResponse"
+      },
+      "Body_upload_product_image_api_v1_store_uploads_image_post": {
+        "properties": {
+          "file": {
+            "type": "string",
+            "contentMediaType": "application/octet-stream",
+            "title": "File"
+          }
+        },
+        "type": "object",
+        "required": [
+          "file"
+        ],
+        "title": "Body_upload_product_image_api_v1_store_uploads_image_post"
+      },
+      "CategoryOut": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "slug": {
+            "type": "string",
+            "title": "Slug"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "description": {
+            "type": "string",
+            "title": "Description"
+          },
+          "icon": {
+            "type": "string",
+            "title": "Icon"
+          },
+          "product_count": {
+            "type": "integer",
+            "title": "Product Count",
+            "default": 0
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "slug",
+          "name",
+          "description",
+          "icon"
+        ],
+        "title": "CategoryOut"
+      },
       "HTTPValidationError": {
         "properties": {
           "detail": {
@@ -620,6 +1229,11 @@
           "queue_size": {
             "type": "integer",
             "title": "Queue Size"
+          },
+          "triage_gateway_mode": {
+            "type": "string",
+            "title": "Triage Gateway Mode",
+            "default": "local"
           }
         },
         "type": "object",
@@ -628,6 +1242,37 @@
           "queue_size"
         ],
         "title": "HealthResponse"
+      },
+      "ImageUploadResponse": {
+        "properties": {
+          "image_url": {
+            "type": "string",
+            "title": "Image Url"
+          }
+        },
+        "type": "object",
+        "required": [
+          "image_url"
+        ],
+        "title": "ImageUploadResponse"
+      },
+      "LoginIn": {
+        "properties": {
+          "email": {
+            "type": "string",
+            "title": "Email"
+          },
+          "password": {
+            "type": "string",
+            "title": "Password"
+          }
+        },
+        "type": "object",
+        "required": [
+          "email",
+          "password"
+        ],
+        "title": "LoginIn"
       },
       "PriorityBreakdownOut": {
         "properties": {
@@ -669,6 +1314,526 @@
           "reasons"
         ],
         "title": "PriorityBreakdownOut"
+      },
+      "ProductDetailResponse": {
+        "properties": {
+          "product": {
+            "$ref": "#/components/schemas/ProductOut"
+          },
+          "insights": {
+            "$ref": "#/components/schemas/ProductInsightsOut"
+          },
+          "reviews": {
+            "items": {
+              "$ref": "#/components/schemas/ReviewOut"
+            },
+            "type": "array",
+            "title": "Reviews"
+          },
+          "total_filtered_reviews": {
+            "type": "integer",
+            "title": "Total Filtered Reviews"
+          }
+        },
+        "type": "object",
+        "required": [
+          "product",
+          "insights",
+          "reviews",
+          "total_filtered_reviews"
+        ],
+        "title": "ProductDetailResponse"
+      },
+      "ProductInsightsOut": {
+        "properties": {
+          "total_reviews": {
+            "type": "integer",
+            "title": "Total Reviews"
+          },
+          "positive_review_count": {
+            "type": "integer",
+            "title": "Positive Review Count"
+          },
+          "neutral_review_count": {
+            "type": "integer",
+            "title": "Neutral Review Count"
+          },
+          "negative_review_count": {
+            "type": "integer",
+            "title": "Negative Review Count"
+          },
+          "satisfaction_rate": {
+            "type": "number",
+            "title": "Satisfaction Rate"
+          },
+          "summary_text_vi": {
+            "type": "string",
+            "title": "Summary Text Vi"
+          },
+          "aspects": {
+            "items": {
+              "$ref": "#/components/schemas/AspectInsightOut"
+            },
+            "type": "array",
+            "title": "Aspects",
+            "default": []
+          },
+          "top_ranked_aspects": {
+            "items": {
+              "$ref": "#/components/schemas/AspectInsightOut"
+            },
+            "type": "array",
+            "title": "Top Ranked Aspects",
+            "default": []
+          }
+        },
+        "type": "object",
+        "required": [
+          "total_reviews",
+          "positive_review_count",
+          "neutral_review_count",
+          "negative_review_count",
+          "satisfaction_rate",
+          "summary_text_vi"
+        ],
+        "title": "ProductInsightsOut"
+      },
+      "ProductListResponse": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/ProductSummaryOut"
+            },
+            "type": "array",
+            "title": "Items"
+          },
+          "total": {
+            "type": "integer",
+            "title": "Total"
+          },
+          "limit": {
+            "type": "integer",
+            "title": "Limit"
+          },
+          "offset": {
+            "type": "integer",
+            "title": "Offset"
+          }
+        },
+        "type": "object",
+        "required": [
+          "items",
+          "total",
+          "limit",
+          "offset"
+        ],
+        "title": "ProductListResponse"
+      },
+      "ProductOut": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "category_id": {
+            "type": "integer",
+            "title": "Category Id"
+          },
+          "category_slug": {
+            "type": "string",
+            "title": "Category Slug"
+          },
+          "category_name": {
+            "type": "string",
+            "title": "Category Name"
+          },
+          "slug": {
+            "type": "string",
+            "title": "Slug"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "short_description": {
+            "type": "string",
+            "title": "Short Description"
+          },
+          "description": {
+            "type": "string",
+            "title": "Description"
+          },
+          "price": {
+            "type": "number",
+            "title": "Price"
+          },
+          "image_url": {
+            "type": "string",
+            "title": "Image Url"
+          },
+          "sku": {
+            "type": "string",
+            "title": "Sku"
+          },
+          "stock": {
+            "type": "integer",
+            "title": "Stock"
+          },
+          "created_at": {
+            "type": "string",
+            "title": "Created At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "category_id",
+          "category_slug",
+          "category_name",
+          "slug",
+          "name",
+          "short_description",
+          "description",
+          "price",
+          "image_url",
+          "sku",
+          "stock",
+          "created_at"
+        ],
+        "title": "ProductOut"
+      },
+      "ProductSummaryOut": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "category_id": {
+            "type": "integer",
+            "title": "Category Id"
+          },
+          "category_slug": {
+            "type": "string",
+            "title": "Category Slug"
+          },
+          "category_name": {
+            "type": "string",
+            "title": "Category Name"
+          },
+          "slug": {
+            "type": "string",
+            "title": "Slug"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "short_description": {
+            "type": "string",
+            "title": "Short Description"
+          },
+          "description": {
+            "type": "string",
+            "title": "Description"
+          },
+          "price": {
+            "type": "number",
+            "title": "Price"
+          },
+          "image_url": {
+            "type": "string",
+            "title": "Image Url"
+          },
+          "sku": {
+            "type": "string",
+            "title": "Sku"
+          },
+          "stock": {
+            "type": "integer",
+            "title": "Stock"
+          },
+          "created_at": {
+            "type": "string",
+            "title": "Created At"
+          },
+          "total_reviews": {
+            "type": "integer",
+            "title": "Total Reviews",
+            "default": 0
+          },
+          "satisfaction_rate": {
+            "type": "number",
+            "title": "Satisfaction Rate",
+            "default": 0.0
+          },
+          "top_ranked_aspects": {
+            "items": {
+              "$ref": "#/components/schemas/AspectInsightOut"
+            },
+            "type": "array",
+            "title": "Top Ranked Aspects",
+            "default": []
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "category_id",
+          "category_slug",
+          "category_name",
+          "slug",
+          "name",
+          "short_description",
+          "description",
+          "price",
+          "image_url",
+          "sku",
+          "stock",
+          "created_at"
+        ],
+        "title": "ProductSummaryOut"
+      },
+      "RegisterIn": {
+        "properties": {
+          "email": {
+            "type": "string",
+            "title": "Email",
+            "description": "Địa chỉ email đăng ký"
+          },
+          "full_name": {
+            "type": "string",
+            "title": "Full Name",
+            "description": "Tên hiển thị của người dùng"
+          },
+          "password": {
+            "type": "string",
+            "maxLength": 128,
+            "minLength": 6,
+            "title": "Password",
+            "description": "Mật khẩu tối thiểu 6 ký tự"
+          }
+        },
+        "type": "object",
+        "required": [
+          "email",
+          "full_name",
+          "password"
+        ],
+        "title": "RegisterIn"
+      },
+      "ReviewCreateIn": {
+        "properties": {
+          "title": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 200
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Title"
+          },
+          "content": {
+            "type": "string",
+            "title": "Content",
+            "description": "Nội dung bình luận tiếng Anh về sản phẩm"
+          }
+        },
+        "type": "object",
+        "required": [
+          "content"
+        ],
+        "title": "ReviewCreateIn"
+      },
+      "ReviewCreateResponse": {
+        "properties": {
+          "review": {
+            "$ref": "#/components/schemas/ReviewOut"
+          },
+          "triage": {
+            "$ref": "#/components/schemas/ReviewTriageSummaryOut"
+          },
+          "insights": {
+            "$ref": "#/components/schemas/ProductInsightsOut"
+          }
+        },
+        "type": "object",
+        "required": [
+          "review",
+          "triage",
+          "insights"
+        ],
+        "title": "ReviewCreateResponse"
+      },
+      "ReviewOut": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "product_id": {
+            "type": "integer",
+            "title": "Product Id"
+          },
+          "user_id": {
+            "type": "integer",
+            "title": "User Id"
+          },
+          "author_name": {
+            "type": "string",
+            "title": "Author Name"
+          },
+          "ticket_id": {
+            "type": "integer",
+            "title": "Ticket Id"
+          },
+          "title": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Title"
+          },
+          "content": {
+            "type": "string",
+            "title": "Content"
+          },
+          "sentiment_label": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sentiment Label"
+          },
+          "confidence": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Confidence"
+          },
+          "priority_score": {
+            "type": "number",
+            "title": "Priority Score"
+          },
+          "priority_level": {
+            "type": "string",
+            "title": "Priority Level"
+          },
+          "needs_manual_review": {
+            "type": "boolean",
+            "title": "Needs Manual Review"
+          },
+          "aspects": {
+            "items": {
+              "$ref": "#/components/schemas/AspectOut"
+            },
+            "type": "array",
+            "title": "Aspects",
+            "default": []
+          },
+          "created_at": {
+            "type": "string",
+            "title": "Created At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "product_id",
+          "user_id",
+          "author_name",
+          "ticket_id",
+          "content",
+          "priority_score",
+          "priority_level",
+          "needs_manual_review",
+          "created_at"
+        ],
+        "title": "ReviewOut"
+      },
+      "ReviewTriageSummaryOut": {
+        "properties": {
+          "ticket_id": {
+            "type": "integer",
+            "title": "Ticket Id"
+          },
+          "sentiment_label": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sentiment Label"
+          },
+          "confidence": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Confidence"
+          },
+          "priority_score": {
+            "type": "number",
+            "title": "Priority Score"
+          },
+          "priority_level": {
+            "type": "string",
+            "title": "Priority Level"
+          },
+          "dominant_aspect": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Dominant Aspect"
+          },
+          "needs_manual_review": {
+            "type": "boolean",
+            "title": "Needs Manual Review"
+          },
+          "aspects": {
+            "items": {
+              "$ref": "#/components/schemas/AspectOut"
+            },
+            "type": "array",
+            "title": "Aspects",
+            "default": []
+          }
+        },
+        "type": "object",
+        "required": [
+          "ticket_id",
+          "priority_score",
+          "priority_level",
+          "needs_manual_review"
+        ],
+        "title": "ReviewTriageSummaryOut"
       },
       "StatsOverviewResponse": {
         "properties": {
@@ -755,6 +1920,74 @@
             "type": "string",
             "title": "Content",
             "description": "Nội dung phản hồi tiếng Anh của khách hàng"
+          },
+          "source": {
+            "type": "string",
+            "enum": [
+              "direct_api",
+              "storefront_review"
+            ],
+            "title": "Source",
+            "description": "Nguồn gửi: direct_api | storefront_review",
+            "default": "direct_api"
+          },
+          "product_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Product Id"
+          },
+          "product_name": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 180
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Product Name"
+          },
+          "product_slug": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 120
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Product Slug"
+          },
+          "user_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "User Id"
+          },
+          "author_name": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 120
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Author Name"
           }
         },
         "type": "object",
@@ -892,6 +2125,55 @@
             ],
             "title": "Assigned To"
           },
+          "source": {
+            "type": "string",
+            "title": "Source",
+            "default": "direct_api"
+          },
+          "product_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Product Id"
+          },
+          "product_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Product Name"
+          },
+          "product_slug": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Product Slug"
+          },
+          "author_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Author Name"
+          },
           "aspects": {
             "items": {
               "$ref": "#/components/schemas/AspectOut"
@@ -923,6 +2205,46 @@
           "updated_at"
         ],
         "title": "TicketOut"
+      },
+      "UserOut": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "email": {
+            "type": "string",
+            "title": "Email"
+          },
+          "full_name": {
+            "type": "string",
+            "title": "Full Name"
+          },
+          "role": {
+            "$ref": "#/components/schemas/UserRoleEnum"
+          },
+          "created_at": {
+            "type": "string",
+            "title": "Created At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "email",
+          "full_name",
+          "role",
+          "created_at"
+        ],
+        "title": "UserOut"
+      },
+      "UserRoleEnum": {
+        "type": "string",
+        "enum": [
+          "customer",
+          "admin"
+        ],
+        "title": "UserRoleEnum"
       },
       "ValidationError": {
         "properties": {
@@ -963,6 +2285,12 @@
           "type"
         ],
         "title": "ValidationError"
+      }
+    },
+    "securitySchemes": {
+      "HTTPBearer": {
+        "type": "http",
+        "scheme": "bearer"
       }
     }
   }

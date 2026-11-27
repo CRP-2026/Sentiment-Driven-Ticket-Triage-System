@@ -1,0 +1,803 @@
+{
+  "schema_version": 1,
+  "users": [
+    {
+      "email": "admin@triage.shop",
+      "full_name": "Quản trị viên Triage",
+      "password": "Admin@123",
+      "role": "admin"
+    },
+    {
+      "email": "customer@triage.shop",
+      "full_name": "Minh Khách Hàng",
+      "password": "Customer@123",
+      "role": "customer"
+    },
+    {
+      "email": "alex.chen@triage.shop",
+      "full_name": "Alex Chen",
+      "password": "Customer@123",
+      "role": "customer"
+    },
+    {
+      "email": "maya.patel@triage.shop",
+      "full_name": "Maya Patel",
+      "password": "Customer@123",
+      "role": "customer"
+    },
+    {
+      "email": "david.miller@triage.shop",
+      "full_name": "David Miller",
+      "password": "Customer@123",
+      "role": "customer"
+    }
+  ],
+  "categories": [
+    {
+      "slug": "smartphones",
+      "name": "Điện thoại",
+      "description": "Smartphone hiệu năng cao, pin bền và camera sắc nét",
+      "icon": "smartphone"
+    },
+    {
+      "slug": "laptops",
+      "name": "Laptop",
+      "description": "Laptop học tập, di động mỏng nhẹ và máy trạm hiệu năng",
+      "icon": "laptop"
+    },
+    {
+      "slug": "accessories",
+      "name": "Phụ kiện & Thiết bị",
+      "description": "Sạc nhanh USB-C, bàn phím và thiết bị ngoại vi đồng bộ",
+      "icon": "cpu"
+    }
+  ],
+  "products": [
+    {
+      "category_slug": "smartphones",
+      "slug": "aerophone-pro-256",
+      "name": "AeroPhone Pro 256GB",
+      "short_description": "Flagship camera 50MP, bộ nhớ 256GB và cảm biến vân tay siêu nhạy.",
+      "description": "AeroPhone Pro 256GB kết hợp cụm camera độ phân giải cao, bộ nhớ lưu trữ lớn và tốc độ xử lý mượt mà cho công việc lẫn giải trí cả ngày dài.",
+      "price": 749.0,
+      "image_url": "/images/products/aerophone-pro.svg",
+      "sku": "PH-AERO-256",
+      "stock": 18
+    },
+    {
+      "category_slug": "smartphones",
+      "slug": "nova-5g-lite",
+      "name": "Nova 5G Lite 128GB",
+      "short_description": "Smartphone 5G tầm trung tối ưu pin và chi phí cho nhu cầu hàng ngày.",
+      "description": "Nova 5G Lite nổi bật với viên pin bền bỉ, giao diện thân thiện và mức giá hợp lý cho sinh viên và nhân viên văn phòng.",
+      "price": 379.0,
+      "image_url": "/images/products/nova-5g-lite.svg",
+      "sku": "PH-NOVA-128",
+      "stock": 32
+    },
+    {
+      "category_slug": "smartphones",
+      "slug": "zenith-ultra-5g",
+      "name": "Zenith Ultra 5G 512GB",
+      "short_description": "Dòng flagship cao cấp khung kim loại, màn hình OLED 120Hz.",
+      "description": "Zenith Ultra 5G được thiết kế cho người dùng chuyên sâu với không gian lưu trữ 512GB, sạc nhanh và độ hoàn thiện chắc chắn.",
+      "price": 899.0,
+      "image_url": "/images/products/zenith-ultra.svg",
+      "sku": "PH-ZEN-512",
+      "stock": 12
+    },
+    {
+      "category_slug": "laptops",
+      "slug": "chromeflip-book-14",
+      "name": "ChromeFlip Book 14 2-in-1",
+      "short_description": "Laptop gập 360 độ gọn nhẹ, khởi động nhanh cho học tập và văn phòng.",
+      "description": "ChromeFlip Book 14 linh hoạt chuyển đổi giữa chế độ laptop và máy tính bảng với bản lề bền bỉ và thời lượng pin cả ngày.",
+      "price": 469.0,
+      "image_url": "/images/products/chromeflip-14.svg",
+      "sku": "LP-CFLIP-14",
+      "stock": 24
+    },
+    {
+      "category_slug": "laptops",
+      "slug": "ultrabook-air-13",
+      "name": "UltraBook Air 13",
+      "short_description": "Laptop di động siêu mỏng 1.1kg, pin 10 giờ cho người hay di chuyển.",
+      "description": "UltraBook Air 13 tối ưu tính di động với khung nhôm nguyên khối, bàn phím êm và thời lượng pin dài cho lịch trình làm việc linh hoạt.",
+      "price": 999.0,
+      "image_url": "/images/products/ultrabook-air.svg",
+      "sku": "LP-UAIR-13",
+      "stock": 15
+    },
+    {
+      "category_slug": "laptops",
+      "slug": "prowork-studio-15",
+      "name": "ProWork Studio 15",
+      "short_description": "Máy trạm di động màn hình 15.6 inch sắc nét cho lập trình và đồ họa.",
+      "description": "ProWork Studio 15 trang bị cấu hình mạnh mẽ, màn hình độ phủ màu cao và hệ thống tản nhiệt ổn định cho tác vụ nặng.",
+      "price": 1399.0,
+      "image_url": "/images/products/prowork-studio.svg",
+      "sku": "LP-PRO-15",
+      "stock": 9
+    },
+    {
+      "category_slug": "accessories",
+      "slug": "shieldglass-case-kit",
+      "name": "ShieldGlass Case & Screen Protector Kit",
+      "short_description": "Bộ ốp chống sốc và kính cường lực bảo vệ màn hình chống trầy xước.",
+      "description": "Bộ phụ kiện bảo vệ toàn diện gồm ốp lưng ôm sát và kính cường lực độ trong cao, dễ dán, chống va đập và đóng gói cẩn thận khi giao hàng.",
+      "price": 29.0,
+      "image_url": "/images/products/shieldglass-kit.svg",
+      "sku": "AC-SHD-01",
+      "stock": 65
+    },
+    {
+      "category_slug": "accessories",
+      "slug": "tactile-pro-keyboard",
+      "name": "Tactile Pro Keyboard & Trackpad",
+      "short_description": "Bàn phím không dây có đèn nền và bàn di cảm ứng mượt mà độ trễ thấp.",
+      "description": "Tactile Pro mang lại trải nghiệm gõ êm ái, hành trình phím chuẩn xác và trackpad đa điểm tương thích tốt với laptop và máy tính bảng.",
+      "price": 119.0,
+      "image_url": "/images/products/tactile-keyboard.svg",
+      "sku": "AC-KBD-PRO",
+      "stock": 28
+    }
+  ],
+  "reviews": [
+    {
+      "product_slug": "aerophone-pro-256",
+      "author_email": "customer@triage.shop",
+      "content": "Encounter issues related to performance, screen is getting blank while calling, to make screen on if I am pressing power key it's not working. Front camera is not up to the mark",
+      "title": null,
+      "source_domain": "phone",
+      "source_language": "en"
+    },
+    {
+      "product_slug": "aerophone-pro-256",
+      "author_email": "alex.chen@triage.shop",
+      "content": "Mobile started to give problems on 8th day itself. Display is not working or nothing displaying only fingerprint sensor is poping. Such a horrible experience in desparate need. I strongly suggest you to go for other mobile which are way better in this price range.",
+      "title": null,
+      "source_domain": "phone",
+      "source_language": "en"
+    },
+    {
+      "product_slug": "aerophone-pro-256",
+      "author_email": "maya.patel@triage.shop",
+      "content": "I have been using this phone for more than a month and it's amazing. Camera quality is so awesome. I like its macro camera too. Battery performance is good. Fast charging helps me to charge it in an hour. Display is crystal clear and brightness is super. Fingerprint is really fast. Sound quality is amazing. I would definitely recommend this phone.",
+      "title": null,
+      "source_domain": "phone",
+      "source_language": "en"
+    },
+    {
+      "product_slug": "aerophone-pro-256",
+      "author_email": "david.miller@triage.shop",
+      "content": "Fingerprint is so smooth.... battery life is long 100% charging is used for all day....camera quality is good....screen also smooth..",
+      "title": null,
+      "source_domain": "phone",
+      "source_language": "en"
+    },
+    {
+      "product_slug": "aerophone-pro-256",
+      "author_email": "customer@triage.shop",
+      "content": "Shipping is fast. Quality is ok ok for the price you paid. The case came slightly bended diagonally.",
+      "title": null,
+      "source_domain": "phone",
+      "source_language": "en"
+    },
+    {
+      "product_slug": "aerophone-pro-256",
+      "author_email": "alex.chen@triage.shop",
+      "content": "The goods have been received Thank you seller! Great quality / good material Same as photo shows Fast delivery Consider to purchase again",
+      "title": null,
+      "source_domain": "phone",
+      "source_language": "en"
+    },
+    {
+      "product_slug": "aerophone-pro-256",
+      "author_email": "maya.patel@triage.shop",
+      "content": "Excellent phone for the price, basic but all that is needed. Good size screen, can't fault picture quality.",
+      "title": null,
+      "source_domain": "phone",
+      "source_language": "en"
+    },
+    {
+      "product_slug": "aerophone-pro-256",
+      "author_email": "david.miller@triage.shop",
+      "content": "Owsem picture and battery life camera quality and overall better experience of phone in this price and looks also great",
+      "title": null,
+      "source_domain": "phone",
+      "source_language": "en"
+    },
+    {
+      "product_slug": "aerophone-pro-256",
+      "author_email": "customer@triage.shop",
+      "content": "Amazing phone. Camera is incredible. Highly recommended. Fast shipping",
+      "title": null,
+      "source_domain": "phone",
+      "source_language": "en"
+    },
+    {
+      "product_slug": "aerophone-pro-256",
+      "author_email": "alex.chen@triage.shop",
+      "content": "Actual display measurements are 6\" long x 2.75\" wide, and diagonal is 6.5\". The screen itself is slightly larger. Hope that helps. Hi thanks for contacting us its 6.5 inch",
+      "title": null,
+      "source_domain": "phone",
+      "source_language": "en"
+    },
+    {
+      "product_slug": "aerophone-pro-256",
+      "author_email": "maya.patel@triage.shop",
+      "content": "Cáp sạc điện thoại và phích cắm USB. Không tai nghe.",
+      "title": null,
+      "source_domain": "phone",
+      "source_language": "vi"
+    },
+    {
+      "product_slug": "nova-5g-lite",
+      "author_email": "david.miller@triage.shop",
+      "content": "Very Disappointed just used it for 1 week now hving issue I can't use my sim card data keep on showing me limited service issue try to reset it but still the same, today I went to one of the mobile shop to ask for help on fixing the issue, they told me is a fake set from china, I need a refund.??",
+      "title": null,
+      "source_domain": "phone",
+      "source_language": "en"
+    },
+    {
+      "product_slug": "nova-5g-lite",
+      "author_email": "customer@triage.shop",
+      "content": "Came in bubble wrap.. no box.. And it cannot work at all!! I want a refund. Seller not responsive to refund and not willing to send replacement set.",
+      "title": null,
+      "source_domain": "phone",
+      "source_language": "en"
+    },
+    {
+      "product_slug": "nova-5g-lite",
+      "author_email": "alex.chen@triage.shop",
+      "content": "Pls don't buy this phone.. screen is too dull, most imp. No refund facility available, it's better add some money buy other phone.",
+      "title": null,
+      "source_domain": "phone",
+      "source_language": "en"
+    },
+    {
+      "product_slug": "nova-5g-lite",
+      "author_email": "maya.patel@triage.shop",
+      "content": "Good product quality Good value for money Excellent service by seller Fast delivery",
+      "title": null,
+      "source_domain": "phone",
+      "source_language": "en"
+    },
+    {
+      "product_slug": "nova-5g-lite",
+      "author_email": "david.miller@triage.shop",
+      "content": "Fast delivery. Package comes with box with seal intact. Phone is brand new and comes with charger & pin. Overall satisfied with the purchase. Please remember to keep the receipt as advised by the seller as you need to produce the receipt to the service center. Thanks seller!",
+      "title": null,
+      "source_domain": "phone",
+      "source_language": "en"
+    },
+    {
+      "product_slug": "nova-5g-lite",
+      "author_email": "customer@triage.shop",
+      "content": "Good buy. Value for money. Bought this as a gift my my mum who seldom uses phone. Good enough for her. Battery life also quite good can last forna few days per fully charge. Just that it could take 2 hours to 3 hours to be fully charged from less than 10%. But can last quite to be fully depleted.",
+      "title": null,
+      "source_domain": "phone",
+      "source_language": "en"
+    },
+    {
+      "product_slug": "nova-5g-lite",
+      "author_email": "alex.chen@triage.shop",
+      "content": "Delivery time as expected by ninja van, Poor delivery speed by seller took 1 week to send out Good product quality, value for money",
+      "title": null,
+      "source_domain": "phone",
+      "source_language": "en"
+    },
+    {
+      "product_slug": "nova-5g-lite",
+      "author_email": "maya.patel@triage.shop",
+      "content": "Fast delivery from seller, good quality and value for money.",
+      "title": null,
+      "source_domain": "phone",
+      "source_language": "en"
+    },
+    {
+      "product_slug": "nova-5g-lite",
+      "author_email": "david.miller@triage.shop",
+      "content": "Cheap and good I phone x max back temper class. Value for money 5 days can receive item delivery also, ok for me?",
+      "title": null,
+      "source_domain": "phone",
+      "source_language": "en"
+    },
+    {
+      "product_slug": "nova-5g-lite",
+      "author_email": "customer@triage.shop",
+      "content": "Delivery took about a week due to 8.8 sale. Product came in sealed box. Bought for my mom, hope she likes it!",
+      "title": null,
+      "source_domain": "phone",
+      "source_language": "en"
+    },
+    {
+      "product_slug": "nova-5g-lite",
+      "author_email": "alex.chen@triage.shop",
+      "content": "nhanh giao hàng! sẽ mua lại trong tương lai. đề xuất..",
+      "title": null,
+      "source_domain": "phone",
+      "source_language": "vi"
+    },
+    {
+      "product_slug": "zenith-ultra-5g",
+      "author_email": "maya.patel@triage.shop",
+      "content": "Charging was not working so it was approved for return and refund",
+      "title": null,
+      "source_domain": "phone",
+      "source_language": "en"
+    },
+    {
+      "product_slug": "zenith-ultra-5g",
+      "author_email": "david.miller@triage.shop",
+      "content": "Wrong size. Not the same as what I ordered last time. The first time I ordered broke too. Super disappointing. Please refund.",
+      "title": null,
+      "source_domain": "phone",
+      "source_language": "en"
+    },
+    {
+      "product_slug": "zenith-ultra-5g",
+      "author_email": "customer@triage.shop",
+      "content": "Microphone not working, can’t use it for online meetings. Paid such a high price for defective product... not sure if really authentic, and seller does not respond to queries so buy at own risk",
+      "title": null,
+      "source_domain": "phone",
+      "source_language": "en"
+    },
+    {
+      "product_slug": "zenith-ultra-5g",
+      "author_email": "alex.chen@triage.shop",
+      "content": "Fast delivery Excellent service by seller Good product quality Good product quality",
+      "title": null,
+      "source_domain": "phone",
+      "source_language": "en"
+    },
+    {
+      "product_slug": "zenith-ultra-5g",
+      "author_email": "maya.patel@triage.shop",
+      "content": "Good product quality. Fast replies,? Fast delivery.? Excellent service by seller. will definitely recommend to anyone who wants to try. Beginner friendly.",
+      "title": null,
+      "source_domain": "phone",
+      "source_language": "en"
+    },
+    {
+      "product_slug": "zenith-ultra-5g",
+      "author_email": "david.miller@triage.shop",
+      "content": "Good product quality,very Fast delivery Excellent service by seller",
+      "title": null,
+      "source_domain": "phone",
+      "source_language": "en"
+    },
+    {
+      "product_slug": "zenith-ultra-5g",
+      "author_email": "customer@triage.shop",
+      "content": "Good product quality. Fast delivery. Excellent service by seller.",
+      "title": null,
+      "source_domain": "phone",
+      "source_language": "en"
+    },
+    {
+      "product_slug": "zenith-ultra-5g",
+      "author_email": "alex.chen@triage.shop",
+      "content": "Fast delivery. There was a minor hiccup but seller took the initiative to rectify the issue quickly. Appreciate the good customer service. Thanks Derek!",
+      "title": null,
+      "source_domain": "phone",
+      "source_language": "en"
+    },
+    {
+      "product_slug": "zenith-ultra-5g",
+      "author_email": "maya.patel@triage.shop",
+      "content": "Item received I'm good condition. Thank you seller for the fast delivery and excellent service provided. Awesome.",
+      "title": null,
+      "source_domain": "phone",
+      "source_language": "en"
+    },
+    {
+      "product_slug": "zenith-ultra-5g",
+      "author_email": "david.miller@triage.shop",
+      "content": "66w in box Yes No 66 w but phone support 55 66W charger Yes",
+      "title": null,
+      "source_domain": "phone",
+      "source_language": "en"
+    },
+    {
+      "product_slug": "chromeflip-book-14",
+      "author_email": "customer@triage.shop",
+      "content": "The computer is good for the price, but the hdmi port is already broken.",
+      "title": null,
+      "source_domain": "laptop",
+      "source_language": "en"
+    },
+    {
+      "product_slug": "chromeflip-book-14",
+      "author_email": "alex.chen@triage.shop",
+      "content": "In the middle of using, it rebooted, then went into an endless boot loop, so I tried to reset it to factory default, now it says chrome os is missing or damaged.",
+      "title": null,
+      "source_domain": "laptop",
+      "source_language": "en"
+    },
+    {
+      "product_slug": "chromeflip-book-14",
+      "author_email": "maya.patel@triage.shop",
+      "content": "Great price for a touchscreen chromebook",
+      "title": null,
+      "source_domain": "laptop",
+      "source_language": "en"
+    },
+    {
+      "product_slug": "chromeflip-book-14",
+      "author_email": "david.miller@triage.shop",
+      "content": "At a $500 price tag for a chromebook I was a little hesitant to pull the trigger but at this point I am very pleased with the purchase and I believe it is worth the price.",
+      "title": null,
+      "source_domain": "laptop",
+      "source_language": "en"
+    },
+    {
+      "product_slug": "chromeflip-book-14",
+      "author_email": "customer@triage.shop",
+      "content": "Product is sturdy, lightweight, fast, and the battery runtime was as advertised!",
+      "title": null,
+      "source_domain": "laptop",
+      "source_language": "en"
+    },
+    {
+      "product_slug": "chromeflip-book-14",
+      "author_email": "alex.chen@triage.shop",
+      "content": "The battery life is great and I love the touchscreen / flip feature.",
+      "title": null,
+      "source_domain": "laptop",
+      "source_language": "en"
+    },
+    {
+      "product_slug": "chromeflip-book-14",
+      "author_email": "maya.patel@triage.shop",
+      "content": "Great price and great performance but terrible battery.",
+      "title": null,
+      "source_domain": "laptop",
+      "source_language": "en"
+    },
+    {
+      "product_slug": "chromeflip-book-14",
+      "author_email": "david.miller@triage.shop",
+      "content": "My only wish is that it were a little more quick / less laggy given it is a chromebook-but for the price point its a great buy.",
+      "title": null,
+      "source_domain": "laptop",
+      "source_language": "en"
+    },
+    {
+      "product_slug": "chromeflip-book-14",
+      "author_email": "customer@triage.shop",
+      "content": "When you stack up all these strengths and offer them at a price of $299, you're getting a fairly impressive value proposition here with this chromebook.",
+      "title": null,
+      "source_domain": "laptop",
+      "source_language": "en"
+    },
+    {
+      "product_slug": "chromeflip-book-14",
+      "author_email": "alex.chen@triage.shop",
+      "content": "I only used it work my college school work and light browsing.",
+      "title": null,
+      "source_domain": "laptop",
+      "source_language": "en"
+    },
+    {
+      "product_slug": "ultrabook-air-13",
+      "author_email": "maya.patel@triage.shop",
+      "content": "2nd problem was the game card was damaged and 3rd problem was youtube wouldn't work again, and the search bar on the laptop wasnt working.",
+      "title": null,
+      "source_domain": "laptop",
+      "source_language": "en"
+    },
+    {
+      "product_slug": "ultrabook-air-13",
+      "author_email": "david.miller@triage.shop",
+      "content": "The wall power adapter charger is not working and then later caught fire.",
+      "title": null,
+      "source_domain": "laptop",
+      "source_language": "en"
+    },
+    {
+      "product_slug": "ultrabook-air-13",
+      "author_email": "customer@triage.shop",
+      "content": "I'm trying to do online college college courses with it and it gets hung up in some intimate nevernever land of unresponsiveness.",
+      "title": null,
+      "source_domain": "laptop",
+      "source_language": "en"
+    },
+    {
+      "product_slug": "ultrabook-air-13",
+      "author_email": "alex.chen@triage.shop",
+      "content": "Best for: if you are looking for a travel laptop and are planning on doing light work this is an amazing buy for the price.",
+      "title": null,
+      "source_domain": "laptop",
+      "source_language": "en"
+    },
+    {
+      "product_slug": "ultrabook-air-13",
+      "author_email": "maya.patel@triage.shop",
+      "content": "Overall I like its slim design and feather light-weight alone with well equipped spec that can meet my daily work environment.",
+      "title": null,
+      "source_domain": "laptop",
+      "source_language": "en"
+    },
+    {
+      "product_slug": "ultrabook-air-13",
+      "author_email": "david.miller@triage.shop",
+      "content": "This is smart looking, thin, light weight, and portable.",
+      "title": null,
+      "source_domain": "laptop",
+      "source_language": "en"
+    },
+    {
+      "product_slug": "ultrabook-air-13",
+      "author_email": "customer@triage.shop",
+      "content": "Light weight, good battery life, sharp screen.",
+      "title": null,
+      "source_domain": "laptop",
+      "source_language": "en"
+    },
+    {
+      "product_slug": "ultrabook-air-13",
+      "author_email": "alex.chen@triage.shop",
+      "content": "However, still 5 stars as you get what you pay for: a cheap, decently rugged, light weight notebook to kick around and tinker with.",
+      "title": null,
+      "source_domain": "laptop",
+      "source_language": "en"
+    },
+    {
+      "product_slug": "ultrabook-air-13",
+      "author_email": "maya.patel@triage.shop",
+      "content": "The reason why I'm giving this laptop a two star is because overall I think the quality of it is good especially for the price.",
+      "title": null,
+      "source_domain": "laptop",
+      "source_language": "en"
+    },
+    {
+      "product_slug": "ultrabook-air-13",
+      "author_email": "david.miller@triage.shop",
+      "content": "After some use, the battery charge had logically gone down some (down to about 80%), and so I went back to my office to plug it in.",
+      "title": null,
+      "source_domain": "laptop",
+      "source_language": "en"
+    },
+    {
+      "product_slug": "prowork-studio-15",
+      "author_email": "customer@triage.shop",
+      "content": "Eventually it bricked and died 3 days after any possible refund could be made.",
+      "title": null,
+      "source_domain": "laptop",
+      "source_language": "en"
+    },
+    {
+      "product_slug": "prowork-studio-15",
+      "author_email": "alex.chen@triage.shop",
+      "content": "The broken mic was not a dealbreaker but annoying in a brand new device.",
+      "title": null,
+      "source_domain": "laptop",
+      "source_language": "en"
+    },
+    {
+      "product_slug": "prowork-studio-15",
+      "author_email": "maya.patel@triage.shop",
+      "content": "Now there are pixels on the screen not working, and they are multiplying.",
+      "title": null,
+      "source_domain": "laptop",
+      "source_language": "en"
+    },
+    {
+      "product_slug": "prowork-studio-15",
+      "author_email": "david.miller@triage.shop",
+      "content": "Finger print scanner not working whatsoever.",
+      "title": null,
+      "source_domain": "laptop",
+      "source_language": "en"
+    },
+    {
+      "product_slug": "prowork-studio-15",
+      "author_email": "customer@triage.shop",
+      "content": "Sleek, great keyboard, convertible laptop with great battery life, nice display and android app support after running a system update.",
+      "title": null,
+      "source_domain": "laptop",
+      "source_language": "en"
+    },
+    {
+      "product_slug": "prowork-studio-15",
+      "author_email": "alex.chen@triage.shop",
+      "content": "15\" screen, full sized keyboard and speed fast enough for some low quality games such as lol.",
+      "title": null,
+      "source_domain": "laptop",
+      "source_language": "en"
+    },
+    {
+      "product_slug": "prowork-studio-15",
+      "author_email": "maya.patel@triage.shop",
+      "content": "Screen display is bright and has excellent graphics.",
+      "title": null,
+      "source_domain": "laptop",
+      "source_language": "en"
+    },
+    {
+      "product_slug": "prowork-studio-15",
+      "author_email": "david.miller@triage.shop",
+      "content": "The screen is plenty bright, and the sound from the speakers is fine for a laptop (you won't be filling a room with sound).",
+      "title": null,
+      "source_domain": "laptop",
+      "source_language": "en"
+    },
+    {
+      "product_slug": "prowork-studio-15",
+      "author_email": "customer@triage.shop",
+      "content": "The screen is beautiful, and the speakers are very nice.",
+      "title": null,
+      "source_domain": "laptop",
+      "source_language": "en"
+    },
+    {
+      "product_slug": "prowork-studio-15",
+      "author_email": "alex.chen@triage.shop",
+      "content": "It doesn't support a hardwire connection.",
+      "title": null,
+      "source_domain": "laptop",
+      "source_language": "en"
+    },
+    {
+      "product_slug": "shieldglass-case-kit",
+      "author_email": "maya.patel@triage.shop",
+      "content": "Item broken, texted seller and hope will get response. packing looks legit but quality is seems not the case. the other side rubber joint looks scratched and not new.",
+      "title": null,
+      "source_domain": "phone",
+      "source_language": "en"
+    },
+    {
+      "product_slug": "shieldglass-case-kit",
+      "author_email": "david.miller@triage.shop",
+      "content": "The box that it came with was like almost totally flatten, but luckily the case wasn’t damaged.?",
+      "title": null,
+      "source_domain": "phone",
+      "source_language": "en"
+    },
+    {
+      "product_slug": "shieldglass-case-kit",
+      "author_email": "customer@triage.shop",
+      "content": "Thank you for the free gift of power bank. But I did not receive the screen protector and case as advertised. Phone works but have not tested. Thank you for the fast delivery.",
+      "title": null,
+      "source_domain": "phone",
+      "source_language": "en"
+    },
+    {
+      "product_slug": "shieldglass-case-kit",
+      "author_email": "alex.chen@triage.shop",
+      "content": "It comes with a clear soft silicone case and it has a standard screen protector applied to it. Additionally I applied a tempered glass screen protector on the top of it and it looks great.",
+      "title": null,
+      "source_domain": "phone",
+      "source_language": "en"
+    },
+    {
+      "product_slug": "shieldglass-case-kit",
+      "author_email": "maya.patel@triage.shop",
+      "content": "Shipping took about 1 week. And omg thank u for the free gifts (phone case, cable and screen protector). The phone is working pretty good. Will recommend to ppl if they need a phone that can stop them into social medias",
+      "title": null,
+      "source_domain": "phone",
+      "source_language": "en"
+    },
+    {
+      "product_slug": "shieldglass-case-kit",
+      "author_email": "david.miller@triage.shop",
+      "content": "Mine came with a hard shell case but no screen protector. Yes, it comes with a clear plastic case in the box. Yes a clear case which does the job perfectly",
+      "title": null,
+      "source_domain": "phone",
+      "source_language": "en"
+    },
+    {
+      "product_slug": "shieldglass-case-kit",
+      "author_email": "customer@triage.shop",
+      "content": "Worthy, comes with screen protector and soft case. Fast seller shipping.",
+      "title": null,
+      "source_domain": "phone",
+      "source_language": "en"
+    },
+    {
+      "product_slug": "shieldglass-case-kit",
+      "author_email": "alex.chen@triage.shop",
+      "content": "Received order through courier a week after order as item shipped from overseas. U.S. unit with some U.S. bloatware. Single SIM. Works in SG. Provided free single-sided TPU cover, screen protector and a UK AC plug adaptor. Seller communicated well regarding features & delivery status.",
+      "title": null,
+      "source_domain": "phone",
+      "source_language": "en"
+    },
+    {
+      "product_slug": "shieldglass-case-kit",
+      "author_email": "maya.patel@triage.shop",
+      "content": "Very responsive seller, good price and fast delivery. Item is as described and in perfect condition. Phone is very responsive and easy to setup. Comes with screen protector and case. Pictures look good and saturation can be adjusted. Definitely recommended.",
+      "title": null,
+      "source_domain": "phone",
+      "source_language": "en"
+    },
+    {
+      "product_slug": "shieldglass-case-kit",
+      "author_email": "david.miller@triage.shop",
+      "content": "Yes, the screen protector is already on for you and the case is a decent silicon one that comes around the edges of the phone to protect it. Comes with a case. Screen is gorilla glass but no extra protector Yes",
+      "title": null,
+      "source_domain": "phone",
+      "source_language": "en"
+    },
+    {
+      "product_slug": "tactile-pro-keyboard",
+      "author_email": "customer@triage.shop",
+      "content": "It doesn't has backlit keyboard: (typing in low light is such a pain.",
+      "title": null,
+      "source_domain": "laptop",
+      "source_language": "en"
+    },
+    {
+      "product_slug": "tactile-pro-keyboard",
+      "author_email": "alex.chen@triage.shop",
+      "content": "I can not stand the trackpad or the keyboard keys.",
+      "title": null,
+      "source_domain": "laptop",
+      "source_language": "en"
+    },
+    {
+      "product_slug": "tactile-pro-keyboard",
+      "author_email": "maya.patel@triage.shop",
+      "content": "Keyboard does seem a little off size as I seem to often be one key offset when get in typing position.",
+      "title": null,
+      "source_domain": "laptop",
+      "source_language": "en"
+    },
+    {
+      "product_slug": "tactile-pro-keyboard",
+      "author_email": "david.miller@triage.shop",
+      "content": "I'm typing this review in a dark room, and it reminds me how much I love this backlit keyboard.",
+      "title": null,
+      "source_domain": "laptop",
+      "source_language": "en"
+    },
+    {
+      "product_slug": "tactile-pro-keyboard",
+      "author_email": "customer@triage.shop",
+      "content": "Backlit keyboard that's really quiet (perfect for in-class typing or library use)",
+      "title": null,
+      "source_domain": "laptop",
+      "source_language": "en"
+    },
+    {
+      "product_slug": "tactile-pro-keyboard",
+      "author_email": "alex.chen@triage.shop",
+      "content": "I love that it is only as big as it needs to be to have a full-size keyboard (not with a number pad, but full-sized keys).",
+      "title": null,
+      "source_domain": "laptop",
+      "source_language": "en"
+    },
+    {
+      "product_slug": "tactile-pro-keyboard",
+      "author_email": "maya.patel@triage.shop",
+      "content": "Backlit allow even guys with large hands to use this keyboard comfortably in any lighting.",
+      "title": null,
+      "source_domain": "laptop",
+      "source_language": "en"
+    },
+    {
+      "product_slug": "tactile-pro-keyboard",
+      "author_email": "david.miller@triage.shop",
+      "content": "I love the keyboard and the trackpad-I finally get it now why both of these have rave reviews.",
+      "title": null,
+      "source_domain": "laptop",
+      "source_language": "en"
+    },
+    {
+      "product_slug": "tactile-pro-keyboard",
+      "author_email": "customer@triage.shop",
+      "content": "It's really nice to have the touchscreen when using apps and I can seamlessly transition back to using the trackpad / keyboard depending on what I'm doing.",
+      "title": null,
+      "source_domain": "laptop",
+      "source_language": "en"
+    },
+    {
+      "product_slug": "tactile-pro-keyboard",
+      "author_email": "alex.chen@triage.shop",
+      "content": "Keyboard layout is not the best, do not like that I have to press the function key to raise or lower the volume / brightness on the arrow keys.",
+      "title": null,
+      "source_domain": "laptop",
+      "source_language": "en"
+    }
+  ]
+}

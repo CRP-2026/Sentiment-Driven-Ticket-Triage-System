@@ -7,6 +7,15 @@ from .repositories import (
     UserRepositoryPort,
 )
 from .security import PasswordHasherPort, TokenPayload, TokenProviderPort
+from .seeding import (
+    SeedBundle,
+    SeedCategory,
+    SeedProduct,
+    SeedRepositoryPort,
+    SeedReview,
+    SeedSourcePort,
+    SeedUser,
+)
 from .storage import ImageStoragePort
 from .triage import PriorityQueuePort, SentimentAnalyzerPort, TriageGatewayPort
 
@@ -16,6 +25,13 @@ __all__ = [
     "PasswordHasherPort",
     "PriorityQueuePort",
     "ReviewRepositoryPort",
+    "SeedBundle",
+    "SeedCategory",
+    "SeedProduct",
+    "SeedRepositoryPort",
+    "SeedReview",
+    "SeedSourcePort",
+    "SeedUser",
     "SentimentAnalyzerPort",
     "TicketRepositoryPort",
     "TokenPayload",

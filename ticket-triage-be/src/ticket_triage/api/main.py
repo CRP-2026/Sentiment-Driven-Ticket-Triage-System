@@ -6,7 +6,13 @@ from pathlib import Path
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from ..adapters.persistence.sqlalchemy_repos import SqlAlchemyTicketRepository
+from ..adapters.persistence.sqlalchemy_repos import (
+    SqlAlchemyTicketRepository,
+    SqlAlchemyUserRepository,
+)
+from ..adapters.seeding.json_seed_source import JsonSeedSource
+from ..adapters.seeding.sqlalchemy_seed_repo import SqlAlchemySeedRepository
+from ..application.seed_service import SeedService
 from ..application.triage_service import ticket_queue_metadata
 from ..core.preprocessing.keyword_prefilter import load_aspect_keywords
 from ..core.priority.priority_engine import load_priority_rules
@@ -144,6 +150,27 @@ async def lifespan(app: FastAPI):
     logger.info("ENABLE_ABTE: %s", app.state.enable_abte)
     logger.info("aspects.yaml loaded: %s", aspects_loaded)
     logger.info("aspect_hypotheses.yaml loaded: %s", hypotheses_loaded)
+
+    # 4c. Tùy chọn tự nạp dữ liệu Storefront & M-ABSA mẫu khi deploy DB trống (AUTO_SEED_DEMO=true)
+    if not is_testing and settings.auto_seed_demo:
+        default_seed_json = BASE_DIR / "seeds" / "mabsa_store_seed.json"
+        if default_seed_json.is_file():
+            with SessionLocal() as db:
+                seed_svc = SeedService(
+                    seed_source=JsonSeedSource(default_seed_json),
+                    seed_repo=SqlAlchemySeedRepository(db),
+                    user_repo=SqlAlchemyUserRepository(db),
+                    password_hasher=app.state.container.password_hasher,
+                    review_service=app.state.container.build_review_service(db, app.state),
+                )
+                summary = seed_svc.run(only_if_empty=True)
+                if summary.products_created > 0 or summary.reviews_created > 0:
+                    logger.info(
+                        "AUTO_SEED_DEMO populated %d categories, %d products, %d reviews.",
+                        summary.categories_created,
+                        summary.products_created,
+                        summary.reviews_created,
+                    )
 
     # 5. Khởi tạo hàng đợi In-memory Max-Heap
     if not is_testing:

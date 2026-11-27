@@ -13,31 +13,87 @@ export interface paths {
     /** Get Aspects Metadata */
     get: operations["get_aspects_metadata_api_v1_meta_aspects_get"];
   };
+  "/api/v1/auth/register": {
+    /**
+     * Register
+     * @description Đăng ký tài khoản khách hàng mới và cấp phát JWT access token.
+     */
+    post: operations["register_api_v1_auth_register_post"];
+  };
+  "/api/v1/auth/login": {
+    /**
+     * Login
+     * @description Đăng nhập bằng email và mật khẩu (hỗ trợ cả customer và admin).
+     */
+    post: operations["login_api_v1_auth_login_post"];
+  };
+  "/api/v1/auth/me": {
+    /**
+     * Get Me
+     * @description Trả về thông tin tài khoản hiện đang đăng nhập.
+     */
+    get: operations["get_me_api_v1_auth_me_get"];
+  };
+  "/api/v1/store/categories": {
+    /**
+     * List Categories
+     * @description Lấy danh sách danh mục sản phẩm kèm tổng số sản phẩm mỗi danh mục.
+     */
+    get: operations["list_categories_api_v1_store_categories_get"];
+  };
+  "/api/v1/store/products": {
+    /**
+     * List Products
+     * @description Lấy danh sách sản phẩm kèm chỉ số hài lòng AI và Top khía cạnh được đánh giá cao.
+     */
+    get: operations["list_products_api_v1_store_products_get"];
+  };
+  "/api/v1/store/products/{slug}": {
+    /**
+     * Get Product Detail
+     * @description Lấy chi tiết sản phẩm, bảng xếp hạng Top 1-2-3 khía cạnh ABSA và danh sách bình luận.
+     */
+    get: operations["get_product_detail_api_v1_store_products__slug__get"];
+  };
+  "/api/v1/store/products/{slug}/reviews": {
+    /**
+     * Submit Product Review
+     * @description Gửi bình luận sản phẩm -> phân tích ABSA qua TriageGatewayPort -> tạo Admin Ticket.
+     */
+    post: operations["submit_product_review_api_v1_store_products__slug__reviews_post"];
+  };
+  "/api/v1/store/uploads/image": {
+    /**
+     * Upload Product Image
+     * @description Admin tải ảnh sản phẩm lên ImageStoragePort (Cloudinary hoặc Local fallback).
+     */
+    post: operations["upload_product_image_api_v1_store_uploads_image_post"];
+  };
   "/api/v1/tickets/triage": {
     /**
      * Triage Ticket
      * @description Tiếp nhận ticket tiếng Anh thô, chạy toàn trình (ABSA -> Priority Engine),
-     * lưu CSDL SQLite và cập nhật hàng đợi Max-Heap.
+     * lưu CSDL và cập nhật hàng đợi Max-Heap.
      */
     post: operations["triage_ticket_api_v1_tickets_triage_post"];
   };
   "/api/v1/tickets": {
     /**
      * Get Tickets
-     * @description Lấy danh sách ticket từ CSDL SQLite sắp xếp theo priority_score giảm dần.
+     * @description Lấy danh sách ticket sắp xếp theo priority_score giảm dần.
      */
     get: operations["get_tickets_api_v1_tickets_get"];
     /**
      * Triage Ticket
      * @description Tiếp nhận ticket tiếng Anh thô, chạy toàn trình (ABSA -> Priority Engine),
-     * lưu CSDL SQLite và cập nhật hàng đợi Max-Heap.
+     * lưu CSDL và cập nhật hàng đợi Max-Heap.
      */
     post: operations["triage_ticket_api_v1_tickets_post"];
   };
   "/api/v1/tickets/queue": {
     /**
      * Get Tickets
-     * @description Lấy danh sách ticket từ CSDL SQLite sắp xếp theo priority_score giảm dần.
+     * @description Lấy danh sách ticket sắp xếp theo priority_score giảm dần.
      */
     get: operations["get_tickets_api_v1_tickets_queue_get"];
   };
@@ -75,6 +131,38 @@ export type webhooks = Record<string, never>;
 
 export interface components {
   schemas: {
+    /** AspectInsightOut */
+    AspectInsightOut: {
+      /** Aspect Id */
+      aspect_id: string;
+      /** Name Vi */
+      name_vi: string;
+      /** Description */
+      description: string;
+      /** Rank */
+      rank?: number | null;
+      /** Total Mentions */
+      total_mentions: number;
+      /** Positive Count */
+      positive_count: number;
+      /** Neutral Count */
+      neutral_count: number;
+      /** Negative Count */
+      negative_count: number;
+      /** Positive Ratio */
+      positive_ratio: number;
+      /** Ranking Score */
+      ranking_score: number;
+      /** Sentiment Summary */
+      sentiment_summary: string;
+      /** Is Highly Rated */
+      is_highly_rated: boolean;
+      /**
+       * Top Terms
+       * @default []
+       */
+      top_terms?: string[];
+    };
     /** AspectMetaItem */
     AspectMetaItem: {
       /** Id */
@@ -111,6 +199,40 @@ export interface components {
       /** Count */
       count: number;
     };
+    /** AuthResponse */
+    AuthResponse: {
+      /** Access Token */
+      access_token: string;
+      /**
+       * Token Type
+       * @default bearer
+       */
+      token_type?: string;
+      user: components["schemas"]["UserOut"];
+    };
+    /** Body_upload_product_image_api_v1_store_uploads_image_post */
+    Body_upload_product_image_api_v1_store_uploads_image_post: {
+      /** File */
+      file: string;
+    };
+    /** CategoryOut */
+    CategoryOut: {
+      /** Id */
+      id: number;
+      /** Slug */
+      slug: string;
+      /** Name */
+      name: string;
+      /** Description */
+      description: string;
+      /** Icon */
+      icon: string;
+      /**
+       * Product Count
+       * @default 0
+       */
+      product_count?: number;
+    };
     /** HTTPValidationError */
     HTTPValidationError: {
       /** Detail */
@@ -142,6 +264,23 @@ export interface components {
       model_loaded?: boolean;
       /** Queue Size */
       queue_size: number;
+      /**
+       * Triage Gateway Mode
+       * @default local
+       */
+      triage_gateway_mode?: string;
+    };
+    /** ImageUploadResponse */
+    ImageUploadResponse: {
+      /** Image Url */
+      image_url: string;
+    };
+    /** LoginIn */
+    LoginIn: {
+      /** Email */
+      email: string;
+      /** Password */
+      password: string;
     };
     /** PriorityBreakdownOut */
     PriorityBreakdownOut: {
@@ -157,6 +296,214 @@ export interface components {
       aspect_bonus: number;
       /** Reasons */
       reasons: string[];
+    };
+    /** ProductDetailResponse */
+    ProductDetailResponse: {
+      product: components["schemas"]["ProductOut"];
+      insights: components["schemas"]["ProductInsightsOut"];
+      /** Reviews */
+      reviews: components["schemas"]["ReviewOut"][];
+      /** Total Filtered Reviews */
+      total_filtered_reviews: number;
+    };
+    /** ProductInsightsOut */
+    ProductInsightsOut: {
+      /** Total Reviews */
+      total_reviews: number;
+      /** Positive Review Count */
+      positive_review_count: number;
+      /** Neutral Review Count */
+      neutral_review_count: number;
+      /** Negative Review Count */
+      negative_review_count: number;
+      /** Satisfaction Rate */
+      satisfaction_rate: number;
+      /** Summary Text Vi */
+      summary_text_vi: string;
+      /**
+       * Aspects
+       * @default []
+       */
+      aspects?: components["schemas"]["AspectInsightOut"][];
+      /**
+       * Top Ranked Aspects
+       * @default []
+       */
+      top_ranked_aspects?: components["schemas"]["AspectInsightOut"][];
+    };
+    /** ProductListResponse */
+    ProductListResponse: {
+      /** Items */
+      items: components["schemas"]["ProductSummaryOut"][];
+      /** Total */
+      total: number;
+      /** Limit */
+      limit: number;
+      /** Offset */
+      offset: number;
+    };
+    /** ProductOut */
+    ProductOut: {
+      /** Id */
+      id: number;
+      /** Category Id */
+      category_id: number;
+      /** Category Slug */
+      category_slug: string;
+      /** Category Name */
+      category_name: string;
+      /** Slug */
+      slug: string;
+      /** Name */
+      name: string;
+      /** Short Description */
+      short_description: string;
+      /** Description */
+      description: string;
+      /** Price */
+      price: number;
+      /** Image Url */
+      image_url: string;
+      /** Sku */
+      sku: string;
+      /** Stock */
+      stock: number;
+      /** Created At */
+      created_at: string;
+    };
+    /** ProductSummaryOut */
+    ProductSummaryOut: {
+      /** Id */
+      id: number;
+      /** Category Id */
+      category_id: number;
+      /** Category Slug */
+      category_slug: string;
+      /** Category Name */
+      category_name: string;
+      /** Slug */
+      slug: string;
+      /** Name */
+      name: string;
+      /** Short Description */
+      short_description: string;
+      /** Description */
+      description: string;
+      /** Price */
+      price: number;
+      /** Image Url */
+      image_url: string;
+      /** Sku */
+      sku: string;
+      /** Stock */
+      stock: number;
+      /** Created At */
+      created_at: string;
+      /**
+       * Total Reviews
+       * @default 0
+       */
+      total_reviews?: number;
+      /**
+       * Satisfaction Rate
+       * @default 0
+       */
+      satisfaction_rate?: number;
+      /**
+       * Top Ranked Aspects
+       * @default []
+       */
+      top_ranked_aspects?: components["schemas"]["AspectInsightOut"][];
+    };
+    /** RegisterIn */
+    RegisterIn: {
+      /**
+       * Email
+       * @description Địa chỉ email đăng ký
+       */
+      email: string;
+      /**
+       * Full Name
+       * @description Tên hiển thị của người dùng
+       */
+      full_name: string;
+      /**
+       * Password
+       * @description Mật khẩu tối thiểu 6 ký tự
+       */
+      password: string;
+    };
+    /** ReviewCreateIn */
+    ReviewCreateIn: {
+      /** Title */
+      title?: string | null;
+      /**
+       * Content
+       * @description Nội dung bình luận tiếng Anh về sản phẩm
+       */
+      content: string;
+    };
+    /** ReviewCreateResponse */
+    ReviewCreateResponse: {
+      review: components["schemas"]["ReviewOut"];
+      triage: components["schemas"]["ReviewTriageSummaryOut"];
+      insights: components["schemas"]["ProductInsightsOut"];
+    };
+    /** ReviewOut */
+    ReviewOut: {
+      /** Id */
+      id: number;
+      /** Product Id */
+      product_id: number;
+      /** User Id */
+      user_id: number;
+      /** Author Name */
+      author_name: string;
+      /** Ticket Id */
+      ticket_id: number;
+      /** Title */
+      title?: string | null;
+      /** Content */
+      content: string;
+      /** Sentiment Label */
+      sentiment_label?: string | null;
+      /** Confidence */
+      confidence?: number | null;
+      /** Priority Score */
+      priority_score: number;
+      /** Priority Level */
+      priority_level: string;
+      /** Needs Manual Review */
+      needs_manual_review: boolean;
+      /**
+       * Aspects
+       * @default []
+       */
+      aspects?: components["schemas"]["AspectOut"][];
+      /** Created At */
+      created_at: string;
+    };
+    /** ReviewTriageSummaryOut */
+    ReviewTriageSummaryOut: {
+      /** Ticket Id */
+      ticket_id: number;
+      /** Sentiment Label */
+      sentiment_label?: string | null;
+      /** Confidence */
+      confidence?: number | null;
+      /** Priority Score */
+      priority_score: number;
+      /** Priority Level */
+      priority_level: string;
+      /** Dominant Aspect */
+      dominant_aspect?: string | null;
+      /** Needs Manual Review */
+      needs_manual_review: boolean;
+      /**
+       * Aspects
+       * @default []
+       */
+      aspects?: components["schemas"]["AspectOut"][];
     };
     /** StatsOverviewResponse */
     StatsOverviewResponse: {
@@ -198,6 +545,23 @@ export interface components {
        * @description Nội dung phản hồi tiếng Anh của khách hàng
        */
       content: string;
+      /**
+       * Source
+       * @description Nguồn gửi: direct_api | storefront_review
+       * @default direct_api
+       * @enum {string}
+       */
+      source?: "direct_api" | "storefront_review";
+      /** Product Id */
+      product_id?: number | null;
+      /** Product Name */
+      product_name?: string | null;
+      /** Product Slug */
+      product_slug?: string | null;
+      /** User Id */
+      user_id?: number | null;
+      /** Author Name */
+      author_name?: string | null;
     };
     /** TicketListResponse */
     TicketListResponse: {
@@ -239,6 +603,19 @@ export interface components {
       /** Assigned To */
       assigned_to?: string | null;
       /**
+       * Source
+       * @default direct_api
+       */
+      source?: string;
+      /** Product Id */
+      product_id?: number | null;
+      /** Product Name */
+      product_name?: string | null;
+      /** Product Slug */
+      product_slug?: string | null;
+      /** Author Name */
+      author_name?: string | null;
+      /**
        * Aspects
        * @default []
        */
@@ -248,6 +625,23 @@ export interface components {
       /** Updated At */
       updated_at: string;
     };
+    /** UserOut */
+    UserOut: {
+      /** Id */
+      id: number;
+      /** Email */
+      email: string;
+      /** Full Name */
+      full_name: string;
+      role: components["schemas"]["UserRoleEnum"];
+      /** Created At */
+      created_at: string;
+    };
+    /**
+     * UserRoleEnum
+     * @enum {string}
+     */
+    UserRoleEnum: "customer" | "admin";
     /** ValidationError */
     ValidationError: {
       /** Location */
@@ -298,9 +692,200 @@ export interface operations {
     };
   };
   /**
+   * Register
+   * @description Đăng ký tài khoản khách hàng mới và cấp phát JWT access token.
+   */
+  register_api_v1_auth_register_post: {
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["RegisterIn"];
+      };
+    };
+    responses: {
+      /** @description Successful Response */
+      201: {
+        content: {
+          "application/json": components["schemas"]["AuthResponse"];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  /**
+   * Login
+   * @description Đăng nhập bằng email và mật khẩu (hỗ trợ cả customer và admin).
+   */
+  login_api_v1_auth_login_post: {
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["LoginIn"];
+      };
+    };
+    responses: {
+      /** @description Successful Response */
+      200: {
+        content: {
+          "application/json": components["schemas"]["AuthResponse"];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  /**
+   * Get Me
+   * @description Trả về thông tin tài khoản hiện đang đăng nhập.
+   */
+  get_me_api_v1_auth_me_get: {
+    responses: {
+      /** @description Successful Response */
+      200: {
+        content: {
+          "application/json": components["schemas"]["UserOut"];
+        };
+      };
+    };
+  };
+  /**
+   * List Categories
+   * @description Lấy danh sách danh mục sản phẩm kèm tổng số sản phẩm mỗi danh mục.
+   */
+  list_categories_api_v1_store_categories_get: {
+    responses: {
+      /** @description Successful Response */
+      200: {
+        content: {
+          "application/json": components["schemas"]["CategoryOut"][];
+        };
+      };
+    };
+  };
+  /**
+   * List Products
+   * @description Lấy danh sách sản phẩm kèm chỉ số hài lòng AI và Top khía cạnh được đánh giá cao.
+   */
+  list_products_api_v1_store_products_get: {
+    parameters: {
+      query?: {
+        category?: string | null;
+        q?: string | null;
+        limit?: number;
+        offset?: number;
+      };
+    };
+    responses: {
+      /** @description Successful Response */
+      200: {
+        content: {
+          "application/json": components["schemas"]["ProductListResponse"];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  /**
+   * Get Product Detail
+   * @description Lấy chi tiết sản phẩm, bảng xếp hạng Top 1-2-3 khía cạnh ABSA và danh sách bình luận.
+   */
+  get_product_detail_api_v1_store_products__slug__get: {
+    parameters: {
+      query?: {
+        aspect?: string | null;
+        limit?: number;
+        offset?: number;
+      };
+      path: {
+        slug: string;
+      };
+    };
+    responses: {
+      /** @description Successful Response */
+      200: {
+        content: {
+          "application/json": components["schemas"]["ProductDetailResponse"];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  /**
+   * Submit Product Review
+   * @description Gửi bình luận sản phẩm -> phân tích ABSA qua TriageGatewayPort -> tạo Admin Ticket.
+   */
+  submit_product_review_api_v1_store_products__slug__reviews_post: {
+    parameters: {
+      path: {
+        slug: string;
+      };
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["ReviewCreateIn"];
+      };
+    };
+    responses: {
+      /** @description Successful Response */
+      201: {
+        content: {
+          "application/json": components["schemas"]["ReviewCreateResponse"];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  /**
+   * Upload Product Image
+   * @description Admin tải ảnh sản phẩm lên ImageStoragePort (Cloudinary hoặc Local fallback).
+   */
+  upload_product_image_api_v1_store_uploads_image_post: {
+    requestBody: {
+      content: {
+        "multipart/form-data": components["schemas"]["Body_upload_product_image_api_v1_store_uploads_image_post"];
+      };
+    };
+    responses: {
+      /** @description Successful Response */
+      201: {
+        content: {
+          "application/json": components["schemas"]["ImageUploadResponse"];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  /**
    * Triage Ticket
    * @description Tiếp nhận ticket tiếng Anh thô, chạy toàn trình (ABSA -> Priority Engine),
-   * lưu CSDL SQLite và cập nhật hàng đợi Max-Heap.
+   * lưu CSDL và cập nhật hàng đợi Max-Heap.
    */
   triage_ticket_api_v1_tickets_triage_post: {
     requestBody: {
@@ -325,7 +910,7 @@ export interface operations {
   };
   /**
    * Get Tickets
-   * @description Lấy danh sách ticket từ CSDL SQLite sắp xếp theo priority_score giảm dần.
+   * @description Lấy danh sách ticket sắp xếp theo priority_score giảm dần.
    */
   get_tickets_api_v1_tickets_get: {
     parameters: {
@@ -355,7 +940,7 @@ export interface operations {
   /**
    * Triage Ticket
    * @description Tiếp nhận ticket tiếng Anh thô, chạy toàn trình (ABSA -> Priority Engine),
-   * lưu CSDL SQLite và cập nhật hàng đợi Max-Heap.
+   * lưu CSDL và cập nhật hàng đợi Max-Heap.
    */
   triage_ticket_api_v1_tickets_post: {
     requestBody: {
@@ -380,7 +965,7 @@ export interface operations {
   };
   /**
    * Get Tickets
-   * @description Lấy danh sách ticket từ CSDL SQLite sắp xếp theo priority_score giảm dần.
+   * @description Lấy danh sách ticket sắp xếp theo priority_score giảm dần.
    */
   get_tickets_api_v1_tickets_queue_get: {
     parameters: {
