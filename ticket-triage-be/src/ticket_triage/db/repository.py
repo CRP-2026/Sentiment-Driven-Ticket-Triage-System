@@ -26,6 +26,12 @@ class TicketRepository:
         dominant_aspect: str | None = None,
         status: str = "new",
         assigned_to: str | None = None,
+        source: str = "direct_api",
+        product_id: int | None = None,
+        product_name: str | None = None,
+        product_slug: str | None = None,
+        user_id: int | None = None,
+        author_name: str | None = None,
         aspects_data: list[dict[str, Any]] | None = None,
     ) -> Ticket:
         """Tạo ticket mới và toàn bộ khía cạnh liên quan trong một Transaction duy nhất."""
@@ -43,6 +49,12 @@ class TicketRepository:
             dominant_aspect=dominant_aspect,
             status=status,
             assigned_to=assigned_to,
+            source=source,
+            product_id=product_id,
+            product_name=product_name,
+            product_slug=product_slug,
+            user_id=user_id,
+            author_name=author_name,
         )
 
         if aspects_data:
@@ -82,9 +94,9 @@ class TicketRepository:
         if sentiment:
             stmt = stmt.where(Ticket.sentiment_label == sentiment)
         if aspect:
-            stmt = stmt.join(Ticket.aspects).where(TicketAspect.aspect == aspect)
+            stmt = stmt.join(Ticket.aspects).where(TicketAspect.aspect == aspect).distinct()
 
-        # Đếm tổng số
+        # Đếm tổng số bản ghi duy nhất
         count_stmt = select(func.count()).select_from(stmt.subquery())
         total = db.scalar(count_stmt) or 0
 
