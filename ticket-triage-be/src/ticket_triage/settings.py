@@ -6,6 +6,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
+
 class Settings(BaseSettings):
     db_url: str = "sqlite:///./tickets.db"
     testing: bool = False
@@ -16,6 +17,25 @@ class Settings(BaseSettings):
     enable_abte: bool = False
     cors_origins: list[str] = ["http://localhost:5173", "http://localhost:8080"]
     hf_hub_offline: bool = False
+
+    # Authentication (stateless JWT)
+    jwt_secret_key: str = "dev-insecure-jwt-secret-change-in-production"
+    jwt_expire_minutes: int = 720
+
+    # Storefront -> Triage Gateway (SOLID-D: local in-process vs remote HTTP service)
+    triage_gateway_mode: str = "local"  # local | http
+    triage_api_url: str = ""
+    triage_api_token: str = ""
+    triage_http_timeout_seconds: float = 30.0
+
+    # Media storage (SOLID-D: Cloudinary when configured, local fallback otherwise)
+    cloudinary_cloud_name: str = ""
+    cloudinary_api_key: str = ""
+    cloudinary_api_secret: str = ""
+    cloudinary_folder: str = "ticket-triage/products"
+
+    # Optional auto-seeding on startup for empty deploy environments
+    auto_seed_demo: bool = False
 
     configs_dir: str = str(BASE_DIR / "configs")
 
@@ -28,6 +48,11 @@ class Settings(BaseSettings):
     )
 
     def is_testing(self) -> bool:
-        return self.testing or os.getenv("TESTING", "").lower() in ("true", "1") or "pytest" in sys.modules
+        return (
+            self.testing
+            or os.getenv("TESTING", "").lower() in ("true", "1")
+            or "pytest" in sys.modules
+        )
+
 
 settings = Settings()
